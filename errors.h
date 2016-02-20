@@ -8,15 +8,29 @@
  * ~~~~~~ultralightbeams~~~~~~~
  *
  * This file contains prototypes for helper functions that print
- * error messages to stdout.  These functions are called exclusively
+ * error messages to stdout.  These functions are called _mainly_
  * by the atexit() function in stdlib.h, which takes a pointer to a 
  * function, and executes that function immediately before program 
  * termination.
  */
 
+#ifndef ERRORS_H
+#define ERRORS_H
+
 /* ==================================================================
  * == FUNCTIONS
  * =============================================================== */
 
-/* Display USAGE exit message */
+/* Display USAGE dialog */
 void printUsageMsg(void);
+
+
+/* Display HELP dialog */
+void printHelpMsg(void);
+
+
+/* Display VERSION dialog */
+void printVersionMsg(void);
+
+
+#endif

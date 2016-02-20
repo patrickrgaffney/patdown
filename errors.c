@@ -16,7 +16,40 @@
 
 #include "errors.h"
 
+/* Global variables */
+const char programName[] = "patdown";
+const char versionNum[]  = "0.0.1";
+
+
+/* Display USAGE dialog */
 void printUsageMsg(void)
 {
-    printf("USAGE: patdown [--help] [--version] <infile> [-o <outfile>] [-f <format>]\n");
+    printf("USAGE: %s [--help] [--version] <infile> [-o <outfile>] [-f <format>]\n",
+        programName);
+}
+
+/* Display HELP dialog */
+void printHelpMsg(void)
+{
+    printUsageMsg();
+    printf("\n");
+    printVersionMsg();
+    printf("\n");
+    printf("  Stand-alone options:\n");
+    printf("  --verison      Print program version\n");
+    printf("  --help         Print program help dialog\n");
+    printf("\n");
+    printf("  Options that require additional arguments:\n");
+    printf("  -o <outfile>   Send the output to <outfile>\n");
+    printf("                 Default is <stdout>\n");
+    printf("  -f <format>    Convert file to <format>\n");
+    printf("                 Default is <html>\n");
+    printf("\n");
+    printf("Available formats: html, txt\n");
+}
+
+/* Display VERSION dialog */
+void printVersionMsg(void)
+{
+    printf("%s version %s\n", programName, versionNum);
 }
