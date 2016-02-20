@@ -19,7 +19,6 @@
 #include <string.h>
 
 #include "arguments.h"
-#include "errors.h"
 
 /* Begin program execution */
 int main(int argc, char const *argv[])

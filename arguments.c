@@ -32,6 +32,7 @@ ArgType *parseArguments(const int argc, const char *argv[])
 {
     // If there are < 2 arguments, stdin will be the input file
     const unsigned int reqNumArgsForFile = 2;
+    int inputFiles = 0;
     
     // Allocate memory for array of ArgTypes
     ArgType *argt = malloc(sizeof(ArgType) * argc);
@@ -41,24 +42,44 @@ ArgType *parseArguments(const int argc, const char *argv[])
     
     if (argc >= reqNumArgsForFile)
     {
+        // Assign the ArgType of argv[i] to argt[i]
         for (size_t i = 1; i < argc; ++i)
         {
             argt[i] = testProgramArgument(argv[i], argt[i - 1]);
         }
+        
+        // Test argument types for edge-case errors
+        for (size_t i = 1; i < argc; ++i)
+        {   
+            if (argt[i] == OUTPUT_FILE_FLAG)
+            {
+                char errstr[] = "Output file flag requires file name.";
+                testArgTypeForMatch(argt[i + 1], OUTPUT_FILE_NAME, errstr);
+            }
+            else if (argt[i] == OUTPUT_FORMAT_FLAG)
+            {
+                char errstr[] = "Output format flag requires format name.";
+                testArgTypeForMatch(argt[i + 1], OUTPUT_FORMAT_NAME, errstr);
+            }
+            else if (argt[i] == INPUT_FILE_NAME)
+            {
+                inputFiles += 1;
+            }
+            
+            if (inputFiles > 1)
+            {
+                printf("Multiple input files were provided.\n");
+                atexit(printUsageMsg);
+                exit(EXIT_FAILURE);
+            }
+        }
     }
     
-    /* TODO: Loop through argt[] :: checking for weird shit
-        - multiple input names
-        - provided a flag that requires a name, but no name
-    */
-    
-    return argt;
+    return argt; 
 }
 
 
-/* Test a string against the variety of possible command-line
- * arguments, return the purpose of that specific argument.
- */
+/* Determine if an argument is a flag or a name. */
 ArgType testProgramArgument(const char argument[], const ArgType prevArg)
 {   
     switch (argument[0])
@@ -78,7 +99,7 @@ ArgType testProgramArgument(const char argument[], const ArgType prevArg)
  */
 ArgType checkFlags(const char possibleFlag[])
 {
-    // Static declaration of valid flags
+    // Static so it is initialized only once.
     static Flag flag;
     flag.help    = "--help";
     flag.version = "--version";
@@ -133,5 +154,19 @@ ArgType checkNonFlags(const ArgType prevArg, const char argument[])
             printf("Invalid argument: %s", argument);
             atexit(printUsageMsg);
             exit(EXIT_FAILURE);
+    }
+}
+
+/* Test the input ArgType to see if it is the required argument,
+ * exit the program with error dialogs if match is NOT found.
+ */
+void testArgTypeForMatch(const ArgType testarg, const ArgType reqarg,
+    const char errstr[])
+{
+    if (testarg != reqarg)
+    {
+        printf("%s\n", errstr);
+        atexit(printUsageMsg);
+        exit(EXIT_FAILURE);
     }
 }

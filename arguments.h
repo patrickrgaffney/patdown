@@ -64,9 +64,7 @@ typedef struct argumentFlags Flag;
 ArgType *parseArguments(const int argc, const char *argv[]);
 
 
-/* Test a string against the variety of possible command-line
- * arguments, return the purpose of that specific argument.
- */
+/* Determine if an argument is a flag or a name. */
 ArgType testProgramArgument(const char argument[], const ArgType prevArg);
 
 
@@ -81,3 +79,11 @@ ArgType checkFlags(const char possibleFlag[]);
  * argument based on the argument that preceeded it.
  */
 ArgType checkNonFlags(const ArgType prevArg, const char argument[]);
+
+
+/* Test the input ArgType to see if it is the required argument,
+ * exit the program with error dialogs if match is NOT found.
+ */
+void testArgTypeForMatch(const ArgType testarg, const ArgType reqarg,
+    const char errstr[]);
+    
