@@ -5,6 +5,7 @@ TEST_TARGET=test
 BUILD_OBJS=main.o
 TEST_OBJS=tests.o
 GEN_OBJS=arguments.o files.o errors.o
+TEST_FILES=test.md
 
 build: $(BUILD_OBJS) $(GEN_OBJS)
 	$(CC) -o $(TARGET) $(BUILD_OBJS) $(GEN_OBJS)
@@ -28,4 +29,4 @@ tests.o: tests.c arguments.h files.h
 	$(CC) -c tests.c
 
 clean: 
-	rm -f $(TARGET) $(TEST_TARGET) $(TEST_OBJS) $(BUILD_OBJS) $(GEN_OBJS)
+	rm -f $(TARGET) $(TEST_TARGET) $(TEST_OBJS) $(BUILD_OBJS) $(GEN_OBJS) $(TEST_FILES)

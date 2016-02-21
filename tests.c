@@ -38,8 +38,6 @@ int main(int argc, char const *argv[])
     const char blue[]  = "\x1b[34m";
     const char reset[] = "\x1b[0m";
     
-    printf("====================BEGIN TESTING====================\n\n");
-    
     /* ==============================================================
      * == COMMAND-LINE ARGUMENTS
      * =========================================================== */
@@ -58,77 +56,77 @@ int main(int argc, char const *argv[])
     const char string2[] = "patdown --version";
     printf("\t%s %s\'%s\'\n", testArguments(fakeArgv2, 2, fakeArgt2) ? pass : fail, test, string2);
          
-     // patdown --help inFile
-     const char *fakeArgv3[] = {"patdown", "--help", "inFile"};
-     ArgType fakeArgt3[] = {PROGRAM_NAME, HELP_FLAG, INPUT_FILE_NAME};
-     const char string3[] = "patdown --help inFile";
-     printf("\t%s %s\'%s\'\n", testArguments(fakeArgv3, 3, fakeArgt3) ? pass : fail, test, string3);
-     
-     // patdown --version inFile
-     const char *fakeArgv4[] = {"patdown", "--version", "inFile"};
-     ArgType fakeArgt4[] = {PROGRAM_NAME, VERSION_FLAG, INPUT_FILE_NAME};
-     const char string4[] = "patdown --version inFile";
-     printf("\t%s %s\'%s\'\n", testArguments(fakeArgv4, 3, fakeArgt4) ? pass : fail, test, string4);
-     
-     // patdown --version --help inFile
-     const char *fakeArgv5[] = {"patdown", "--version", "--help", "inFile"};
-     ArgType fakeArgt5[] = {PROGRAM_NAME, VERSION_FLAG, HELP_FLAG, INPUT_FILE_NAME};
-     const char string5[] = "patdown --version --help inFile";
-     printf("\t%s %s\'%s\'\n", testArguments(fakeArgv5, 4, fakeArgt5) ? pass : fail, test, string5);
-     
-     // patdown --version inFile --help
-     const char *fakeArgv6[] = {"patdown", "--version", "inFile", "--help"};
-     ArgType fakeArgt6[] = {PROGRAM_NAME, VERSION_FLAG, INPUT_FILE_NAME, HELP_FLAG};
-     const char string6[] = "patdown --version inFile --help";
-     printf("\t%s %s\'%s\'\n", testArguments(fakeArgv6, 4, fakeArgt6) ? pass : fail, test, string6);
-     
-     // patdown --version inFile --help -o outFile
-     const char *fakeArgv7[] = {"patdown", "--version", "inFile", "--help", "-o", "outFile"};
-     ArgType fakeArgt7[] = {PROGRAM_NAME, VERSION_FLAG, INPUT_FILE_NAME, HELP_FLAG, OUTPUT_FILE_FLAG, OUTPUT_FILE_NAME};
-     const char string7[] = "patdown --version inFile --help -o outFile";
-     printf("\t%s %s\'%s\'\n", testArguments(fakeArgv7, 6, fakeArgt7) ? pass : fail, test, string7);
-     
-     // patdown --version inFile --help -f format
-     const char *fakeArgv8[] = {"patdown", "--version", "inFile", "--help", "-f", "format"};
-     ArgType fakeArgt8[] = {PROGRAM_NAME, VERSION_FLAG, INPUT_FILE_NAME, HELP_FLAG, OUTPUT_FORMAT_FLAG, OUTPUT_FORMAT_NAME};
-     const char string8[] = "patdown --version inFile --help -f format";
-     printf("\t%s %s\'%s\'\n", testArguments(fakeArgv8, 6, fakeArgt8) ? pass : fail, test, string8);
-     
-     // patdown -f format inFile
-     const char *fakeArgv9[] = {"patdown", "-f", "format", "inFile"};
-     ArgType fakeArgt9[] = {PROGRAM_NAME, OUTPUT_FORMAT_FLAG, OUTPUT_FORMAT_NAME, INPUT_FILE_NAME};
-     const char string9[] = "patdown -f format inFile";
-     printf("\t%s %s\'%s\'\n", testArguments(fakeArgv9, 4, fakeArgt9) ? pass : fail, test, string9);
-     
-     // patdown -f format --help
-     const char *fakeArgv10[] = {"patdown", "-f", "format", "--help"};
-     ArgType fakeArgt10[] = {PROGRAM_NAME, OUTPUT_FORMAT_FLAG, OUTPUT_FORMAT_NAME, HELP_FLAG};
-     const char string10[] = "patdown -f format --help";
-     printf("\t%s %s\'%s\'\n", testArguments(fakeArgv10, 4, fakeArgt10) ? pass : fail, test, string10);
-     
-     // patdown --help inFile -f format --help -o outFile
-     const char *fakeArgv11[] = {"patdown", "inFile", "-f", "format", "--help", "-o", "outFile"};
-     ArgType fakeArgt11[] = {
-         PROGRAM_NAME, INPUT_FILE_NAME, OUTPUT_FORMAT_FLAG, OUTPUT_FORMAT_NAME, 
-         HELP_FLAG, OUTPUT_FILE_FLAG, OUTPUT_FILE_NAME
-     };
-     const char string11[] = "patdown --help inFile -f format --help -o outFile";
-     printf("\t%s %s\'%s\'\n", testArguments(fakeArgv11, 4, fakeArgt11) ? pass : fail, test, string11);
+    // patdown --help inFile
+    const char *fakeArgv3[] = {"patdown", "--help", "inFile"};
+    ArgType fakeArgt3[] = {PROGRAM_NAME, HELP_FLAG, INPUT_FILE_NAME};
+    const char string3[] = "patdown --help inFile";
+    printf("\t%s %s\'%s\'\n", testArguments(fakeArgv3, 3, fakeArgt3) ? pass : fail, test, string3);
+    
+    // patdown --version inFile
+    const char *fakeArgv4[] = {"patdown", "--version", "inFile"};
+    ArgType fakeArgt4[] = {PROGRAM_NAME, VERSION_FLAG, INPUT_FILE_NAME};
+    const char string4[] = "patdown --version inFile";
+    printf("\t%s %s\'%s\'\n", testArguments(fakeArgv4, 3, fakeArgt4) ? pass : fail, test, string4);
+    
+    // patdown --version --help inFile
+    const char *fakeArgv5[] = {"patdown", "--version", "--help", "inFile"};
+    ArgType fakeArgt5[] = {PROGRAM_NAME, VERSION_FLAG, HELP_FLAG, INPUT_FILE_NAME};
+    const char string5[] = "patdown --version --help inFile";
+    printf("\t%s %s\'%s\'\n", testArguments(fakeArgv5, 4, fakeArgt5) ? pass : fail, test, string5);
+    
+    // patdown --version inFile --help
+    const char *fakeArgv6[] = {"patdown", "--version", "inFile", "--help"};
+    ArgType fakeArgt6[] = {PROGRAM_NAME, VERSION_FLAG, INPUT_FILE_NAME, HELP_FLAG};
+    const char string6[] = "patdown --version inFile --help";
+    printf("\t%s %s\'%s\'\n", testArguments(fakeArgv6, 4, fakeArgt6) ? pass : fail, test, string6);
+    
+    // patdown --version inFile --help -o outFile
+    const char *fakeArgv7[] = {"patdown", "--version", "inFile", "--help", "-o", "outFile"};
+    ArgType fakeArgt7[] = {PROGRAM_NAME, VERSION_FLAG, INPUT_FILE_NAME, HELP_FLAG, OUTPUT_FILE_FLAG, OUTPUT_FILE_NAME};
+    const char string7[] = "patdown --version inFile --help -o outFile";
+    printf("\t%s %s\'%s\'\n", testArguments(fakeArgv7, 6, fakeArgt7) ? pass : fail, test, string7);
+    
+    // patdown --version inFile --help -f format
+    const char *fakeArgv8[] = {"patdown", "--version", "inFile", "--help", "-f", "html"};
+    ArgType fakeArgt8[] = {PROGRAM_NAME, VERSION_FLAG, INPUT_FILE_NAME, HELP_FLAG, OUTPUT_FORMAT_FLAG, OUTPUT_FORMAT_NAME};
+    const char string8[] = "patdown --version inFile --help -f html";
+    printf("\t%s %s\'%s\'\n", testArguments(fakeArgv8, 6, fakeArgt8) ? pass : fail, test, string8);
+    
+    // patdown -f format inFile
+    const char *fakeArgv9[] = {"patdown", "-f", "HTML", "inFile"};
+    ArgType fakeArgt9[] = {PROGRAM_NAME, OUTPUT_FORMAT_FLAG, OUTPUT_FORMAT_NAME, INPUT_FILE_NAME};
+    const char string9[] = "patdown -f HTML inFile";
+    printf("\t%s %s\'%s\'\n", testArguments(fakeArgv9, 4, fakeArgt9) ? pass : fail, test, string9);
+    
+    // patdown -f format --help
+    const char *fakeArgv10[] = {"patdown", "-f", "txt", "--help"};
+    ArgType fakeArgt10[] = {PROGRAM_NAME, OUTPUT_FORMAT_FLAG, OUTPUT_FORMAT_NAME, HELP_FLAG};
+    const char string10[] = "patdown -f txt --help";
+    printf("\t%s %s\'%s\'\n", testArguments(fakeArgv10, 4, fakeArgt10) ? pass : fail, test, string10);
+    
+    // patdown --help inFile -f format --help -o outFile
+    const char *fakeArgv11[] = {"patdown", "inFile", "-f", "TXT", "--help", "-o", "outFile"};
+    ArgType fakeArgt11[] = {
+        PROGRAM_NAME, INPUT_FILE_NAME, OUTPUT_FORMAT_FLAG, OUTPUT_FORMAT_NAME, 
+        HELP_FLAG, OUTPUT_FILE_FLAG, OUTPUT_FILE_NAME
+    };
+    const char string11[] = "patdown --help inFile -f TXT --help -o outFile";
+    printf("\t%s %s\'%s\'\n", testArguments(fakeArgv11, 4, fakeArgt11) ? pass : fail, test, string11);
      
     /* ==============================================================
      * == FILE PROCESSING
      * =========================================================== */
      
-     printf("\n");
-     printf("%sFile-Processing:%s\n", blue, reset);
-     
-     // open file for reading
-     const char string12[] = "open input file \'test.md\' for reading";
-     printf("\t%s %s%s\n", testFileOpening("test.md", INPUT_FILE_NAME) ? pass : fail, test, string12);
-     
-     // open file for reading
-     const char string13[] = "open output file \'test.out\' for writing";
-     printf("\t%s %s%s\n", testFileOpening("test.out", OUTPUT_FILE_NAME) ? pass : fail, test, string13);
+    printf("\n");
+    printf("%sFile-Processing:%s\n", blue, reset);
+    
+    // open file for reading
+    const char string13[] = "open output file \'test.md\' for writing";
+    printf("\t%s %s%s\n", testFileOpening("test.md", OUTPUT_FILE_NAME) ? pass : fail, test, string13);
+    
+    // open file for reading
+    const char string12[] = "open input file \'test.md\' for reading";
+    printf("\t%s %s%s\n", testFileOpening("test.md", INPUT_FILE_NAME) ? pass : fail, test, string12);
     
     return 0;
 }

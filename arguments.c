@@ -16,6 +16,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <ctype.h>
 
 #include "errors.h"
 #include "arguments.h"
@@ -33,6 +34,7 @@ ArgType *parseArguments(const int argc, const char *argv[])
     // If there are < 2 arguments, stdin will be the input file
     const unsigned int reqNumArgsForFile = 2;
     int inputFiles = 0;
+    int formatTypes = 0;
     
     // Allocate memory for array of ArgTypes
     ArgType *argt = malloc(sizeof(ArgType) * argc);
@@ -65,10 +67,21 @@ ArgType *parseArguments(const int argc, const char *argv[])
             {
                 inputFiles += 1;
             }
+            else if (argt[i] == OUTPUT_FORMAT_NAME)
+            {
+                formatTypes += 1;
+                testFormatType(argv[i]);
+            }
             
             if (inputFiles > 1)
             {
                 printf("Multiple input files were provided.\n");
+                atexit(printUsageMsg);
+                exit(EXIT_FAILURE);
+            }
+            else if (formatTypes > 1)
+            {
+                printf("Multiple format types were provided.\n");
                 atexit(printUsageMsg);
                 exit(EXIT_FAILURE);
             }
@@ -163,6 +176,7 @@ ArgType checkNonFlags(const ArgType prevArg, const char argument[])
     }
 }
 
+
 /* Test the input ArgType to see if it is the required argument,
  * exit the program with error dialogs if match is NOT found.
  */
@@ -172,6 +186,36 @@ void testArgTypeForMatch(const ArgType testarg, const ArgType reqarg,
     if (testarg != reqarg)
     {
         printf("%s\n", errstr);
+        atexit(printUsageMsg);
+        exit(EXIT_FAILURE);
+    }
+}
+
+
+/* Test the input FormatType to determine if it is valid. If it is
+ * found to be invalid, exit with error dialogs.
+ */
+void testFormatType(const char possibleFormat[])
+{
+    // Static so it is initialized only once.
+    static Format format;
+    format.html   = "html";
+    format.txt    = "txt";
+    
+    // Allocate new string to be lowercase version of possibleFormat
+    char *lowercaseFormat = malloc(sizeof(char) * strlen(possibleFormat));
+    
+    // Convert possibleFormat to all lowercase
+    for (size_t i = 0; i < strlen(possibleFormat); ++i)
+    {
+        lowercaseFormat[i] = tolower(possibleFormat[i]);
+    }
+    
+    if (strcmp(lowercaseFormat, format.html) == 0) { return; }
+    else if (strcmp(lowercaseFormat, format.txt) == 0) { return; }
+    else
+    {
+        printf("\'%s\' is not an valid output format.\n", possibleFormat);
         atexit(printUsageMsg);
         exit(EXIT_FAILURE);
     }
