@@ -65,25 +65,22 @@ ArgType *parseArguments(const int argc, const char *argv[])
             }
             else if (argt[i] == INPUT_FILE_NAME)
             {
-                inputFiles += 1;
+                if (++inputFiles > 1)
+                {
+                    printf("Multiple input files were provided.\n");
+                    atexit(printUsageMsg);
+                    exit(EXIT_FAILURE);
+                }
             }
             else if (argt[i] == OUTPUT_FORMAT_NAME)
             {
-                formatTypes += 1;
+                if (++formatTypes > 1)
+                {
+                    printf("Multiple format types were provided.\n");
+                    atexit(printUsageMsg);
+                    exit(EXIT_FAILURE);
+                }
                 testFormatType(argv[i]);
-            }
-            
-            if (inputFiles > 1)
-            {
-                printf("Multiple input files were provided.\n");
-                atexit(printUsageMsg);
-                exit(EXIT_FAILURE);
-            }
-            else if (formatTypes > 1)
-            {
-                printf("Multiple format types were provided.\n");
-                atexit(printUsageMsg);
-                exit(EXIT_FAILURE);
             }
         }
     }
