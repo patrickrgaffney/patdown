@@ -8,8 +8,8 @@
  * ~~~~~~ultralightbeams~~~~~~~
  *
  * This file contains the implementations of the functions defined
- * in errors.h. All of these functions are used as parameters to the
- * atexit() function in stdlib.h.
+ * in errors.h. All of these functions are _mainly_ used as 
+ * parameters to the atexit() function in stdlib.h.
  */
 
 #include <stdio.h>

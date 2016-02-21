@@ -28,6 +28,7 @@ FILE *openFile(const char fileName[], const ArgType fileType)
     
     if (fileType == INPUT_FILE_NAME)
     {
+        // Open file for READING
         filePtr = fopen(fileName, "r");
         
         if (filePtr == NULL)
@@ -41,6 +42,7 @@ FILE *openFile(const char fileName[], const ArgType fileType)
     }
     else if (fileType == OUTPUT_FILE_NAME)
     {
+        // Open file for WRITING
         filePtr = fopen(fileName, "w");
         
         if (filePtr == NULL)

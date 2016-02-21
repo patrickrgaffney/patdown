@@ -132,7 +132,11 @@ ArgType checkFlags(const char possibleFlag[])
 
 
 /* Makes an educated guess about the ArgType of the command-line
- * argument based on the argument that preceeded it.
+ * argument based on the argument that preceeded it. This function is
+ * only called for command-line arguments that ARE NOT flags (ones 
+ * that begin with a `-`); in other words, it basically defaults to
+ * INPUT_FILE_NAME unless the previous argument was a flag that 
+ * requires an additional arugment (output files/formats).
  */
 ArgType checkNonFlags(const ArgType prevArg, const char argument[])
 {
@@ -142,6 +146,8 @@ ArgType checkNonFlags(const ArgType prevArg, const char argument[])
         case PROGRAM_NAME: 
         case HELP_FLAG:
         case VERSION_FLAG:
+        case OUTPUT_FILE_NAME:
+        case OUTPUT_FORMAT_NAME:
             return INPUT_FILE_NAME;
         
         case OUTPUT_FILE_FLAG:
