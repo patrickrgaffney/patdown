@@ -53,3 +53,15 @@ void printVersionMsg(void)
 {
     printf("%s version %s\n", programName, versionNum);
 }
+
+/* Display INPUT FILE READ error */
+void inputFileError(void)
+{
+    printf("There was a problem reading the input file.\n");
+}
+
+/* Display MEMORY ERROR exit message. */
+void printMemoryError(void)
+{
+    printf("No memory available.\n");
+}

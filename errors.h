@@ -32,5 +32,11 @@ void printHelpMsg(void);
 /* Display VERSION dialog */
 void printVersionMsg(void);
 
+/* Display INPUT FILE READ error */
+void inputFileError(void);
+
+/* Display MEMORY ERROR exit message. */
+void printMemoryError(void);
+
 
 #endif

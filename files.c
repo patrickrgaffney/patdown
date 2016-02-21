@@ -59,3 +59,46 @@ FILE *openFile(const char fileName[], const ArgType fileType)
     atexit(printUsageMsg);
     exit(EXIT_FAILURE);
 }
+
+
+/* Read exactly one line (until next newline) from the file pointed
+ * to by *fp.
+ */
+char *readLine(FILE *fp)
+{
+    const int MAX_LINE = 6400;
+    char *line = malloc(sizeof(char) * MAX_LINE);
+    
+    if (line != NULL)
+    {
+        if (fgets(line, MAX_LINE, fp) != NULL)
+        {
+            return line;
+        }
+        else
+        {
+            return NULL;
+        }
+    }
+    else
+    {
+        atexit(printMemoryError);
+        exit(EXIT_FAILURE);
+    }
+}
+
+
+/* Wrtie exactly one line (received as input) to the file pointed to
+ * by *fp.
+ */
+int writeLine(const char *line, FILE *fp)
+{
+    if (fputs(line, fp) != EOF)
+    {
+        return 1;
+    }
+    else
+    {
+        return 0;
+    }
+}

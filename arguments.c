@@ -192,7 +192,7 @@ void testArgTypeForMatch(const ArgType testarg, const ArgType reqarg,
 /* Test the input FormatType to determine if it is valid. If it is
  * found to be invalid, exit with error dialogs.
  */
-void testFormatType(const char possibleFormat[])
+FormatType testFormatType(const char possibleFormat[])
 {
     // Static so it is initialized only once.
     static Format format;
@@ -208,8 +208,14 @@ void testFormatType(const char possibleFormat[])
         lowercaseFormat[i] = tolower(possibleFormat[i]);
     }
     
-    if (strcmp(lowercaseFormat, format.html) == 0) { return; }
-    else if (strcmp(lowercaseFormat, format.txt) == 0) { return; }
+    if (strcmp(lowercaseFormat, format.html) == 0) 
+    { 
+        return HTML_FORMAT; 
+    }
+    else if (strcmp(lowercaseFormat, format.txt) == 0) 
+    { 
+        return TXT_FORMAT;
+    }
     else
     {
         printf("\'%s\' is not an valid output format.\n", possibleFormat);

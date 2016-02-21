@@ -19,7 +19,8 @@
 
 /* Static function definitions */
 static int testArguments(const char *argv[], const char argc, const ArgType argt[]);
-static int testFileOpening(const char fileName[], const ArgType fileType);
+static int testFileOpening(const char fileName[], const ArgType fileType, const int readwrite);
+static int testReadLine(FILE *fp);
 
 
 int main(int argc, char const *argv[])
@@ -120,13 +121,13 @@ int main(int argc, char const *argv[])
     printf("\n");
     printf("%sFile-Processing:%s\n", blue, reset);
     
-    // open file for reading
-    const char string13[] = "open output file \'test.md\' for writing";
-    printf("\t%s %s%s\n", testFileOpening("test.md", OUTPUT_FILE_NAME) ? pass : fail, test, string13);
+    // write a string to file
+    const char string14[] = "write a string to output file \'test.md\'";
+    printf("\t%s %s%s\n", testFileOpening("test.md", OUTPUT_FILE_NAME, 0) ? pass : fail, test, string14);
     
-    // open file for reading
-    const char string12[] = "open input file \'test.md\' for reading";
-    printf("\t%s %s%s\n", testFileOpening("test.md", INPUT_FILE_NAME) ? pass : fail, test, string12);
+    // read string from a file
+    const char string15[] = "read a string from input file \'test.md\'";
+    printf("\t%s %s%s\n", testFileOpening("test.md", INPUT_FILE_NAME, 5) ? pass : fail, test, string15);
     
     return 0;
 }
@@ -160,18 +161,25 @@ static int testArguments(const char *argv[], const char argc, const ArgType argt
 
 
 /* Test the openFile() function in files.c for INPUT_FILE_NAME and 
- * OUTPUT_FILE_NAME ArgTypes's.
+ * OUTPUT_FILE_NAME ArgTypes's. Depending on the value of the
+ * `readwrite` operator, the function may read or write to the file
+ * that was opened using readLine() and writeLine() from files.c.
  */
-static int testFileOpening(const char fileName[], const ArgType fileType)
+static int testFileOpening(const char fileName[], const ArgType fileType, const int readwrite)
 {
-    FILE *filePtr = openFile(fileName, fileType);
+    FILE *fp = openFile(fileName, fileType);
+    int returnValue = 0;
     
-    if (filePtr == NULL)
+    if (readwrite == 0) // write to the file
     {
-        return 0;
+        returnValue = writeLine("test string to be written to file\n", fp);
     }
-    else
+    else // read from file
     {
-        return 1;
+        char *string = readLine(fp);
+        returnValue = (string == NULL) ? 0 : 1;
     }
+    
+    fclose(fp);
+    return returnValue;
 }

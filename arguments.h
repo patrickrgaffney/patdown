@@ -122,6 +122,6 @@ void testArgTypeForMatch(const ArgType testarg, const ArgType reqarg,
 /* Test the input FormatType to determine if it is valid. If it is
  * found to be invalid, exit with error dialogs.
  */
-void testFormatType(const char possibleFormat[]);
+FormatType testFormatType(const char possibleFormat[]);
     
 #endif

@@ -25,50 +25,55 @@
 
 int main(int argc, char const *argv[])
 {
-    ArgType *argt = parseArguments(argc, argv);
-    
-    FILE *inputFile  = NULL;
-    FILE *outputFile = NULL;
+    FILE *inputFile  = stdin;
+    FILE *outputFile = stdout;
     FormatType outputFormat = HTML_FORMAT;
+    ArgType *argt;
     
-    for (size_t i = 0; i < argc; ++i)
+    // If arguments were provided, determine their purpose
+    if (argc > 1)
     {
-        printf("argt[%zu] = %d  ", i, argt[i]);
-        printf("argv[%zu] = \'%s\'\n", i, argv[i]);
+        argt = parseArguments(argc, argv);
         
-        if (argt[i] == INPUT_FILE_NAME)
+        for (size_t i = 0; i < argc; ++i)
         {
-            inputFile = openFile(argv[i], argt[i]);
-        }
-        else if (argt[i] == OUTPUT_FILE_NAME)
-        {
-            outputFile = openFile(argv[i], argt[i]);
-        }
-        // else if (argt[i] == OUTPUT_FORMAT_NAME)
-        // {
-            // set output format
-        // }
-        else if (argt[i] == HELP_FLAG)
-        {
-            printHelpMsg();
-        }
-        else if (argt[i] == VERSION_FLAG)
-        {
-            printVersionMsg();
+            printf("argt[%zu] = %d  ", i, argt[i]);
+            printf("argv[%zu] = \'%s\'\n", i, argv[i]);
+        
+            if (argt[i] == INPUT_FILE_NAME)
+            {
+                inputFile = openFile(argv[i], argt[i]);
+            }
+            else if (argt[i] == OUTPUT_FILE_NAME)
+            {
+                outputFile = openFile(argv[i], argt[i]);
+            }
+            else if (argt[i] == OUTPUT_FORMAT_NAME)
+            {
+                testFormatType(argv[i]);
+            }
+            else if (argt[i] == HELP_FLAG)
+            {
+                printHelpMsg();
+            }
+            else if (argt[i] == VERSION_FLAG)
+            {
+                printVersionMsg();
+            }
         }
     }
     
-    if (inputFile != NULL)
+    // Consume all lines from inputFile
+    while (1)
     {
-        printf("Input file opened.\n");
+        char *line = readLine(inputFile);
+        if (line == NULL) { break; }
+        writeLine(line, outputFile);
     }
     
-    if (outputFile != NULL)
-    {
-        printf("Output file opened.\n");
-    }
+    // Process them using outputFormat
     
+    // Write all lines to outputFile
     
-
     return 0;
 }
