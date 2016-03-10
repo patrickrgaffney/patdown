@@ -21,7 +21,7 @@
 #include "arguments.h"
 #include "files.h"
 #include "errors.h"
-
+#include "markdown.h"
 
 int main(int argc, char const *argv[])
 {
@@ -29,6 +29,7 @@ int main(int argc, char const *argv[])
     FILE *outputFile = stdout;
     FormatType outputFormat = HTML_FORMAT;
     ArgType *argt;
+    blockNode *headPtr = NULL;
     
     // If arguments were provided, determine their purpose
     if (argc > 1)
@@ -37,9 +38,6 @@ int main(int argc, char const *argv[])
         
         for (size_t i = 0; i < argc; ++i)
         {
-            printf("argt[%zu] = %d  ", i, argt[i]);
-            printf("argv[%zu] = \'%s\'\n", i, argv[i]);
-        
             if (argt[i] == INPUT_FILE_NAME)
             {
                 inputFile = openFile(argv[i], argt[i]);
@@ -50,7 +48,7 @@ int main(int argc, char const *argv[])
             }
             else if (argt[i] == OUTPUT_FORMAT_NAME)
             {
-                testFormatType(argv[i]);
+                outputFormat = testFormatType(argv[i]);
             }
             else if (argt[i] == HELP_FLAG)
             {
@@ -64,12 +62,7 @@ int main(int argc, char const *argv[])
     }
     
     // Consume all lines from inputFile
-    while (1)
-    {
-        char *line = readLine(inputFile);
-        if (line == NULL) { break; }
-        writeLine(line, outputFile);
-    }
+    headPtr = buildList(inputFile);
     
     // Process them using outputFormat
     

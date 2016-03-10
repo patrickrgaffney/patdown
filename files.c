@@ -13,6 +13,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 #include "files.h"
 #include "arguments.h"
@@ -71,7 +72,7 @@ char *readLine(FILE *fp)
     
     if (line != NULL)
     {
-        if (fgets(line, MAX_LINE, fp) != NULL)
+        if (fgetline(line, MAX_LINE, fp) != NULL)
         {
             return line;
         }
@@ -100,5 +101,41 @@ int writeLine(const char *line, FILE *fp)
     else
     {
         return 0;
+    }
+}
+
+
+/* This is basically a rewrite of the fgets() function in clib, the
+ * only difference being that it does NOT add the `\n` newline to the
+ * string it reads from the file.
+ */
+char *fgetline(char *s, int n, FILE *file)
+{
+    char *newstr = s;
+    int c;
+    int num = 0;
+    
+    while (--n > 0)
+    {
+        c = getc(file);
+        if (c == '\n' || c == EOF) { break; }
+        else {
+            *newstr++ = c;
+            num++;
+        }
+    }
+    *newstr = '\0';
+    
+    if (num == 0 && c == EOF)
+    {
+        return NULL;
+    }
+    else if (num == 0)
+    {
+        return newstr;
+    }
+    else
+    {
+        return newstr;
     }
 }

@@ -4,7 +4,7 @@ TEST_TARGET=test
 
 BUILD_OBJS=main.o
 TEST_OBJS=tests.o
-GEN_OBJS=arguments.o files.o errors.o
+GEN_OBJS=arguments.o files.o errors.o markdown.o parsers.o
 TEST_FILES=test.md
 
 build: $(BUILD_OBJS) $(GEN_OBJS)
@@ -21,8 +21,14 @@ files.o: files.c files.h arguments.h errors.h
 	
 errors.o: errors.c errors.h
 	$(CC) -c errors.c
+	
+markdown.o: markdown.c markdown.h files.h parsers.h
+	$(CC) -c markdown.c
+	
+parsers.o: parsers.c parsers.h markdown.h
+	$(CC) -c parsers.c
 
-main.o: main.c arguments.h files.h errors.h
+main.o: main.c arguments.h files.h errors.h markdown.h
 	$(CC) -c main.c
 
 tests.o: tests.c arguments.h files.h

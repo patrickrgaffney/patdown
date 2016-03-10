@@ -40,5 +40,11 @@ char *readLine(FILE *fp);
  */
 int writeLine(const char *line, FILE *fp);
 
+/* This is basically a rewrite of the fgets() function in clib, the
+ * only difference being that it does NOT add the `\n` newline to the
+ * string it reads from the file.
+ */
+char *fgetline(char *s, int n, FILE *file);
+
 
 #endif

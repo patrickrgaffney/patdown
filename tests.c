@@ -20,8 +20,6 @@
 /* Static function definitions */
 static int testArguments(const char *argv[], const char argc, const ArgType argt[]);
 static int testFileOpening(const char fileName[], const ArgType fileType, const int readwrite);
-static int testReadLine(FILE *fp);
-
 
 int main(int argc, char const *argv[])
 {
@@ -160,10 +158,10 @@ static int testArguments(const char *argv[], const char argc, const ArgType argt
 }
 
 
-/* Test the openFile() function in files.c for INPUT_FILE_NAME and 
- * OUTPUT_FILE_NAME ArgTypes's. Depending on the value of the
- * `readwrite` operator, the function may read or write to the file
- * that was opened using readLine() and writeLine() from files.c.
+/* Test the writeLine() and readLine() functions in files.c. Before
+ * either of these calls can be made, a call to openFile() must be 
+ * made. The success of failure of these calls is returned (as an
+ * integer boolean).
  */
 static int testFileOpening(const char fileName[], const ArgType fileType, const int readwrite)
 {
