@@ -32,6 +32,7 @@ blockNode isATXHeader(const char *string)
     blockNode block;
     block.blockString = NULL;
     size_t level = 0;
+    size_t addtSpaces = 0;
 
     // If first character isnt `#`, can't be ATX_HEADING
     if (string[0] != '#')
@@ -78,10 +79,22 @@ blockNode isATXHeader(const char *string)
         else { break; }
     }
     
+    // Determine if the heading has been padded with extra spaces
+    // after the initial set of `#`s.
+    // example: '#            foo' => remove 12 spaces before foo
+    if (string[level + 1] == ' ')
+    {
+        for (size_t i = level + 1; i < trailingChars; ++i)
+        {
+            if (string[i] == ' ') { addtSpaces++; }
+            else { break; }
+        }
+    }
+    
     // Allocate new string
     // START: level + 1 (add one for the required space)
     // END: remove all trailingChars
-    block.blockString = allocateString(string, level + 1, trailingChars);
+    block.blockString = allocateString(string, level + 1 + addtSpaces, trailingChars);
     
     // Return type of ATX_HEADING_level
     switch (level)

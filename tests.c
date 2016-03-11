@@ -16,10 +16,13 @@
 
 #include "arguments.h"
 #include "files.h"
+#include "parsers.h"
+#include "markdown.h"
 
 /* Static function definitions */
 static int testArguments(const char *argv[], const char argc, const ArgType argt[]);
 static int testFileOpening(const char fileName[], const ArgType fileType, const int readwrite);
+static blockNode testParser(const char *string, blockNode (*parser)(const char *string));
 
 int main(int argc, char const *argv[])
 {
@@ -31,17 +34,18 @@ int main(int argc, char const *argv[])
      * FAILed, the color is changed to red. Both color changes are 
      * set using ANSI color codes.
      */
-    const char pass[]  = "\x1b[32m√";
-    const char fail[]  = "\x1b[31m✕";
-    const char test[]  = "TEST: \x1b[0m";
-    const char blue[]  = "\x1b[34m";
-    const char reset[] = "\x1b[0m";
+    const char pass[]     = "\x1b[32m√";
+    const char fail[]     = "\x1b[31m✕";
+    const char test[]     = "TEST: \x1b[0m";
+    const char blue[]     = "\x1b[34m";
+    const char magenta[]  = "\x1b[35m";
+    const char reset[]    = "\x1b[0m";
     
     /* ==============================================================
      * == COMMAND-LINE ARGUMENTS
      * =========================================================== */
     
-    printf("%sCommand-line arguments:%s\n", blue, reset);
+    printf("%sCommand-line arguments:%s\n\n", blue, reset);
     
     // patdown --help
     const char *fakeArgv[] = {"patdown", "--help"};
@@ -117,7 +121,7 @@ int main(int argc, char const *argv[])
      * =========================================================== */
      
     printf("\n");
-    printf("%sFile-Processing:%s\n", blue, reset);
+    printf("%sFile-Processing:%s\n\n", blue, reset);
     
     // write a string to file
     const char string14[] = "write a string to output file \'test.md\'";
@@ -126,6 +130,120 @@ int main(int argc, char const *argv[])
     // read string from a file
     const char string15[] = "read a string from input file \'test.md\'";
     printf("\t%s %s%s\n", testFileOpening("test.md", INPUT_FILE_NAME, 5) ? pass : fail, test, string15);
+    
+   /* ==============================================================
+    * == MARKDOWN BLOCK PARSING
+    * =========================================================== */
+    
+    printf("\n");
+    printf("%sMarkdown Block Parsing:%s\n\n", blue, reset);
+    
+    printf("\tNULL is displayed to indicate that the type returned\n");
+    printf("\tby the parser function was not the intended type.\n\n");
+    
+    // Varibles used by each test (they are updated for each individual test)
+    blockNode block;
+    mdBlock assertType;
+    
+    /* ====================## ATX HEADINGS ##==================== */
+    
+    printf("\t%sATX HEADERS:%s\n", magenta, reset);
+    
+    // '# heading'
+    const char string16[] = "# header";
+    block = isATXHeader(string16);
+    assertType = ATX_HEADING_1;
+    printf("\t%s %s\'%s\' -> \'%s\'\n", (block.blockType == assertType) ? pass : fail, test, string16, block.blockString);
+    
+    // '## heading'
+    const char string17[] = "## header";
+    block = isATXHeader(string17);
+    assertType = ATX_HEADING_2;
+    printf("\t%s %s\'%s\' -> \'%s\'\n", (block.blockType == assertType) ? pass : fail, test, string17, block.blockString);
+    
+    // '### heading'
+    const char string18[] = "### header";
+    block = isATXHeader(string18);
+    assertType = ATX_HEADING_3;
+    printf("\t%s %s\'%s\' -> \'%s\'\n", (block.blockType == assertType) ? pass : fail, test, string18, block.blockString);
+    
+    // '#### heading'
+    const char string19[] = "#### header";
+    block = isATXHeader(string19);
+    assertType = ATX_HEADING_4;
+    printf("\t%s %s\'%s\' -> \'%s\'\n", (block.blockType == assertType) ? pass : fail, test, string19, block.blockString);
+    
+    // '##### heading'
+    const char string20[] = "##### header";
+    block = isATXHeader(string20);
+    assertType = ATX_HEADING_5;
+    printf("\t%s %s\'%s\' -> \'%s\'\n", (block.blockType == assertType) ? pass : fail, test, string20, block.blockString);
+    
+    // '###### heading'
+    const char string21[] = "###### header";
+    block = isATXHeader(string21);
+    assertType = ATX_HEADING_6;
+    printf("\t%s %s\'%s\' -> \'%s\'\n", (block.blockType == assertType) ? pass : fail, test, string21, block.blockString);
+    
+    // '####### heading'
+    const char string24[] = "####### header";
+    block = isATXHeader(string24);
+    assertType = PARAGRAPH;
+    printf("\t%s %s\'%s\' -> \'%s\'\n", (block.blockType == assertType) ? pass : fail, test, string24, block.blockString);
+    
+    // '# heading #'
+    const char string22[] = "# header #";
+    block = isATXHeader(string22);
+    assertType = ATX_HEADING_1;
+    printf("\t%s %s\'%s\' -> \'%s\'\n", (block.blockType == assertType) ? pass : fail, test, string22, block.blockString);
+    
+    // '### header ################# '
+    const char string23[] = "### header ################# ";
+    block = isATXHeader(string23);
+    assertType = ATX_HEADING_3;
+    printf("\t%s %s\'%s\' -> \'%s\'\n", (block.blockType == assertType) ? pass : fail, test, string23, block.blockString);
+    
+    // '#hashtag'
+    const char string25[] = "#hashtag";
+    block = isATXHeader(string25);
+    assertType = PARAGRAPH;
+    printf("\t%s %s\'%s\' -> \'%s\'\n", (block.blockType == assertType) ? pass : fail, test, string25, block.blockString);
+    
+    // '#\ttab'
+    const char string26[] = "#\ttab";
+    block = isATXHeader(string26);
+    assertType = PARAGRAPH;
+    printf("\t%s %s\'%s\' -> \'%s\'\n", (block.blockType == assertType) ? pass : fail, test, string26, block.blockString);
+    
+    // '\## foo'
+    const char string27[] = "\\## foo";
+    block = isATXHeader(string27);
+    assertType = UNKNOWN;
+    printf("\t%s %s\'%s\' -> \'%s\'\n", (block.blockType == assertType) ? pass : fail, test, string27, block.blockString);
+    
+    // '#                  foo                     '
+    const char string28[] = "#                  foo                     ";
+    block = isATXHeader(string28);
+    assertType = ATX_HEADING_1;
+    printf("\t%s %s\'%s\' -> \'%s\'\n", (block.blockType == assertType) ? pass : fail, test, string28, block.blockString);
+    
+    // '### foo ### b'
+    const char string29[] = "### foo ### b";
+    block = isATXHeader(string29);
+    assertType = ATX_HEADING_3;
+    printf("\t%s %s\'%s\' -> \'%s\'\n", (block.blockType == assertType) ? pass : fail, test, string29, block.blockString);
+    
+    // '### foo \###'
+    const char string30[] = "### foo \\###";
+    block = isATXHeader(string30);
+    assertType = ATX_HEADING_3;
+    printf("\t%s %s\'%s\' -> \'%s\'\n", (block.blockType == assertType) ? pass : fail, test, string30, block.blockString);
+    
+    // '## ##'
+    const char string31[] = "## ";
+    block = isATXHeader(string31);
+    assertType = ATX_HEADING_2;
+    printf("\t%s %s\'%s\' -> \'%s\'\n", (block.blockType == assertType) ? pass : fail, test, string31, block.blockString);
     
     return 0;
 }
