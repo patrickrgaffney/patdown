@@ -127,12 +127,6 @@ typedef struct temporaryMDBlock temp_block_node_t;
  * == FUNCTIONS
  * =============================================================== */
 
-/* Parse a line of text and attempt to determine its blockType and 
- * strip the input line of all MD metacharacters.
- */
-temp_block_node_t *parseBlockType(const char *line);
-
-
 /* Build a linked-list of lines parsed from inputFile. */
 block_node_t *buildQueue(FILE *inputFile);
 

@@ -22,15 +22,17 @@
 #include "errors.h"
 
 
-/* Build a linked-list of lines parsed from inputFile. */
+/* Build a queue (FIFO) of lines parsed from inputFile. */
 block_node_t *buildQueue(FILE *inputFile)
 {
     // List initially empty
     block_node_t *headNode = NULL;
     block_node_t *tailNode = NULL;
     
-    // Consume all lines from inputFile
-    // Break when readLine() returns NULL
+    mdblock_t lastBlockType       = UNKNOWN; // Last block that was parsed
+    mdblock_t lastQueuedBlockType = UNKNOWN; // Last block that was added to queue
+    
+    // Consume all lines from inputFile :: Break when readLine() returns NULL
     while (1)
     {
         // Read line from file :: return NULL if EOF
@@ -41,65 +43,34 @@ block_node_t *buildQueue(FILE *inputFile)
         if (line == NULL) { break; }
         else
         {
-            currentBlock = parseBlockType(line);
-            insertBlockNode(&headNode, &tailNode, currentBlock);
+            currentBlock = parseBlockType(line, lastBlockType);
+            
+            if (currentBlock->blockType == PARAGRAPH && lastBlockType == PARAGRAPH)
+            {
+                // Append the two lines together -- they constitute the same PARAGRAPH
+                tailNode->blockString = reallocateString(tailNode->blockString, currentBlock->blockString);
+            }
+            else if (currentBlock->blockType == INDENTED_CODE_BLOCK && lastQueuedBlockType == INDENTED_CODE_BLOCK)
+            {
+                // Two INDENTED_CODE_BLOCKs in a row -- Append them together into one
+                tailNode->blockString = reallocateString(tailNode->blockString, currentBlock->blockString);
+            }
+            else if (currentBlock->blockType == BLANK_LINE && lastQueuedBlockType == INDENTED_CODE_BLOCK)
+            {
+                // BLANK_LINE encountered while "inside" INDENTED_CODE_BLOCK -- append a newline
+                tailNode->blockString = reallocateString(tailNode->blockString, "");
+            }
+            else if (currentBlock->blockType != BLANK_LINE)
+            {
+                insertBlockNode(&headNode, &tailNode, currentBlock);
+                lastQueuedBlockType = currentBlock->blockType;
+            }
+            lastBlockType = currentBlock->blockType;
         }
     }
     
     return headNode;
 }
-
-
-/* Parse a line of text and attempt to determine its blockType. 
- * Return a tempBlock structure containing:
- *  1. The assigned blockType.
- *  2. The string containing only the characters to be written to the
- *     outputFile.
- *      - AKA: Stripped of its metacharacters.
- *
- * This is accomplished by scanning the first four characters of each
- * line for unique syntactical tokens to markdown. A function of the 
- * form `isBlockElement()` is called to determine the validity of 
- * each assumption.
- */
-temp_block_node_t *parseBlockType(const char *line)
-{
-    // tempBlock is initially unknown to us
-    temp_block_node_t *block = malloc(sizeof(temp_block_node_t));
-    block->blockType   = UNKNOWN;
-    block->blockString = NULL;
-    
-    // TODO: Increment a `lastBlock` variable to be EMPTY_LINE
-    //       - EMPTY_LINE's are required be some block types
-    //       - call readLine() again, get new *line
-    //       - parse again with knowledge of previous line.
-    if (strlen(line) == 0) { return block; }
-    
-    // iterate through first 4 characters of line
-    for (size_t i = 0; i < 4; i++)
-    {
-        switch (line[i])
-        {
-            case ' ': // INDENTED_CODE_BLOCK
-                break;
-            case '#': // ATX_HEADER 
-                *block = isATXHeader(&line[i]);
-                break;
-        }
-        
-        // TODO: figure out something clever to do here
-        if (block->blockType != UNKNOWN) { break; }
-    }
-    
-    // TODO: THIS IS A DIRTY HACK TO BE REMOVED AT A LATER/SMARTER TIME
-    if (block->blockType == PARAGRAPH || block->blockType == UNKNOWN)
-    {
-        block->blockString = allocateString(line, 0, strlen(line));
-    }
-    
-    return block;
-}
-
 
 /* Insert a blockNode, `newBlock` into the queue at the tail. */
 void insertBlockNode(block_node_t **head, block_node_t **tail, temp_block_node_t *temp)
@@ -169,6 +140,12 @@ void printQueue(block_node_t *currentNode, FILE *outputFile)
                     break;
                 case ATX_HEADING_6: 
                     writeLine(outputFile, 3, "<h6>", currentNode->blockString, "</h6>");
+                    break;
+                case PARAGRAPH:
+                    writeLine(outputFile, 3, "<p>", currentNode->blockString, "</p>");
+                    break;
+                case INDENTED_CODE_BLOCK:
+                    writeLine(outputFile, 3, "<pre><code>", currentNode->blockString, "\n</code></pre>");
                     break;
                 default:
                     writeLine(outputFile, 1, currentNode->blockString);
