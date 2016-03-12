@@ -15,9 +15,9 @@
 #define FILES_H
 
 #include <stdio.h>
+#include <stdarg.h>
 
 #include "arguments.h"
-#include <stdarg.h>
 
 /* ==================================================================
  * == FUNCTIONS
@@ -27,7 +27,7 @@
  * be opened, exit with an error dialog. Otherwise, return the file
  * pointer to the calling function.
  */
-FILE *openFile(const char fileName[], const ArgType fileType);
+FILE *openFile(const char fileName[], const argtype_t fileType);
 
 
 /* Read exactly one line (until next newline) from the file pointed

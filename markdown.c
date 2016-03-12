@@ -1,15 +1,15 @@
-/* markdown.h
+/* markdown.c
  *
  * ~~~~~~ultralightbeams~~~~~~~
- * Author:  Pat Gaffney       *
- * Email:   <pat@hypepat.com> *
- * Date:    02/25/2016        *
- * Project: patdown           *
+ *  AUTHOR: Pat Gaffney       *
+ *   EMAIL: <pat@hypepat.com> *
+ *    DATE: 02/25/2016        *
+ * PROJECT: patdown           *
  * ~~~~~~ultralightbeams~~~~~~~
  *
  * This file contains the implementations of functions and 
- * enumerations that create and iterate over the a stack data 
- * structure created from the block-level elements of a MD file.
+ * enumerations that create and iterate over a queue data structure
+ * created from the block-level elements of a MD file.
  */
 
 #include <stdio.h>
@@ -22,12 +22,12 @@
 #include "errors.h"
 
 
-/* Parse a line of text, returning the MDBlockType of that line. */
-blockNode *buildList(FILE *inputFile)
+/* Build a linked-list of lines parsed from inputFile. */
+block_node_t *buildQueue(FILE *inputFile)
 {
     // List initially empty
-    blockNode *headNode = NULL;
-    blockNode *tailNode = NULL;
+    block_node_t *headNode = NULL;
+    block_node_t *tailNode = NULL;
     
     // Consume all lines from inputFile
     // Break when readLine() returns NULL
@@ -35,7 +35,7 @@ blockNode *buildList(FILE *inputFile)
     {
         // Read line from file :: return NULL if EOF
         char *line = readLine(inputFile);
-        tempBlock *currentBlock;
+        temp_block_node_t *currentBlock;
         
         // EOF reached
         if (line == NULL) { break; }
@@ -62,11 +62,11 @@ blockNode *buildList(FILE *inputFile)
  * form `isBlockElement()` is called to determine the validity of 
  * each assumption.
  */
-tempBlock *parseBlockType(const char *line)
+temp_block_node_t *parseBlockType(const char *line)
 {
     // tempBlock is initially unknown to us
-    tempBlock *block = malloc(sizeof(tempBlock));
-    block->blockType = UNKNOWN;
+    temp_block_node_t *block = malloc(sizeof(temp_block_node_t));
+    block->blockType   = UNKNOWN;
     block->blockString = NULL;
     
     // TODO: Increment a `lastBlock` variable to be EMPTY_LINE
@@ -80,10 +80,10 @@ tempBlock *parseBlockType(const char *line)
     {
         switch (line[i])
         {
-            case ' ':
+            case ' ': // INDENTED_CODE_BLOCK
                 break;
-            
-            case '#': *block = isATXHeader(&line[i]);
+            case '#': // ATX_HEADER 
+                *block = isATXHeader(&line[i]);
                 break;
         }
         
@@ -102,12 +102,12 @@ tempBlock *parseBlockType(const char *line)
 
 
 /* Insert a blockNode, `newBlock` into the queue at the tail. */
-void insertBlockNode(blockNode **head, blockNode **tail, tempBlock *temp)
+void insertBlockNode(block_node_t **head, block_node_t **tail, temp_block_node_t *temp)
 {
     if (temp->blockString != NULL)
     {
         // Create node to be inserted
-        blockNode *newNode = malloc(sizeof(blockNode));
+        block_node_t *newNode = malloc(sizeof(block_node_t));
         
         if (newNode != NULL)
         {
@@ -140,8 +140,8 @@ void insertBlockNode(blockNode **head, blockNode **tail, tempBlock *temp)
 }
 
 
-/* Print the queue */
-void printQueue(blockNode *currentNode, FILE *outputFile)
+/* Print the queue, line-by-line, by calling `writeLine(fp, i, ...)`. */
+void printQueue(block_node_t *currentNode, FILE *outputFile)
 {
     // If queue is empty, exit with message
     if (currentNode == NULL) { printf("\nQueue is empty.\n"); }

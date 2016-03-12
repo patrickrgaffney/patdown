@@ -27,9 +27,9 @@ int main(int argc, char const *argv[])
 {
     FILE *inputFile  = stdin;
     FILE *outputFile = stdout;
-    FormatType outputFormat = HTML_FORMAT;
-    ArgType *argt;
-    blockNode *headPtr = NULL;
+    formattype_t outputFormat = HTML_FORMAT;
+    argtype_t *argt;
+    block_node_t *headPtr = NULL;
     
     // If arguments were provided, determine their purpose
     if (argc > 1)
@@ -62,7 +62,7 @@ int main(int argc, char const *argv[])
     }
     
     // Consume all lines from inputFile
-    headPtr = buildList(inputFile);
+    headPtr = buildQueue(inputFile);
     
     // Process them using outputFormat
     

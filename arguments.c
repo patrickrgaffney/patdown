@@ -29,15 +29,15 @@
  *
  *  argt[i] is the ArgType of argv[i]
  */
-ArgType *parseArguments(const int argc, const char *argv[])
+argtype_t *parseArguments(const int argc, const char *argv[])
 {
     // If there are < 2 arguments, stdin will be the input file
-    const unsigned int reqNumArgsForFile = 2;
-    int inputFiles = 0;
-    int formatTypes = 0;
+    const size_t reqNumArgsForFile = 2;
+    size_t inputFiles  = 0;
+    size_t formatTypes = 0;
     
     // Allocate memory for array of ArgTypes
-    ArgType *argt = malloc(sizeof(ArgType) * argc);
+    argtype_t *argt = malloc(sizeof(argtype_t) * argc);
     
     // The first argument is always program name
     argt[0] = PROGRAM_NAME;
@@ -90,15 +90,12 @@ ArgType *parseArguments(const int argc, const char *argv[])
 
 
 /* Determine if an argument is a flag or a name. */
-ArgType testProgramArgument(const char argument[], const ArgType prevArg)
+argtype_t testProgramArgument(const char *argument, const argtype_t prevArg)
 {   
     switch (argument[0])
     {
-        case '-': // Check for flags
-            return checkFlags(argument);
-        
-        default: // Defaults to input file
-            return checkNonFlags(prevArg, argument);
+        case '-': return checkFlags(argument);
+        default:  return checkNonFlags(prevArg, argument);
     }
 }
 
@@ -107,7 +104,7 @@ ArgType testProgramArgument(const char argument[], const ArgType prevArg)
  * line arguments (flags) and return the ArgType of that flag. Exit
  * the program if the flag is not recognizable.
  */
-ArgType checkFlags(const char possibleFlag[])
+argtype_t checkFlags(const char *possibleFlag)
 {
     // Static so it is initialized only once.
     static Flag flag;
@@ -148,7 +145,7 @@ ArgType checkFlags(const char possibleFlag[])
  * INPUT_FILE_NAME unless the previous argument was a flag that 
  * requires an additional arugment (output files/formats).
  */
-ArgType checkNonFlags(const ArgType prevArg, const char argument[])
+argtype_t checkNonFlags(const argtype_t prevArg, const char *argument)
 {
     switch (prevArg)
     {
@@ -177,8 +174,7 @@ ArgType checkNonFlags(const ArgType prevArg, const char argument[])
 /* Test the input ArgType to see if it is the required argument,
  * exit the program with error dialogs if match is NOT found.
  */
-void testArgTypeForMatch(const ArgType testarg, const ArgType reqarg,
-    const char errstr[])
+void testArgTypeForMatch(const argtype_t testarg, const argtype_t reqarg, const char *errstr)
 {
     if (testarg != reqarg)
     {
@@ -192,7 +188,7 @@ void testArgTypeForMatch(const ArgType testarg, const ArgType reqarg,
 /* Test the input FormatType to determine if it is valid. If it is
  * found to be invalid, exit with error dialogs.
  */
-FormatType testFormatType(const char possibleFormat[])
+formattype_t testFormatType(const char *possibleFormat)
 {
     // Static so it is initialized only once.
     static Format format;

@@ -38,7 +38,7 @@ enum argumentTypes
 };
 
 /* Synonym for `enum argumentTypes` */
-typedef enum argumentTypes ArgType;
+typedef enum argumentTypes argtype_t;
 
 
 /* Valid values for the 'format' of the output. */
@@ -49,7 +49,7 @@ enum formatTypes
 };
 
 /* Synonym for `enum formatTypes` */
-typedef enum formatTypes FormatType;
+typedef enum formatTypes formattype_t;
 
 
 /* ==================================================================
@@ -92,36 +92,35 @@ typedef struct outputFormats Format;
  *
  *  argt[i] is the ArgType of argv[i]
  */
-ArgType *parseArguments(const int argc, const char *argv[]);
+argtype_t *parseArguments(const int argc, const char *argv[]);
 
 
 /* Determine if an argument is a flag or a name. */
-ArgType testProgramArgument(const char argument[], const ArgType prevArg);
+argtype_t testProgramArgument(const char *argument, const argtype_t prevArg);
 
 
 /* Compare the input string with the different possible command-
  * line arguments (flags) and return the ArgType of that flag. Exit
  * the program if the flag is not recognizable.
  */
-ArgType checkFlags(const char possibleFlag[]);
+argtype_t checkFlags(const char *possibleFlag);
 
 
 /* Makes an educated guess about the ArgType of the command-line
  * argument based on the argument that preceeded it.
  */
-ArgType checkNonFlags(const ArgType prevArg, const char argument[]);
+argtype_t checkNonFlags(const argtype_t prevArg, const char *argument);
 
 
 /* Test the input ArgType to see if it is the required argument,
  * exit the program with error dialogs if match is NOT found.
  */
-void testArgTypeForMatch(const ArgType testarg, const ArgType reqarg,
-    const char errstr[]);
+void testArgTypeForMatch(const argtype_t testarg, const argtype_t reqarg, const char *errstr);
     
 
 /* Test the input FormatType to determine if it is valid. If it is
  * found to be invalid, exit with error dialogs.
  */
-FormatType testFormatType(const char possibleFormat[]);
+formattype_t testFormatType(const char *possibleFormat);
     
 #endif

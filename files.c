@@ -24,7 +24,7 @@
  * be opened, exit with an error dialog. Otherwise, return the file
  * pointer to the calling function.
  */
-FILE *openFile(const char fileName[], const ArgType fileType)
+FILE *openFile(const char fileName[], const argtype_t fileType)
 {
     FILE *filePtr = NULL;
     
@@ -33,28 +33,16 @@ FILE *openFile(const char fileName[], const ArgType fileType)
         // Open file for READING
         filePtr = fopen(fileName, "r");
         
-        if (filePtr == NULL)
-        {
-            printf("ERROR: Input file ");
-        }
-        else
-        {
-            return filePtr;
-        }
+        if (filePtr == NULL) { printf("ERROR: Input file "); }
+        else { return filePtr; }
     }
     else if (fileType == OUTPUT_FILE_NAME)
     {
         // Open file for WRITING
         filePtr = fopen(fileName, "w");
         
-        if (filePtr == NULL)
-        {
-            printf("ERROR: Output file ");
-        }
-        else
-        {
-            return filePtr;
-        }
+        if (filePtr == NULL) { printf("ERROR: Output file "); }
+        else { return filePtr; }
     }
     
     printf("\'%s\' could not be opened.\n", fileName);
@@ -68,7 +56,7 @@ FILE *openFile(const char fileName[], const ArgType fileType)
  */
 char *readLine(FILE *fp)
 {
-    const int MAX_LINE = 6400;
+    const int MAX_LINE = 1208;
     char *line = malloc(sizeof(char) * MAX_LINE);
     
     if (line != NULL)

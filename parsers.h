@@ -25,11 +25,11 @@
  * =============================================================== */
 
 /* Parse for an ATX_HEADING_x. Returns either: 
- *  1. `UNKNOWN` MDBlockType and `NULL` string
- *  2. `ATX_HEADING_x` and string with only character to be written
+ *  1. `UNKNOWN` mdblock_t and `NULL` string
+ *  2. `ATX_HEADING_x` and string with only characters to be written
  *     to the outputFile.
  */
-tempBlock isATXHeader(const char *string);
+temp_block_node_t isATXHeader(const char *string);
 
 
 

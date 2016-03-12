@@ -24,15 +24,17 @@
 
 /* Parse for an ATX_HEADING_x. Returns either: 
  *  1. `UNKNOWN` MDBlockType and `NULL` string
- *  2. `ATX_HEADING_x` and string with only character to be written
+ *  2. `ATX_HEADING_x` and string with only characters to be written
  *     to the outputFile.
  */
-tempBlock isATXHeader(const char *string)
+temp_block_node_t isATXHeader(const char *string)
 {
-    tempBlock block;
+    temp_block_node_t block;
     block.blockString = NULL;
-    size_t level = 0;
-    size_t addtSpaces = 0;
+    
+    size_t level         = 0; // The level, of a heading
+    size_t addtSpaces    = 0; // Spaces between leading `#`s and heading
+    size_t trailingChars = 0; // Spaces after heading end (trailing `#`s)
 
     // If first character isnt `#`, can't be ATX_HEADING
     if (string[0] != '#')
@@ -69,7 +71,7 @@ tempBlock isATXHeader(const char *string)
     
     // Determine the number of trailing characters to be removed.
     // example: '## heading ##' => remove 3 chars
-    size_t trailingChars = strlen(string);
+    trailingChars = strlen(string);
     for (size_t i = strlen(string) - 1; i > level + 1; --i)
     {
         if (string[i] == ' ' || string[i] == '#')
@@ -99,18 +101,12 @@ tempBlock isATXHeader(const char *string)
     // Return type of ATX_HEADING_level
     switch (level)
     {
-        case 1:  block.blockType = ATX_HEADING_1;
-            break;
-        case 2:  block.blockType = ATX_HEADING_2;
-            break;
-        case 3:  block.blockType = ATX_HEADING_3;
-            break;
-        case 4:  block.blockType = ATX_HEADING_4;
-            break;
-        case 5:  block.blockType = ATX_HEADING_5;
-            break;
-        case 6:  block.blockType = ATX_HEADING_6;
-            break;
+        case 1:  block.blockType = ATX_HEADING_1; break;
+        case 2:  block.blockType = ATX_HEADING_2; break;
+        case 3:  block.blockType = ATX_HEADING_3; break;
+        case 4:  block.blockType = ATX_HEADING_4; break;
+        case 5:  block.blockType = ATX_HEADING_5; break;
+        case 6:  block.blockType = ATX_HEADING_6; break;
         default: block.blockType = UNKNOWN;
     }
     return block;

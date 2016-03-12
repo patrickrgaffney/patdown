@@ -20,8 +20,8 @@
 #include "markdown.h"
 
 /* Static function definitions */
-static int testArguments(const char *argv[], const char argc, const ArgType argt[]);
-static int testFileOpening(const char fileName[], const ArgType fileType, const int readwrite);
+static int testArguments(const char *argv[], const char argc, const argtype_t argt[]);
+static int testFileOpening(const char fileName[], const argtype_t fileType, const int readwrite);
 
 int main(int argc, char const *argv[])
 {
@@ -48,67 +48,67 @@ int main(int argc, char const *argv[])
     
     // patdown --help
     const char *fakeArgv[] = {"patdown", "--help"};
-    ArgType fakeArgt[] = {PROGRAM_NAME, HELP_FLAG};
+    argtype_t fakeArgt[] = {PROGRAM_NAME, HELP_FLAG};
     const char string[] = "patdown --help";
     printf("\t%s %s\'%s\'\n", testArguments(fakeArgv, 2, fakeArgt) ? pass : fail, test, string);
 
     // patdown --version
     const char *fakeArgv2[] = {"patdown", "--version"};
-    ArgType fakeArgt2[] = {PROGRAM_NAME, VERSION_FLAG};
+    argtype_t fakeArgt2[] = {PROGRAM_NAME, VERSION_FLAG};
     const char string2[] = "patdown --version";
     printf("\t%s %s\'%s\'\n", testArguments(fakeArgv2, 2, fakeArgt2) ? pass : fail, test, string2);
          
     // patdown --help inFile
     const char *fakeArgv3[] = {"patdown", "--help", "inFile"};
-    ArgType fakeArgt3[] = {PROGRAM_NAME, HELP_FLAG, INPUT_FILE_NAME};
+    argtype_t fakeArgt3[] = {PROGRAM_NAME, HELP_FLAG, INPUT_FILE_NAME};
     const char string3[] = "patdown --help inFile";
     printf("\t%s %s\'%s\'\n", testArguments(fakeArgv3, 3, fakeArgt3) ? pass : fail, test, string3);
     
     // patdown --version inFile
     const char *fakeArgv4[] = {"patdown", "--version", "inFile"};
-    ArgType fakeArgt4[] = {PROGRAM_NAME, VERSION_FLAG, INPUT_FILE_NAME};
+    argtype_t fakeArgt4[] = {PROGRAM_NAME, VERSION_FLAG, INPUT_FILE_NAME};
     const char string4[] = "patdown --version inFile";
     printf("\t%s %s\'%s\'\n", testArguments(fakeArgv4, 3, fakeArgt4) ? pass : fail, test, string4);
     
     // patdown --version --help inFile
     const char *fakeArgv5[] = {"patdown", "--version", "--help", "inFile"};
-    ArgType fakeArgt5[] = {PROGRAM_NAME, VERSION_FLAG, HELP_FLAG, INPUT_FILE_NAME};
+    argtype_t fakeArgt5[] = {PROGRAM_NAME, VERSION_FLAG, HELP_FLAG, INPUT_FILE_NAME};
     const char string5[] = "patdown --version --help inFile";
     printf("\t%s %s\'%s\'\n", testArguments(fakeArgv5, 4, fakeArgt5) ? pass : fail, test, string5);
     
     // patdown --version inFile --help
     const char *fakeArgv6[] = {"patdown", "--version", "inFile", "--help"};
-    ArgType fakeArgt6[] = {PROGRAM_NAME, VERSION_FLAG, INPUT_FILE_NAME, HELP_FLAG};
+    argtype_t fakeArgt6[] = {PROGRAM_NAME, VERSION_FLAG, INPUT_FILE_NAME, HELP_FLAG};
     const char string6[] = "patdown --version inFile --help";
     printf("\t%s %s\'%s\'\n", testArguments(fakeArgv6, 4, fakeArgt6) ? pass : fail, test, string6);
     
     // patdown --version inFile --help -o outFile
     const char *fakeArgv7[] = {"patdown", "--version", "inFile", "--help", "-o", "outFile"};
-    ArgType fakeArgt7[] = {PROGRAM_NAME, VERSION_FLAG, INPUT_FILE_NAME, HELP_FLAG, OUTPUT_FILE_FLAG, OUTPUT_FILE_NAME};
+    argtype_t fakeArgt7[] = {PROGRAM_NAME, VERSION_FLAG, INPUT_FILE_NAME, HELP_FLAG, OUTPUT_FILE_FLAG, OUTPUT_FILE_NAME};
     const char string7[] = "patdown --version inFile --help -o outFile";
     printf("\t%s %s\'%s\'\n", testArguments(fakeArgv7, 6, fakeArgt7) ? pass : fail, test, string7);
     
     // patdown --version inFile --help -f format
     const char *fakeArgv8[] = {"patdown", "--version", "inFile", "--help", "-f", "html"};
-    ArgType fakeArgt8[] = {PROGRAM_NAME, VERSION_FLAG, INPUT_FILE_NAME, HELP_FLAG, OUTPUT_FORMAT_FLAG, OUTPUT_FORMAT_NAME};
+    argtype_t fakeArgt8[] = {PROGRAM_NAME, VERSION_FLAG, INPUT_FILE_NAME, HELP_FLAG, OUTPUT_FORMAT_FLAG, OUTPUT_FORMAT_NAME};
     const char string8[] = "patdown --version inFile --help -f html";
     printf("\t%s %s\'%s\'\n", testArguments(fakeArgv8, 6, fakeArgt8) ? pass : fail, test, string8);
     
     // patdown -f format inFile
     const char *fakeArgv9[] = {"patdown", "-f", "HTML", "inFile"};
-    ArgType fakeArgt9[] = {PROGRAM_NAME, OUTPUT_FORMAT_FLAG, OUTPUT_FORMAT_NAME, INPUT_FILE_NAME};
+    argtype_t fakeArgt9[] = {PROGRAM_NAME, OUTPUT_FORMAT_FLAG, OUTPUT_FORMAT_NAME, INPUT_FILE_NAME};
     const char string9[] = "patdown -f HTML inFile";
     printf("\t%s %s\'%s\'\n", testArguments(fakeArgv9, 4, fakeArgt9) ? pass : fail, test, string9);
     
     // patdown -f format --help
     const char *fakeArgv10[] = {"patdown", "-f", "txt", "--help"};
-    ArgType fakeArgt10[] = {PROGRAM_NAME, OUTPUT_FORMAT_FLAG, OUTPUT_FORMAT_NAME, HELP_FLAG};
+    argtype_t fakeArgt10[] = {PROGRAM_NAME, OUTPUT_FORMAT_FLAG, OUTPUT_FORMAT_NAME, HELP_FLAG};
     const char string10[] = "patdown -f txt --help";
     printf("\t%s %s\'%s\'\n", testArguments(fakeArgv10, 4, fakeArgt10) ? pass : fail, test, string10);
     
     // patdown --help inFile -f format --help -o outFile
     const char *fakeArgv11[] = {"patdown", "inFile", "-f", "TXT", "--help", "-o", "outFile"};
-    ArgType fakeArgt11[] = {
+    argtype_t fakeArgt11[] = {
         PROGRAM_NAME, INPUT_FILE_NAME, OUTPUT_FORMAT_FLAG, OUTPUT_FORMAT_NAME, 
         HELP_FLAG, OUTPUT_FILE_FLAG, OUTPUT_FILE_NAME
     };
@@ -141,8 +141,8 @@ int main(int argc, char const *argv[])
     printf("\tby the parser function was not the intended type.\n\n");
     
     // Varibles used by each test (they are updated for each individual test)
-    tempBlock block;
-    mdBlock assertType;
+    temp_block_node_t block;
+    mdblock_t assertType;
     
     /* ====================## ATX HEADINGS ##==================== */
     
@@ -256,10 +256,10 @@ int main(int argc, char const *argv[])
  * NOTE: All INVALID command-line arguments will result in the exit()
  *       function begin called, therefore, it is hard to test them.
  */
-static int testArguments(const char *argv[], const char argc, const ArgType argt[])
+static int testArguments(const char *argv[], const char argc, const argtype_t argt[])
 {
     // Call parseArguments() with fake input
-    ArgType *returnArgt = parseArguments(argc, argv);
+    argtype_t *returnArgt = parseArguments(argc, argv);
     
     // Compare it to argt to determine if its valid
     for (size_t i = 0; i < argc; ++i)
@@ -280,7 +280,7 @@ static int testArguments(const char *argv[], const char argc, const ArgType argt
  * made. The success of failure of these calls is returned (as an
  * integer boolean).
  */
-static int testFileOpening(const char fileName[], const ArgType fileType, const int readwrite)
+static int testFileOpening(const char fileName[], const argtype_t fileType, const int readwrite)
 {
     FILE *fp = openFile(fileName, fileType);
     int returnValue = 1;

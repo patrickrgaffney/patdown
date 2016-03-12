@@ -8,7 +8,8 @@
  * ~~~~~~ultralightbeams~~~~~~~
  *
  * This file contains the definitions of functions and enumerations
- * that operate on text, transforming it into markdown.
+ * that create and iterate over a queue data structure created from
+ * the block-level elements of a MD file.
  */
 
 #ifndef MARKDOWN_H
@@ -25,6 +26,7 @@
 enum MDBlockType
 {
     UNKNOWN,
+    BLANK_LINE,
     HORIZONTAL_RULE,
     ATX_HEADING_1,
     ATX_HEADING_2,
@@ -40,14 +42,13 @@ enum MDBlockType
     BLOCK_COMMENT,
     LINK_REF_DEFINITION,
     PARAGRAPH,
-    BLANK_LINE,
     BLOCKQUOTE,
     UNORDERED_LIST,
     ORDERED_LIST
 };
 
 /* Synonym for `enum MDBlockType` */
-typedef enum MDBlockType mdBlock;
+typedef enum MDBlockType mdblock_t;
 
 
 /* Values for different inline level MD elements. */
@@ -71,7 +72,7 @@ enum MDInlineType
 };
 
 /* Synonym for `enum MDInlineType */
-typedef enum MDInlineType mdInline;
+typedef enum MDInlineType mdinline_t;
 
 
 /* ==================================================================
@@ -82,56 +83,66 @@ typedef enum MDInlineType mdInline;
 struct markdownInlineNode
 {
     char *inlineString;
-    mdInline inlineType;
+    mdinline_t inlineType;
     struct markdownInlineNode *nextInlineNode;
 };
 
 /* Synonym for `struct markdownInlineNode` */
-typedef struct markdownInlineNode inlineNode;
+typedef struct markdownInlineNode inline_node_t;
 
 
-/* A type to hold one block string of markdown text. */
+/* A type to hold one block string of markdown text. This structure
+ * holds nodes that will eventually be stung together to create a 
+ * queue of block-level, parsed, elements.  */
 struct markdownBlockNode
 {
-    char *blockString;
-    mdBlock blockType;
+    char *blockString; 
+    mdblock_t blockType;
     struct markdownBlockNode *nextBlockNode;
     struct markdownInlineNode *nextInlineNode;
 };
 
 /* Synonym for `struct markdownBlockNode` */
-typedef struct markdownBlockNode blockNode;
+typedef struct markdownBlockNode block_node_t;
 
 /* A type to temporarily hold blockStrings that are being parsed,
- * and their anticipated blockType.
+ * and their anticipated blockType. This structure is used as an easy
+ * way to pass a group of variables (a blockString and a blockType) 
+ * around between functions. When the variables are ready to be 
+ * inserted into the queue, they are transered to a `block_node_t`.
+ *
+ * NOTE: Same as `block_node_t`; but without pointers to other nodes.
  */
 struct temporaryMDBlock
 {
     char *blockString;
-    mdBlock blockType;
+    mdblock_t blockType;
 };
 
 /* Synonym for `struct temporaryMDBlock` */
-typedef struct temporaryMDBlock tempBlock;
+typedef struct temporaryMDBlock temp_block_node_t;
 
 
 /* ==================================================================
  * == FUNCTIONS
  * =============================================================== */
 
-/* Parse a line of text, returning the MDBlockType of that line. */
-tempBlock *parseBlockType(const char *line);
+/* Parse a line of text and attempt to determine its blockType and 
+ * strip the input line of all MD metacharacters.
+ */
+temp_block_node_t *parseBlockType(const char *line);
 
 
 /* Build a linked-list of lines parsed from inputFile. */
-blockNode *buildList(FILE *inputFile);
+block_node_t *buildQueue(FILE *inputFile);
 
 
 /* Insert a blockNode, `newBlock` into the queue at the tail. */
-void insertBlockNode(blockNode **head, blockNode **tail, tempBlock *temp);
+void insertBlockNode(block_node_t **head, block_node_t **tail, temp_block_node_t *temp);
 
-/* Print the queue */
-void printQueue(blockNode *currentNode, FILE *outputFile);
+
+/* Print the queue, line-by-line, by calling `writeLine(fp, i, ...)`. */
+void printQueue(block_node_t *currentNode, FILE *outputFile);
 
 
 #endif
