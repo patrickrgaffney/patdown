@@ -14,6 +14,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <stdarg.h>
 
 #include "files.h"
 #include "arguments.h"
@@ -89,19 +90,24 @@ char *readLine(FILE *fp)
 }
 
 
-/* Wrtie exactly one line (received as input) to the file pointed to
- * by *fp.
+/* Write `i` string's received as input to the file pointed to by 
+ * `*fp`. Exit the function by printing a newline `\n`. 
  */
-int writeLine(const char *line, FILE *fp)
+void writeLine(FILE *fp, size_t i, ...)
 {
-    if (fputs(line, fp) != EOF)
+    // stores information needed by va_start and va_end
+    va_list ap;
+    
+    // initialize the va_list object
+    va_start(ap, i);
+    
+    for (size_t j = 0; j < i; ++j)
     {
-        return 1;
+        fprintf(fp, "%s", va_arg(ap, char *));
     }
-    else
-    {
-        return 0;
-    }
+    
+    va_end(ap);
+    printf("\n");
 }
 
 

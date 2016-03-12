@@ -22,7 +22,6 @@
 /* Static function definitions */
 static int testArguments(const char *argv[], const char argc, const ArgType argt[]);
 static int testFileOpening(const char fileName[], const ArgType fileType, const int readwrite);
-static blockNode testParser(const char *string, blockNode (*parser)(const char *string));
 
 int main(int argc, char const *argv[])
 {
@@ -142,7 +141,7 @@ int main(int argc, char const *argv[])
     printf("\tby the parser function was not the intended type.\n\n");
     
     // Varibles used by each test (they are updated for each individual test)
-    blockNode block;
+    tempBlock block;
     mdBlock assertType;
     
     /* ====================## ATX HEADINGS ##==================== */
@@ -284,11 +283,11 @@ static int testArguments(const char *argv[], const char argc, const ArgType argt
 static int testFileOpening(const char fileName[], const ArgType fileType, const int readwrite)
 {
     FILE *fp = openFile(fileName, fileType);
-    int returnValue = 0;
+    int returnValue = 1;
     
     if (readwrite == 0) // write to the file
     {
-        returnValue = writeLine("test string to be written to file\n", fp);
+        writeLine(fp, 1, "test string to be written to file");
     }
     else // read from file
     {

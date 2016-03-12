@@ -27,9 +27,9 @@
  *  2. `ATX_HEADING_x` and string with only character to be written
  *     to the outputFile.
  */
-blockNode isATXHeader(const char *string)
+tempBlock isATXHeader(const char *string)
 {
-    blockNode block;
+    tempBlock block;
     block.blockString = NULL;
     size_t level = 0;
     size_t addtSpaces = 0;

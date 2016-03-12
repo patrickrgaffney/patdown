@@ -17,6 +17,7 @@
 #include <stdio.h>
 
 #include "arguments.h"
+#include <stdarg.h>
 
 /* ==================================================================
  * == FUNCTIONS
@@ -35,10 +36,10 @@ FILE *openFile(const char fileName[], const ArgType fileType);
 char *readLine(FILE *fp);
 
 
-/* Wrtie exactly one line (received as input) to the file pointed to
- * by *fp.
+/* Write `i` string's received as input to the file pointed to by 
+ * `*fp`. Exit the function by printing a newline `\n`. 
  */
-int writeLine(const char *line, FILE *fp);
+void writeLine(FILE *fp, size_t i, ...);
 
 /* This is basically a rewrite of the fgets() function in clib, the
  * only difference being that it does NOT add the `\n` newline to the

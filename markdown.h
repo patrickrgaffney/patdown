@@ -102,13 +102,25 @@ struct markdownBlockNode
 /* Synonym for `struct markdownBlockNode` */
 typedef struct markdownBlockNode blockNode;
 
+/* A type to temporarily hold blockStrings that are being parsed,
+ * and their anticipated blockType.
+ */
+struct temporaryMDBlock
+{
+    char *blockString;
+    mdBlock blockType;
+};
+
+/* Synonym for `struct temporaryMDBlock` */
+typedef struct temporaryMDBlock tempBlock;
+
 
 /* ==================================================================
  * == FUNCTIONS
  * =============================================================== */
 
 /* Parse a line of text, returning the MDBlockType of that line. */
-blockNode parseBlockType(const char *line);
+tempBlock *parseBlockType(const char *line);
 
 
 /* Build a linked-list of lines parsed from inputFile. */
@@ -116,7 +128,10 @@ blockNode *buildList(FILE *inputFile);
 
 
 /* Insert a blockNode, `newBlock` into the queue at the tail. */
-void insertBlockNode(blockNode **head, blockNode **tail, blockNode newNode);
+void insertBlockNode(blockNode **head, blockNode **tail, tempBlock *temp);
+
+/* Print the queue */
+void printQueue(blockNode *currentNode, FILE *outputFile);
 
 
 #endif

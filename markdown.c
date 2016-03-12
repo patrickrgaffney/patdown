@@ -32,7 +32,7 @@ blockNode *buildList(FILE *inputFile)
     {
         // Read line from file :: return NULL if EOF
         char *line = readLine(inputFile);
-        blockNode currentBlock;
+        tempBlock *currentBlock;
         
         // EOF reached
         if (line == NULL) 
@@ -42,14 +42,10 @@ blockNode *buildList(FILE *inputFile)
         else
         {
             currentBlock = parseBlockType(line);
-            // insertBlockNode(&startNode, currentBlock);
-        }
-        
-        if (currentBlock.blockString != NULL)
-        {
-            printf("%s\n", currentBlock.blockString);
+            insertBlockNode(&headNode, &tailNode, currentBlock);
         }
     }
+    
     return headNode;
 }
 
@@ -66,16 +62,16 @@ blockNode *buildList(FILE *inputFile)
  * form `isBlockElement()` is called to determine the validity of 
  * each assumption.
  */
-blockNode parseBlockType(const char *line)
+tempBlock *parseBlockType(const char *line)
 {
-    blockNode tempBlock;
-    tempBlock.blockType = UNKNOWN;
-    tempBlock.blockString = NULL;
+    tempBlock *block = malloc(sizeof(tempBlock));
+    block->blockType = UNKNOWN;
+    block->blockString = NULL;
     
     if (strlen(line) == 0)
     {
-        tempBlock.blockType = UNKNOWN;
-        return tempBlock;
+        block->blockType = UNKNOWN;
+        return block;
     }
     
     for (size_t i = 0; i < 4; i++)
@@ -86,46 +82,98 @@ blockNode parseBlockType(const char *line)
                 break;
             
             case '#':
-                tempBlock = isATXHeader(&line[i]);
+                *block = isATXHeader(&line[i]);
                 break;
         }
         
-        if (tempBlock.blockType != UNKNOWN) 
+        if (block->blockType != UNKNOWN) 
         {
             break;
         }
     }
     
-    if (tempBlock.blockType == PARAGRAPH || tempBlock.blockType == UNKNOWN)
+    if (block->blockType == PARAGRAPH || block->blockType == UNKNOWN)
     {
-        tempBlock.blockString = allocateString(line, 0, strlen(line));
+        block->blockString = allocateString(line, 0, strlen(line));
     }
     
-    return tempBlock;
+    return block;
 }
 
 
 /* Insert a blockNode, `newBlock` into the queue at the tail. */
-// void insertBlockNode(blockNode **head, blockNode **tail, blockNode newNode)
-// {
-//     if (newNode.blockString != NULL && newNode.blockType != UNKNOWN)
-//     {
-//         newNode.nextBlockNode = NULL;
-//         newNode.nextInlineNode = NULL;
-//
-//         // If queue is empty, insert at head
-//         if (head == NULL)
-//         {
-//             **head = newNode;
-//         }
-//         else
-//         {
-//             *(*tail)->nextBlockNode = newNode;
-//         }
-//     }
-//     else
-//     {
-//         printf("ERROR: newNode has not been allocated.\n");
-//         exit(EXIT_FAILURE);
-//     }
-// }
+void insertBlockNode(blockNode **head, blockNode **tail, tempBlock *temp)
+{
+    if (temp->blockString != NULL)
+    {
+        blockNode *newNode = malloc(sizeof(blockNode));
+        
+        if (newNode != NULL)
+        {
+            newNode->blockString = temp->blockString;
+            newNode->blockType = temp->blockType;
+            newNode->nextBlockNode = NULL;
+            newNode->nextInlineNode = NULL;
+            
+            // If queue is empty, insert at head
+            if (*head == NULL)
+            {
+                *head = newNode;
+            }
+            else
+            {
+                (*tail)->nextBlockNode = newNode;
+            }
+        
+            *tail = newNode;
+        }
+        else
+        {
+            printf("No memory available.\n");
+            exit(EXIT_FAILURE);
+        }
+    }
+    else
+    {
+        printf("ERROR: newNode has not been allocated.\n");
+        exit(EXIT_FAILURE);
+    }
+}
+
+
+/* Print the queue */
+void printQueue(blockNode *currentNode, FILE *outputFile)
+{
+    // If queue is empty, exit with message
+    if (currentNode == NULL) { printf("\nQueue is empty.\n"); }
+    else
+    {
+        while (currentNode != NULL)
+        {
+            switch (currentNode->blockType)
+            {
+                case ATX_HEADING_1: 
+                    writeLine(outputFile, 3, "<h1>", currentNode->blockString, "</h1>");
+                    break;
+                case ATX_HEADING_2: 
+                    writeLine(outputFile, 3, "<h2>", currentNode->blockString, "</h2>");
+                    break;
+                case ATX_HEADING_3: 
+                    writeLine(outputFile, 3, "<h3>", currentNode->blockString, "</h3>");
+                    break;
+                case ATX_HEADING_4: 
+                    writeLine(outputFile, 3, "<h4>", currentNode->blockString, "</h4>");
+                    break;
+                case ATX_HEADING_5: 
+                    writeLine(outputFile, 3, "<h5>", currentNode->blockString, "</h5>");
+                    break;
+                case ATX_HEADING_6: 
+                    writeLine(outputFile, 3, "<h6>", currentNode->blockString, "</h6>");
+                    break;
+                default:
+                    writeLine(outputFile, 1, currentNode->blockString);
+            }
+            currentNode = currentNode->nextBlockNode;
+        }
+    }   
+}

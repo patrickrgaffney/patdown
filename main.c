@@ -67,6 +67,7 @@ int main(int argc, char const *argv[])
     // Process them using outputFormat
     
     // Write all lines to outputFile
+    printQueue(headPtr, outputFile);
     
     return 0;
 }
