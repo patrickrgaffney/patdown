@@ -18,7 +18,7 @@
 
 /* Global variables */
 const char programName[] = "patdown";
-const char versionNum[]  = "0.0.1";
+const char versionNum[]  = "0.0.3";
 
 
 /* Display USAGE dialog */
@@ -27,6 +27,7 @@ void printUsageMsg(void)
     printf("USAGE: %s [--help] [--version] <infile> [-o <outfile>] [-f <format>]\n",
         programName);
 }
+
 
 /* Display HELP dialog */
 void printHelpMsg(void)
@@ -48,11 +49,13 @@ void printHelpMsg(void)
     printf("Available formats: html, txt\n");
 }
 
+
 /* Display VERSION dialog */
 void printVersionMsg(void)
 {
     printf("%s version %s\n", programName, versionNum);
 }
+
 
 /* Display INPUT FILE READ error */
 void inputFileError(void)
@@ -60,8 +63,16 @@ void inputFileError(void)
     printf("There was a problem reading the input file.\n");
 }
 
+
 /* Display MEMORY ERROR exit message. */
 void printMemoryError(void)
 {
     printf("No memory available.\n");
+}
+
+
+/* Display STRING ALLOCATION exit message. */
+void printStringError(void)
+{
+    printf("ERROR: A string was not allocated.");
 }

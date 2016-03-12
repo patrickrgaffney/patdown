@@ -8,7 +8,8 @@
  * ~~~~~~ultralightbeams~~~~~~~
  *
  * This file contains the implementations of functions and 
- * enumerations that operate on text, transforming it into markdown.
+ * enumerations that create and iterate over the a stack data 
+ * structure created from the block-level elements of a MD file.
  */
 
 #include <stdio.h>
@@ -18,6 +19,7 @@
 #include "markdown.h"
 #include "files.h"
 #include "parsers.h"
+#include "errors.h"
 
 
 /* Parse a line of text, returning the MDBlockType of that line. */
@@ -28,6 +30,7 @@ blockNode *buildList(FILE *inputFile)
     blockNode *tailNode = NULL;
     
     // Consume all lines from inputFile
+    // Break when readLine() returns NULL
     while (1)
     {
         // Read line from file :: return NULL if EOF
@@ -35,10 +38,7 @@ blockNode *buildList(FILE *inputFile)
         tempBlock *currentBlock;
         
         // EOF reached
-        if (line == NULL) 
-        { 
-            break;
-        }
+        if (line == NULL) { break; }
         else
         {
             currentBlock = parseBlockType(line);
@@ -50,9 +50,9 @@ blockNode *buildList(FILE *inputFile)
 }
 
 
-/* Parse a line of text and attempt to determine its MDBlockType. 
- * Return a mdBlock structure containing:
- *  1. The assigned MDBlockType.
+/* Parse a line of text and attempt to determine its blockType. 
+ * Return a tempBlock structure containing:
+ *  1. The assigned blockType.
  *  2. The string containing only the characters to be written to the
  *     outputFile.
  *      - AKA: Stripped of its metacharacters.
@@ -64,16 +64,18 @@ blockNode *buildList(FILE *inputFile)
  */
 tempBlock *parseBlockType(const char *line)
 {
+    // tempBlock is initially unknown to us
     tempBlock *block = malloc(sizeof(tempBlock));
     block->blockType = UNKNOWN;
     block->blockString = NULL;
     
-    if (strlen(line) == 0)
-    {
-        block->blockType = UNKNOWN;
-        return block;
-    }
+    // TODO: Increment a `lastBlock` variable to be EMPTY_LINE
+    //       - EMPTY_LINE's are required be some block types
+    //       - call readLine() again, get new *line
+    //       - parse again with knowledge of previous line.
+    if (strlen(line) == 0) { return block; }
     
+    // iterate through first 4 characters of line
     for (size_t i = 0; i < 4; i++)
     {
         switch (line[i])
@@ -81,17 +83,15 @@ tempBlock *parseBlockType(const char *line)
             case ' ':
                 break;
             
-            case '#':
-                *block = isATXHeader(&line[i]);
+            case '#': *block = isATXHeader(&line[i]);
                 break;
         }
         
-        if (block->blockType != UNKNOWN) 
-        {
-            break;
-        }
+        // TODO: figure out something clever to do here
+        if (block->blockType != UNKNOWN) { break; }
     }
     
+    // TODO: THIS IS A DIRTY HACK TO BE REMOVED AT A LATER/SMARTER TIME
     if (block->blockType == PARAGRAPH || block->blockType == UNKNOWN)
     {
         block->blockString = allocateString(line, 0, strlen(line));
@@ -106,30 +106,29 @@ void insertBlockNode(blockNode **head, blockNode **tail, tempBlock *temp)
 {
     if (temp->blockString != NULL)
     {
+        // Create node to be inserted
         blockNode *newNode = malloc(sizeof(blockNode));
         
         if (newNode != NULL)
         {
+            // Assign the new attributes to node
             newNode->blockString = temp->blockString;
             newNode->blockType = temp->blockType;
             newNode->nextBlockNode = NULL;
             newNode->nextInlineNode = NULL;
             
             // If queue is empty, insert at head
-            if (*head == NULL)
-            {
-                *head = newNode;
-            }
-            else
-            {
-                (*tail)->nextBlockNode = newNode;
-            }
+            if (*head == NULL) { *head = newNode; }
+
+            // Otherwise, insert at the end
+            else { (*tail)->nextBlockNode = newNode; }
         
+            // Reassign the tail to be this new node
             *tail = newNode;
         }
         else
         {
-            printf("No memory available.\n");
+            atexit(printMemoryError);
             exit(EXIT_FAILURE);
         }
     }
@@ -148,6 +147,7 @@ void printQueue(blockNode *currentNode, FILE *outputFile)
     if (currentNode == NULL) { printf("\nQueue is empty.\n"); }
     else
     {
+        // Loop until currentNode->nextBlockNode is NULL
         while (currentNode != NULL)
         {
             switch (currentNode->blockType)
@@ -173,6 +173,8 @@ void printQueue(blockNode *currentNode, FILE *outputFile)
                 default:
                     writeLine(outputFile, 1, currentNode->blockString);
             }
+            
+            // Advance to next node in the stack
             currentNode = currentNode->nextBlockNode;
         }
     }   
