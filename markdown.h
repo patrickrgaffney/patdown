@@ -25,8 +25,10 @@
 /* Values for different block level MD elements. */
 enum MDBlockType
 {
-    UNKNOWN,
-    BLANK_LINE,
+    UNKNOWN, /* For values that need more parsing. */
+    BLANK_LINE, /* For lines that serve as a break between mdblock_t's. */
+    
+    /* IMPLEMENTED */
     HORIZONTAL_RULE,
     ATX_HEADING_1,
     ATX_HEADING_2,
@@ -34,17 +36,25 @@ enum MDBlockType
     ATX_HEADING_4,
     ATX_HEADING_5,
     ATX_HEADING_6,
+    INDENTED_CODE_BLOCK,
+    PARAGRAPH,
     SETEXT_HEADING_1,
     SETEXT_HEADING_2,
-    INDENTED_CODE_BLOCK,
+    
+    /* UNIMPLEMENTED */
     FENCED_CODE_BLOCK,
     HTML_BLOCK,
     BLOCK_COMMENT,
     LINK_REF_DEFINITION,
-    PARAGRAPH,
-    BLOCKQUOTE,
-    UNORDERED_LIST,
-    ORDERED_LIST
+    BLOCKQUOTE_START,
+    BLOCKQUOTE_TEXT,
+    BLOCKQUOTE_END,
+    UNORDERED_LIST_START,
+    UNORDERED_LIST_ITEM,
+    UNORDERED_LIST_END,
+    ORDERED_LIST_START,
+    ORDERED_LIST_ITEM,
+    ORDERED_LIST_END
 };
 
 /* Synonym for `enum MDBlockType` */

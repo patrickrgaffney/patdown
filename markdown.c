@@ -60,6 +60,16 @@ block_node_t *buildQueue(FILE *inputFile)
                 // BLANK_LINE encountered while "inside" INDENTED_CODE_BLOCK -- append a newline
                 tailNode->blockString = reallocateString(tailNode->blockString, "");
             }
+            else if (currentBlock->blockType == SETEXT_HEADING_1 && lastQueuedBlockType == PARAGRAPH)
+            {
+                // Change the last line (PARAGRAPH) to a SETEXT_HEADING_1
+                tailNode->blockType = SETEXT_HEADING_1;
+            }
+            else if (currentBlock->blockType == SETEXT_HEADING_2 && lastQueuedBlockType == PARAGRAPH)
+            {
+                // Change the last line (PARAGRAPH) to a SETEXT_HEADING_2
+                tailNode->blockType = SETEXT_HEADING_2;
+            }
             else if (currentBlock->blockType != BLANK_LINE)
             {
                 insertBlockNode(&headNode, &tailNode, currentBlock);
@@ -123,9 +133,11 @@ void printQueue(block_node_t *currentNode, FILE *outputFile)
         {
             switch (currentNode->blockType)
             {
+                case SETEXT_HEADING_1:
                 case ATX_HEADING_1: 
                     writeLine(outputFile, 3, "<h1>", currentNode->blockString, "</h1>");
                     break;
+                case SETEXT_HEADING_2:
                 case ATX_HEADING_2: 
                     writeLine(outputFile, 3, "<h2>", currentNode->blockString, "</h2>");
                     break;
@@ -146,6 +158,9 @@ void printQueue(block_node_t *currentNode, FILE *outputFile)
                     break;
                 case INDENTED_CODE_BLOCK:
                     writeLine(outputFile, 3, "<pre><code>", currentNode->blockString, "\n</code></pre>");
+                    break;
+                case HORIZONTAL_RULE:
+                    writeLine(outputFile, 1, "<hr />");
                     break;
                 default:
                     writeLine(outputFile, 1, currentNode->blockString);

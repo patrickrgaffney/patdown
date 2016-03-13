@@ -54,17 +54,46 @@ temp_block_node_t *parseBlockType(const char *line, mdblock_t lastBlockType)
         return block;
     }
     
-    // Iterate through first 4 characters of line
+    // Search the first 4 characters for a mdblock_t
     for (size_t i = 0; i < 4; i++)
     {
         switch (line[i])
         {
-            case ' ': // INDENTED_CODE_BLOCK
+            case ' ':
                 if (lastScannedChar == ' ' && i == 3)
+                {
                     *block = isIndentedCodeBlock(line, lastBlockType);
+                }
                 break;
-            case '#': // ATX_HEADER 
+            
+            case '#':
                 *block = isATXHeader(&line[i]);
+                break;
+            
+            case '*':
+                *block = isHorizontalRule(line, '*');
+                break;
+            
+            case '-':
+                if (lastBlockType == PARAGRAPH)
+                {
+                    *block = isSetextHeading(&line[i], '-');
+                } 
+                else
+                {
+                    *block = isHorizontalRule(line, '-');
+                }
+                break;
+            
+            case '_':
+                *block = isHorizontalRule(line, '_');
+                break;
+                
+            case '=':
+                if (lastBlockType == PARAGRAPH)
+                {
+                    *block = isSetextHeading(&line[i], '=');
+                }
                 break;
         }
         lastScannedChar = line[i];
@@ -85,11 +114,7 @@ temp_block_node_t *parseBlockType(const char *line, mdblock_t lastBlockType)
  * == BLOCK-LEVEL ELEMENTS
  * =============================================================== */
 
-/* Parse for an ATX_HEADING_x. Returns either: 
- *  1. `UNKNOWN` MDBlockType and `NULL` string
- *  2. `ATX_HEADING_x` and string with only characters to be written
- *     to the outputFile.
- */
+/* Parse for an ATX_HEADING_x. */
 temp_block_node_t isATXHeader(const char *string)
 {
     temp_block_node_t block;
@@ -210,13 +235,20 @@ temp_block_node_t isParagraph(const char *string, const mdblock_t lastBlockType)
 temp_block_node_t isIndentedCodeBlock(const char *string, const mdblock_t lastBlockType)
 {
     temp_block_node_t block;
+    block.blockString = NULL;
+    
+    // PARAGRAPHs have precedence over INDENTED_CODE_BLOCKs
+    if (lastBlockType == PARAGRAPH)
+    {
+        block.blockType = PARAGRAPH;
+        return block;
+    }
     
     // First 4 characters MUST be spaces
     for (size_t i = 0; i < 3; ++i)
     {
         if (string[i] != ' ')
         {
-            block.blockString = NULL;
             block.blockType   = UNKNOWN;
             return block;
         }
@@ -226,6 +258,77 @@ temp_block_node_t isIndentedCodeBlock(const char *string, const mdblock_t lastBl
     // END: end of `string` (save any and all WS)
     block.blockString = allocateString(string, 4, strlen(string));
     block.blockType   = INDENTED_CODE_BLOCK;
+    return block;
+}
+
+
+/* Parse for a HORIZONTAL_RULE. */
+temp_block_node_t isHorizontalRule(const char *line, const char character)
+{
+    temp_block_node_t block;
+    
+    // HORIZONTAL_RULEs are given this string so it passes the != NULL test
+    block.blockString = "NULL";
+    
+    // Number of instances of `character` encountered
+    size_t numChars = 0;
+    
+    // Iterate over entire line, unless we find a char different from `character`
+    for (size_t i = 0; i < strlen(line); ++i)
+    {
+        if (line[i] == ' ') { continue; }
+        else if (line[i] == character) { numChars++; }
+        else // anything other than WS and `character` results in UNKNOWN
+        {
+            block.blockType   = UNKNOWN;
+            block.blockString = NULL;
+            return block;
+        }
+    }
+    
+    if (numChars > 2) { block.blockType = HORIZONTAL_RULE; }
+    else { block.blockType = UNKNOWN; }
+    
+    return block;
+}
+
+
+/* Parse for a SETEXT_HEADING_x. */
+temp_block_node_t isSetextHeading(const char *line, const char character)
+{
+    temp_block_node_t block;
+    
+    // Number of instances of `character` encountered
+    size_t numChars = 0;
+    
+    // Iterate over entire line, unless we find a char different from `character`
+    for (size_t i = 0; i < strlen(line); ++i)
+    {
+        if (line[i] == character) { numChars++; }
+        else if (line[i] == ' ' && numChars > 3)
+        {
+            block.blockType   = HORIZONTAL_RULE;
+            block.blockString = "NULL";
+            return block;
+        }
+        else // anything other than WS and `character` results in UNKNOWN
+        {
+            block.blockType   = UNKNOWN;
+            block.blockString = NULL;
+            return block;
+        }
+    }
+    
+    if (numChars >= 1)
+    {
+        switch (character)
+        {
+            case '=': block.blockType = SETEXT_HEADING_1; break;
+            case '-': block.blockType = SETEXT_HEADING_2; break;
+        }
+    }
+    else { block.blockType = UNKNOWN; }
+    
     return block;
 }
 

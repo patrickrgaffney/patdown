@@ -31,15 +31,12 @@
  */
 temp_block_node_t *parseBlockType(const char *line, mdblock_t lastBlockType);
 
+
 /* ==================================================================
  * == BLOCK-LEVEL ELEMENTS
  * =============================================================== */
 
-/* Parse for an ATX_HEADING_x. Returns either: 
- *  1. `UNKNOWN` mdblock_t and `NULL` string
- *  2. `ATX_HEADING_x` and string with only characters to be written
- *     to the outputFile.
- */
+/* Parse for an ATX_HEADING_x. */
 temp_block_node_t isATXHeader(const char *string);
 
 
@@ -49,6 +46,14 @@ temp_block_node_t isParagraph(const char *string, const mdblock_t lastBlockType)
 
 /* Parse for an INDENTED_CODE_BLOCK. */
 temp_block_node_t isIndentedCodeBlock(const char *string, const mdblock_t lastBlockType);
+
+
+/* Parse for a HORIZONTAL_RULE. */
+temp_block_node_t isHorizontalRule(const char *line, const char character);
+
+
+/* Parse for a SETEXT_HEADING_x. */
+temp_block_node_t isSetextHeading(const char *line, const char character);
 
 
 /* ==================================================================
