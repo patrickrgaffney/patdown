@@ -17,9 +17,11 @@
 
 #include <stdlib.h>
 #include <string.h>
+#include <ctype.h>
 
 #include "parsers.h"
 #include "markdown.h"
+
 
 
 /* ==================================================================
@@ -44,56 +46,69 @@ temp_block_node_t *parseBlockType(const char *line, mdblock_t lastBlockType)
     temp_block_node_t *block = malloc(sizeof(temp_block_node_t));
     block->blockType   = UNKNOWN;
     block->blockString = NULL;
+    size_t strlength   = strlen(line);
     
     char lastScannedChar;
     
-    // Return EMPTY_LINE -> needed for certain block-level elements
+    // Return BLANK_LINE -> needed for certain block-level elements
     if (strlen(line) == 0) 
     { 
         block->blockType = BLANK_LINE;
+        block->insertType = (lastBlockType == INDENTED_CODE_BLOCK) ? APPEND_NEWLINE : PLACEHOLDER;
         return block;
     }
     
-    // Search the first 4 characters for a mdblock_t
-    for (size_t i = 0; i < 4; i++)
+    // Search the first 10 characters for a mdblock_t
+    for (size_t i = 0; i < strlength; i++)
     {
         switch (line[i])
         {
-            case ' ':
+            case ' ': /* INDENTED_CODE_BLOCK */
                 if (lastScannedChar == ' ' && i == 3)
                 {
                     *block = isIndentedCodeBlock(line, lastBlockType);
                 }
                 break;
             
-            case '#':
-                *block = isATXHeader(&line[i]);
+            case '#': /* ATX_HEADING_x */
+                if (lastScannedChar == '\\')
+                {
+                    *block = isParagraph(line, lastBlockType);
+                }
+                else 
+                {
+                    *block = isATXHeader(&line[i]);
+                }
                 break;
             
-            case '*':
+            case '*': /* HORIZONTAL_RULE */
                 *block = isHorizontalRule(line, '*');
                 break;
             
-            case '-':
+            case '-': /* SETEXT_HEADING_x */
                 if (lastBlockType == PARAGRAPH)
                 {
                     *block = isSetextHeading(&line[i], '-');
-                } 
+                }
                 else
                 {
                     *block = isHorizontalRule(line, '-');
                 }
                 break;
             
-            case '_':
+            case '_': /* HORIZONTAL_RULE */
                 *block = isHorizontalRule(line, '_');
                 break;
                 
-            case '=':
+            case '=': /* SETEXT_HEADING_x */
                 if (lastBlockType == PARAGRAPH)
                 {
                     *block = isSetextHeading(&line[i], '=');
                 }
+                break;
+            
+            case '<': /* HTML_BLOCK || HTML_COMMENT */
+                *block = isHTMLBlock(line, lastBlockType);
                 break;
         }
         lastScannedChar = line[i];
@@ -102,10 +117,11 @@ temp_block_node_t *parseBlockType(const char *line, mdblock_t lastBlockType)
     }
     
     // Parse a PARAGRAPH
-    if (block->blockType == PARAGRAPH || block->blockType == UNKNOWN)
+    if ((block->blockType == PARAGRAPH && block->blockString == NULL) || block->blockType == UNKNOWN)
     {
         *block = isParagraph(line, lastBlockType);
     }
+    
     return block;
 }
 
@@ -122,7 +138,8 @@ temp_block_node_t isATXHeader(const char *string)
     
     size_t level         = 0; // The level of a heading
     size_t addtSpaces    = 0; // Spaces between leading `#`s and heading
-    size_t trailingChars = 0; // Spaces after heading end (trailing `#`s)
+    size_t trailingChars = 0; // Spaces and `#`s after heading end (trailing `#`s)
+    size_t strlength     = strlen(string);
 
     // If first character isnt `#`, can't be ATX_HEADING
     if (string[0] != '#')
@@ -134,10 +151,7 @@ temp_block_node_t isATXHeader(const char *string)
     // Determine the ATX_HEADING level
     for (size_t i = 0; i < 8; ++i)
     {
-        if (string[i] == '#')
-        {
-            level++;
-        }
+        if (string[i] == '#') { level++; }
         else { break; }
     }
     
@@ -158,8 +172,8 @@ temp_block_node_t isATXHeader(const char *string)
     
     // Determine the number of trailing characters to be removed.
     // example: '## heading ##' => remove 3 chars
-    trailingChars = strlen(string);
-    for (size_t i = strlen(string) - 1; i > level + 1; --i)
+    trailingChars = strlength;
+    for (size_t i = strlength - 1; i > level + 1; --i)
     {
         if (string[i] == ' ' || string[i] == '#') { trailingChars--; }
         else { break; }
@@ -204,12 +218,13 @@ temp_block_node_t isParagraph(const char *string, const mdblock_t lastBlockType)
     size_t leadingSpaces           = 0; // Spaces at beginning of line
     size_t numAllowedLeadingSpaces = 3; // Otherwise, INDENTED_CODE_BLOCK
     size_t atLeastOneChar          = 0; // There is at least one character in line
+    size_t strlength               = strlen(string);
     
     // INDENTED_CODE_BLOCK's cannot interrupt a PARAGRAPH
-    if (lastBlockType == PARAGRAPH) { numAllowedLeadingSpaces = strlen(string); }
+    if (lastBlockType == PARAGRAPH) { numAllowedLeadingSpaces = strlength; }
     
     // Remove leading spaces
-    for (size_t i = 0; i < strlen(string); ++i)
+    for (size_t i = 0; i < strlength; ++i)
     {
         if (string[i] == ' ') { leadingSpaces++; }
         else { atLeastOneChar = 1; break; }
@@ -219,13 +234,22 @@ temp_block_node_t isParagraph(const char *string, const mdblock_t lastBlockType)
     {
         block.blockType   = BLANK_LINE;
         block.blockString = NULL;
+        block.insertType  = PLACEHOLDER;
     }
     else
     {
         // START: leadingSpaces (remove all of them)
         // END: end of `string` (save WS for possible HARD_LINE_BREAK)
-        block.blockString = allocateString(string, leadingSpaces, strlen(string));
+        block.blockString = allocateString(string, leadingSpaces, strlength);
         block.blockType   = PARAGRAPH;
+        
+        switch (lastBlockType)
+        {
+            case PARAGRAPH:    block.insertType = APPEND_STRING; break;
+            case HTML_BLOCK:   block.insertType = APPEND_STRING; break;
+            case HTML_COMMENT: block.insertType = APPEND_STRING; break;
+            default: block.insertType = INSERT_NODE;
+        }
     }
     return block;
 }
@@ -258,14 +282,18 @@ temp_block_node_t isIndentedCodeBlock(const char *string, const mdblock_t lastBl
     // END: end of `string` (save any and all WS)
     block.blockString = allocateString(string, 4, strlen(string));
     block.blockType   = INDENTED_CODE_BLOCK;
+    
+    block.insertType  = (lastBlockType == INDENTED_CODE_BLOCK) ? APPEND_STRING : INSERT_NODE;
+    
     return block;
 }
 
 
 /* Parse for a HORIZONTAL_RULE. */
-temp_block_node_t isHorizontalRule(const char *line, const char character)
+temp_block_node_t isHorizontalRule(const char *string, const char character)
 {
     temp_block_node_t block;
+    block.insertType = INSERT_NODE;
     
     // HORIZONTAL_RULEs are given this string so it passes the != NULL test
     block.blockString = "NULL";
@@ -274,10 +302,10 @@ temp_block_node_t isHorizontalRule(const char *line, const char character)
     size_t numChars = 0;
     
     // Iterate over entire line, unless we find a char different from `character`
-    for (size_t i = 0; i < strlen(line); ++i)
+    for (size_t i = 0; i < strlen(string); ++i)
     {
-        if (line[i] == ' ') { continue; }
-        else if (line[i] == character) { numChars++; }
+        if (string[i] == ' ') { continue; }
+        else if (string[i] == character) { numChars++; }
         else // anything other than WS and `character` results in UNKNOWN
         {
             block.blockType   = UNKNOWN;
@@ -294,7 +322,7 @@ temp_block_node_t isHorizontalRule(const char *line, const char character)
 
 
 /* Parse for a SETEXT_HEADING_x. */
-temp_block_node_t isSetextHeading(const char *line, const char character)
+temp_block_node_t isSetextHeading(const char *string, const char character)
 {
     temp_block_node_t block;
     
@@ -302,10 +330,10 @@ temp_block_node_t isSetextHeading(const char *line, const char character)
     size_t numChars = 0;
     
     // Iterate over entire line, unless we find a char different from `character`
-    for (size_t i = 0; i < strlen(line); ++i)
+    for (size_t i = 0; i < strlen(string); ++i)
     {
-        if (line[i] == character) { numChars++; }
-        else if (line[i] == ' ' && numChars > 3)
+        if (string[i] == character) { numChars++; }
+        else if (string[i] == ' ' && numChars > 3)
         {
             block.blockType   = HORIZONTAL_RULE;
             block.blockString = "NULL";
@@ -326,8 +354,64 @@ temp_block_node_t isSetextHeading(const char *line, const char character)
             case '=': block.blockType = SETEXT_HEADING_1; break;
             case '-': block.blockType = SETEXT_HEADING_2; break;
         }
+        block.insertType = UPDATE_TYPE;
     }
     else { block.blockType = UNKNOWN; }
+    
+    return block;
+}
+
+
+/* Parse for an HTML_BLOCK. */
+temp_block_node_t isHTMLBlock(const char *string, const mdblock_t lastBlockType)
+{
+    temp_block_node_t block;
+    block.blockType   = UNKNOWN;
+    block.blockString = NULL;
+    
+    size_t strlength = strlen(string);
+    size_t leadingWS = 0;
+    int startTag     = -1;
+    int endTag       = -1;
+    size_t comment   = 0;
+    
+    // Check to make sure there is at minimum a '<'
+    // Will check for a '>', but not required.
+    // Also, tag names can only contain alpha, nums, and hypens
+    for (size_t i = 0; i < strlength; ++i)
+    {
+        if (string[i] == '<') { startTag = i; }
+        // Haven't found an opening bracket yet
+        else if (startTag == -1)
+        {
+            if (string[i] == ' ') { leadingWS++; }
+            else { return block; }
+        }
+        // Encountered starting tag - Check for valid characters
+        else if (startTag >= 0)
+        {
+            if (isalnum(string[i]))      { continue; }
+            else if (string[i] == '!')   { comment = 1; }
+            else if (string[i] == '-')   { continue; }
+            else if (string[i] == ' ')   { continue; }
+            else if (string[i] == '/')   { continue; }
+            else if (string[i] == '>')   { endTag = i; break; }
+            else { return block; }
+        }
+    }
+    
+    if (leadingWS > 3) { return block; }
+    else if (comment != 0)
+    {
+        block.blockType = HTML_COMMENT;
+    }
+    else
+    {
+        block.blockType = HTML_BLOCK;
+    }
+    
+    block.blockString = allocateString(string, 0, strlength);
+    block.insertType  = (lastBlockType == block.blockType) ? APPEND_STRING : INSERT_NODE;
     
     return block;
 }

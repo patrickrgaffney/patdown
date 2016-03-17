@@ -56,6 +56,10 @@ temp_block_node_t isHorizontalRule(const char *line, const char character);
 temp_block_node_t isSetextHeading(const char *line, const char character);
 
 
+/* Parse for a HTML_BLOCK */
+temp_block_node_t isHTMLBlock(const char *string, const mdblock_t lastBlockType);
+
+
 /* ==================================================================
  * == HELPER FUNCTIONS
  * =============================================================== */

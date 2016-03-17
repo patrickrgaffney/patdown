@@ -39,42 +39,30 @@ block_node_t *buildQueue(FILE *inputFile)
         char *line = readLine(inputFile);
         temp_block_node_t *currentBlock;
         
-        // EOF reached
         if (line == NULL) { break; }
         else
         {
             currentBlock = parseBlockType(line, lastBlockType);
             
-            if (currentBlock->blockType == PARAGRAPH && lastBlockType == PARAGRAPH)
+            switch (currentBlock->insertType)
             {
-                // Append the two lines together -- they constitute the same PARAGRAPH
-                tailNode->blockString = reallocateString(tailNode->blockString, currentBlock->blockString);
+                case APPEND_STRING: 
+                    tailNode->blockString = reallocateString(tailNode->blockString, currentBlock->blockString);
+                    break;
+                case APPEND_NEWLINE:
+                    tailNode->blockString = reallocateString(tailNode->blockString, "");
+                    break;
+                case UPDATE_TYPE:
+                    tailNode->blockType = currentBlock->blockType;
+                    break;
+                case PLACEHOLDER:
+                    break;
+                case INSERT_NODE:
+                    insertBlockNode(&headNode, &tailNode, currentBlock);
+                    lastQueuedBlockType = currentBlock->blockType;
+                    break;
             }
-            else if (currentBlock->blockType == INDENTED_CODE_BLOCK && lastQueuedBlockType == INDENTED_CODE_BLOCK)
-            {
-                // Two INDENTED_CODE_BLOCKs in a row -- Append them together into one
-                tailNode->blockString = reallocateString(tailNode->blockString, currentBlock->blockString);
-            }
-            else if (currentBlock->blockType == BLANK_LINE && lastQueuedBlockType == INDENTED_CODE_BLOCK)
-            {
-                // BLANK_LINE encountered while "inside" INDENTED_CODE_BLOCK -- append a newline
-                tailNode->blockString = reallocateString(tailNode->blockString, "");
-            }
-            else if (currentBlock->blockType == SETEXT_HEADING_1 && lastQueuedBlockType == PARAGRAPH)
-            {
-                // Change the last line (PARAGRAPH) to a SETEXT_HEADING_1
-                tailNode->blockType = SETEXT_HEADING_1;
-            }
-            else if (currentBlock->blockType == SETEXT_HEADING_2 && lastQueuedBlockType == PARAGRAPH)
-            {
-                // Change the last line (PARAGRAPH) to a SETEXT_HEADING_2
-                tailNode->blockType = SETEXT_HEADING_2;
-            }
-            else if (currentBlock->blockType != BLANK_LINE)
-            {
-                insertBlockNode(&headNode, &tailNode, currentBlock);
-                lastQueuedBlockType = currentBlock->blockType;
-            }
+            
             lastBlockType = currentBlock->blockType;
         }
     }
@@ -135,33 +123,28 @@ void printQueue(block_node_t *currentNode, FILE *outputFile)
             {
                 case SETEXT_HEADING_1:
                 case ATX_HEADING_1: 
-                    writeLine(outputFile, 3, "<h1>", currentNode->blockString, "</h1>");
-                    break;
+                    writeLine(outputFile, 3, "<h1>", currentNode->blockString, "</h1>"); break;
                 case SETEXT_HEADING_2:
                 case ATX_HEADING_2: 
-                    writeLine(outputFile, 3, "<h2>", currentNode->blockString, "</h2>");
-                    break;
+                    writeLine(outputFile, 3, "<h2>", currentNode->blockString, "</h2>"); break;
                 case ATX_HEADING_3: 
-                    writeLine(outputFile, 3, "<h3>", currentNode->blockString, "</h3>");
-                    break;
+                    writeLine(outputFile, 3, "<h3>", currentNode->blockString, "</h3>"); break;
                 case ATX_HEADING_4: 
-                    writeLine(outputFile, 3, "<h4>", currentNode->blockString, "</h4>");
-                    break;
+                    writeLine(outputFile, 3, "<h4>", currentNode->blockString, "</h4>"); break;
                 case ATX_HEADING_5: 
-                    writeLine(outputFile, 3, "<h5>", currentNode->blockString, "</h5>");
-                    break;
+                    writeLine(outputFile, 3, "<h5>", currentNode->blockString, "</h5>"); break;
                 case ATX_HEADING_6: 
-                    writeLine(outputFile, 3, "<h6>", currentNode->blockString, "</h6>");
-                    break;
+                    writeLine(outputFile, 3, "<h6>", currentNode->blockString, "</h6>"); break;
                 case PARAGRAPH:
-                    writeLine(outputFile, 3, "<p>", currentNode->blockString, "</p>");
-                    break;
+                    writeLine(outputFile, 3, "<p>", currentNode->blockString, "</p>"); break;
                 case INDENTED_CODE_BLOCK:
-                    writeLine(outputFile, 3, "<pre><code>", currentNode->blockString, "\n</code></pre>");
-                    break;
+                    writeLine(outputFile, 3, "<pre><code>", currentNode->blockString, "</code></pre>"); break;
                 case HORIZONTAL_RULE:
-                    writeLine(outputFile, 1, "<hr />");
-                    break;
+                    writeLine(outputFile, 1, "<hr />"); break;
+                case HTML_BLOCK:
+                    writeLine(outputFile, 1, currentNode->blockString); break;
+                case HTML_COMMENT:
+                    writeLine(outputFile, 1, currentNode->blockString); break;
                 default:
                     writeLine(outputFile, 1, currentNode->blockString);
             }

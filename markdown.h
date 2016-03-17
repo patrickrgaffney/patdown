@@ -40,10 +40,11 @@ enum MDBlockType
     PARAGRAPH,
     SETEXT_HEADING_1,
     SETEXT_HEADING_2,
+    HTML_BLOCK,
+    HTML_COMMENT,
     
     /* UNIMPLEMENTED */
     FENCED_CODE_BLOCK,
-    HTML_BLOCK,
     BLOCK_COMMENT,
     LINK_REF_DEFINITION,
     BLOCKQUOTE_START,
@@ -83,6 +84,22 @@ enum MDInlineType
 
 /* Synonym for `enum MDInlineType */
 typedef enum MDInlineType mdinline_t;
+
+
+/* Values to determine if and how the new node is inserted into the
+ * queue. All actions other than INSERT_NODE are applied to the tail
+ * of the queue.
+ */
+enum InsertType
+{
+    APPEND_STRING,  /* Append the current node's string to that of the tailNode. */
+    PLACEHOLDER,    /* This is a placeholder node, they do not get inserted. */
+    INSERT_NODE,    /* Insert this node as a new node at tail of queue. */
+    APPEND_NEWLINE, /* Append a newline to the tailNode's string. */
+    UPDATE_TYPE     /* Update the previous node's blockType to the currentNodes. */
+};
+
+typedef enum InsertType insert_t;
 
 
 /* ==================================================================
@@ -127,6 +144,7 @@ struct temporaryMDBlock
 {
     char *blockString;
     mdblock_t blockType;
+    insert_t insertType;
 };
 
 /* Synonym for `struct temporaryMDBlock` */
