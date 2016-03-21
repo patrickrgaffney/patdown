@@ -1,18 +1,18 @@
 /* main.c
  *
  * ~~~~~~ultralightbeams~~~~~~~
- * Author:  Pat Gaffney       *
- * Email:   <pat@hypepat.com> *
- * Date:    02/15/2016        *
- * Project: patdown           *
+ *  AUTHOR: Pat Gaffney       *
+ *   EMAIL: <pat@hypepat.com> *
+ *    DATE: 02/15/2016        *
+ * PROJECT: patdown           *
  * ~~~~~~ultralightbeams~~~~~~~
  * 
- * This file serves as the entry into the program. First, the 
- * command-line arguments are parsed, or if none were supplied, data
- * is read from `stdin`. Then, the appropriate functions are called.
- * 
- * patdown [--help] [--version] <infile> [-o <outfile>] [-f <format>]
- */
+ * =======================================================================
+ * This file serves as the entry to the program. It starts by parsing the 
+ * arguments, and they determine the function of the program from there.
+ * =======================================================================
+ *   patdown [--help] [--version] <infile> [-o <outfile>] [-f <format>]
+ * ======================================================================= */
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -29,45 +29,36 @@ int main(int argc, char const *argv[])
     FILE *outputFile = stdout;
     formattype_t outputFormat = HTML_FORMAT;
     argtype_t *argt;
-    block_node_t *headPtr = NULL;
+    MarkdownBlock *headPtr = NULL;
     
-    // If arguments were provided, determine their purpose
     if (argc > 1)
     {
-        argt = parseArguments(argc, argv);
+        argt = parse_arguments(argc, argv);
         
         for (size_t i = 0; i < argc; ++i)
         {
-            if (argt[i] == INPUT_FILE_NAME)
+            switch (argt[i])
             {
-                inputFile = openFile(argv[i], argt[i]);
-            }
-            else if (argt[i] == OUTPUT_FILE_NAME)
-            {
-                outputFile = openFile(argv[i], argt[i]);
-            }
-            else if (argt[i] == OUTPUT_FORMAT_NAME)
-            {
-                outputFormat = testFormatType(argv[i]);
-            }
-            else if (argt[i] == HELP_FLAG)
-            {
-                printHelpMsg();
-            }
-            else if (argt[i] == VERSION_FLAG)
-            {
-                printVersionMsg();
+                case INPUT_FILE_NAME:    inputFile = openFile(argv[i], argt[i]); break;
+                case OUTPUT_FILE_NAME:   outputFile = openFile(argv[i], argt[i]); break;
+                case OUTPUT_FORMAT_NAME: outputFormat = test_format_type(argv[i]); break;
+                case HELP_FLAG:          print_help(); break;
+                case VERSION_FLAG:       print_version(); break;
+                default: continue;
             }
         }
     }
     
     // Consume all lines from inputFile
-    headPtr = buildQueue(inputFile);
+    headPtr = build_queue(inputFile);
     
     // Process them using outputFormat
     
     // Write all lines to outputFile
-    printQueue(headPtr, outputFile);
+    print_queue(headPtr, outputFile);
+    
+    if (argt) free(argt);
+    free_block(headPtr);
     
     return 0;
 }

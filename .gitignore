@@ -3,9 +3,13 @@
 
 # Executable files
 *.out
+patdown
 
 # OS X files
 .DS_Store
 
 # Example Input/Output files.
 *.md
+
+# valgrind files
+*.dSYM

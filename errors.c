@@ -1,40 +1,47 @@
 /* errors.c
  * 
  * ~~~~~~ultralightbeams~~~~~~~
- * Author:  Pat Gaffney       *
- * Email:   <pat@hypepat.com> *
- * Date:    02/15/2016        *
- * Project: patdown           *
+ *  AUTHOR: Pat Gaffney       *
+ *   EMAIL: <pat@hypepat.com> *
+ *    DATE: 02/15/2016        *
+ * PROJECT: patdown           *
  * ~~~~~~ultralightbeams~~~~~~~
  *
- * This file contains the implementations of the functions defined
- * in errors.h. All of these functions are _mainly_ used as 
- * parameters to the atexit() function in stdlib.h.
- */
+ * =======================================================================
+ * This file contains the implementations of functions that print dialogs 
+ * for the user either of exit from the program or on request via a 
+ * command-line flag argument.
+ * ======================================================================= */
 
 #include <stdio.h>
 
 #include "errors.h"
 
-/* Global variables */
+/* global variables for use in the following functions only.
+ * ======================================================================= */
 const char programName[] = "patdown";
 const char versionNum[]  = "0.0.3";
 
 
-/* Display USAGE dialog */
-void printUsageMsg(void)
+/* print_usage()
+ * =======================================================================
+ * Print the usage dialog.
+ * ======================================================================= */
+void print_usage(void)
 {
-    printf("USAGE: %s [--help] [--version] <infile> [-o <outfile>] [-f <format>]\n",
-        programName);
+    printf("USAGE: %s [--help] [--version] <infile> [-o <outfile>] [-f <format>]\n", programName);
 }
 
 
-/* Display HELP dialog */
-void printHelpMsg(void)
+/* print_help()
+ * =======================================================================
+ * Print the help dialog.
+ * ======================================================================= */
+void print_help(void)
 {
-    printUsageMsg();
+    print_usage();
     printf("\n");
-    printVersionMsg();
+    print_version();
     printf("\n");
     printf("  Stand-alone options:\n");
     printf("  --verison      Print program version\n");
@@ -50,29 +57,31 @@ void printHelpMsg(void)
 }
 
 
-/* Display VERSION dialog */
-void printVersionMsg(void)
+/* print_version()
+ * =======================================================================
+ * Print the version dialog.
+ * ======================================================================= */
+void print_version(void)
 {
     printf("%s version %s\n", programName, versionNum);
 }
 
 
-/* Display INPUT FILE READ error */
-void inputFileError(void)
+/* printf_file_error()
+ * =======================================================================
+ * Print the file error dialog.
+ * ======================================================================= */
+void input_file_error(void)
 {
-    printf("There was a problem reading the input file.\n");
+    printf("ERROR: There was a problem reading the input file.\n");
 }
 
 
-/* Display MEMORY ERROR exit message. */
-void printMemoryError(void)
+/* print_memory_error()
+ * =======================================================================
+ * Print the memory error dialog.
+ * ======================================================================= */
+void print_memory_error(void)
 {
-    printf("No memory available.\n");
-}
-
-
-/* Display STRING ALLOCATION exit message. */
-void printStringError(void)
-{
-    printf("ERROR: A string was not allocated.");
+    printf("ERROR: No memory available.\n");
 }

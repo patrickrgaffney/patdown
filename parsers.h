@@ -1,19 +1,17 @@
 /* parsers.h
  *
  * ~~~~~~ultralightbeams~~~~~~~
- * Author:  Pat Gaffney       *
- * Email:   <pat@hypepat.com> *
- * Date:    03/04/2016        *
- * Project: patdown           *
+ *  AUTHOR: Pat Gaffney       *
+ *   EMAIL: <pat@hypepat.com> *
+ *    DATE: 03/04/2016        *
+ * PROJECT: patdown           *
  * ~~~~~~ultralightbeams~~~~~~~
  *
- * This file contains the definitions of functions that parse a 
- * string of text to determine its block level type.
- * 
- * One helper function is defined to factor out the allocation
- * of the new strings that will be created after a block level type
- * is determined.
- */
+ * =======================================================================
+ * This file contains the definitions of functions and structures that 
+ * parse lines read from the input file to determine their mdblock_t and
+ * strip the string of its metacharacters and WS.
+ * ======================================================================= */
 
 #ifndef PARSERS_H
 #define PARSERS_H
@@ -21,58 +19,54 @@
 #include "markdown.h"
 
 
-/* ==================================================================
- * == MAIN PARSING FUNCTION
- * ==== All individual parsing functions are called from here.
- * =============================================================== */
-
-/* Parse a line of text and attempt to determine its blockType and 
- * strip the input line of all MD metacharacters.
- */
-temp_block_node_t *parseBlockType(const char *line, mdblock_t lastBlockType);
-
-
-/* ==================================================================
- * == BLOCK-LEVEL ELEMENTS
- * =============================================================== */
-
-/* Parse for an ATX_HEADING_x. */
-temp_block_node_t isATXHeader(const char *string);
+/* ParseInfo
+ * =======================================================================
+ * Return value for each of the block-level parsing functions. Contains 
+ * information needed to make a substring out of the line read from the 
+ * input file, stripped of all its metacharacters and WS.
+ * ======================================================================= */
+typedef struct parsingInformation
+{
+    mdblock_t type; // Type of new block.
+    size_t start;   // Index of first character to be copied.
+    size_t stop;    // Index of last character to be copied. 
+} ParseInfo;
 
 
-/* Parse for a PARAGRAPH. */
-temp_block_node_t isParagraph(const char *string, const mdblock_t lastBlockType);
+/* parse_block_type(char *, mdblock_t)
+ * =======================================================================
+ * This is the grand central station of block-level parsing. Given a line
+ * from input, determine its mdblock_t and parse it to remove all WS and
+ * metacharacters.
+ *
+ * Returns a TempMarkdownBlock which contains the mdblock_t, parsed 
+ * string, and insert_t of the input string. The TempMarkdownBlock now 
+ * contains all the necessary information to be added to the stack.
+ * ======================================================================= */
+TempMarkdownBlock *parse_block_type(char *line, mdblock_t lastBlockType);
 
 
-/* Parse for an INDENTED_CODE_BLOCK. */
-temp_block_node_t isIndentedCodeBlock(const char *string, const mdblock_t lastBlockType);
+/* parse_atx_heading(char *)
+ * =======================================================================
+ * ATX Headings are a string between an opening sequence of indentation 
+ * and pound-signs and a closing sequence of WS and pound-signs. All 
+ * leading and trailing WS and pound-signs are marked for removal.
+ *
+ * Returns a structure of information required to create the output string.
+ * NOTE: Can return PARAGRAPH or INDENTED_CODE_BLOCK mdblock_t in addition
+ *       to ATX_HEADING_x.
+ * ======================================================================= */
+ParseInfo *parse_atx_heading(char *s);
 
 
-/* Parse for a HORIZONTAL_RULE. */
-temp_block_node_t isHorizontalRule(const char *line, const char character);
-
-
-/* Parse for a SETEXT_HEADING_x. */
-temp_block_node_t isSetextHeading(const char *line, const char character);
-
-
-/* Parse for a HTML_BLOCK */
-temp_block_node_t isHTMLBlock(const char *string, const mdblock_t lastBlockType);
-
-
-/* ==================================================================
- * == HELPER FUNCTIONS
- * =============================================================== */
-
-/* Return a new string that contains all the characters of `string` 
- * from `string[start]` to `string[stop]`.
- */
-char *allocateString(const char *string, size_t start, size_t stop);
-
-
-/* Combine string1 and string2 into a single string separated
- * by a newline `\n`.
- */
-char *reallocateString(const char *string1, const char *string2);
+/* alloc_parse_info(mdblock_t, size_t, size_t)
+ * =======================================================================
+ * Allocate space for a ParseInfo structure, initialize it with the 
+ * mdblock_t and two sizes that were passed to the function.
+ *
+ * Return a pointer to the newly initializes ParseInfo structure.
+ * NOTE: Function will exit program if the malloc returns NULL.
+ * ======================================================================= */
+ParseInfo *alloc_parse_info(mdblock_t type, size_t start, size_t stop);
 
 #endif

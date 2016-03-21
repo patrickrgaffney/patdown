@@ -1,48 +1,55 @@
 /* errors.h
  *
  * ~~~~~~ultralightbeams~~~~~~~
- * Author:  Pat Gaffney       *
- * Email:   <pat@hypepat.com> *
- * Date:    02/17/2016        *
- * Project: patdown           *
+ *  AUTHOR: Pat Gaffney       *
+ *   EMAIL: <pat@hypepat.com> *
+ *    DATE: 02/15/2016        *
+ * PROJECT: patdown           *
  * ~~~~~~ultralightbeams~~~~~~~
  *
- * This file contains prototypes for helper functions that print
- * error messages to stdout.  These functions are called _mainly_
- * by the atexit() function in stdlib.h, which takes a pointer to a 
- * function, and executes that function immediately before program 
- * termination.
- */
+ * =======================================================================
+ * This file contains the definitions of functions that print dialogs for
+ * the user either of exit from the program or on request via a command-
+ * line flag argument.
+ * ======================================================================= */
 
 #ifndef ERRORS_H
 #define ERRORS_H
 
-/* ==================================================================
- * == FUNCTIONS
- * =============================================================== */
 
-/* Display USAGE dialog */
-void printUsageMsg(void);
-
-
-/* Display HELP dialog */
-void printHelpMsg(void);
+/* print_usage()
+ * =======================================================================
+ * Print the usage dialog.
+ * ======================================================================= */
+void print_usage(void);
 
 
-/* Display VERSION dialog */
-void printVersionMsg(void);
+/* print_help()
+ * =======================================================================
+ * Print the help dialog.
+ * ======================================================================= */
+void print_help(void);
 
 
-/* Display INPUT FILE READ error */
-void inputFileError(void);
+/* print_version()
+ * =======================================================================
+ * Print the version dialog.
+ * ======================================================================= */
+void print_version(void);
 
 
-/* Display MEMORY ERROR exit message. */
-void printMemoryError(void);
+/* printf_file_error()
+ * =======================================================================
+ * Print the file error dialog.
+ * ======================================================================= */
+void input_file_error(void);
 
 
-/* Display STRING ALLOCATION exit message. */
-void printStringError(void);
+/* print_memory_error()
+ * =======================================================================
+ * Print the memory error dialog.
+ * ======================================================================= */
+void print_memory_error(void);
 
 
 #endif

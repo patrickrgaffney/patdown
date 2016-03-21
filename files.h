@@ -1,15 +1,16 @@
 /* files.h
  *
  * ~~~~~~ultralightbeams~~~~~~~
- * Author:  Pat Gaffney       *
- * Email:   <pat@hypepat.com> *
- * Date:    02/15/2016        *
- * Project: patdown           *
+ *  AUTHOR: Pat Gaffney       *
+ *   EMAIL: <pat@hypepat.com> *
+ *    DATE: 02/15/2016        *
+ * PROJECT: patdown           *
  * ~~~~~~ultralightbeams~~~~~~~
  *
- * This file contains the definitions of functions that open various
- * types of files (INPUT, OUPTUT) for processing.
- */
+ * =======================================================================
+ * This file contains the definitions of functions that open and operate
+ * on various types of files (input and output) for processing.
+ * ======================================================================= */
 
 #ifndef FILES_H
 #define FILES_H
@@ -40,6 +41,7 @@ char *readLine(FILE *fp);
  * `*fp`. Exit the function by printing a newline `\n`. 
  */
 void writeLine(FILE *fp, size_t i, ...);
+
 
 /* This is basically a rewrite of the fgets() function in clib, the
  * only difference being that it does NOT add the `\n` newline to the

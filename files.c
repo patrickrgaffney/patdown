@@ -1,15 +1,16 @@
 /* files.h
  *
  * ~~~~~~ultralightbeams~~~~~~~
- * Author:  Pat Gaffney       *
- * Email:   <pat@hypepat.com> *
- * Date:    02/15/2016        *
- * Project: patdown           *
+ *  AUTHOR: Pat Gaffney       *
+ *   EMAIL: <pat@hypepat.com> *
+ *    DATE: 02/15/2016        *
+ * PROJECT: patdown           *
  * ~~~~~~ultralightbeams~~~~~~~
  *
- * This file contains the implementations of functions that open 
- * various types of files (INPUT, OUPTUT) for processing.
- */
+ * =======================================================================
+ * This file contains the implementations of functions that open and 
+ * operate on various types of files (input and output) for processing.
+ * ======================================================================= */
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -46,7 +47,7 @@ FILE *openFile(const char fileName[], const argtype_t fileType)
     }
     
     printf("\'%s\' could not be opened.\n", fileName);
-    atexit(printUsageMsg);
+    atexit(print_usage);
     exit(EXIT_FAILURE);
 }
 
@@ -57,12 +58,16 @@ FILE *openFile(const char fileName[], const argtype_t fileType)
 char *readLine(FILE *fp)
 {
     const int MAX_LINE = 1208;
-    char *line = malloc(sizeof(char) * MAX_LINE);
+    char *line =(char *) malloc(sizeof(char) * MAX_LINE);
     
     if (line != NULL)
     {
         if (fgetline(line, MAX_LINE, fp) != NULL)
         {
+            size_t ln = strlen(line) - 1;
+            if (*line && line[ln] == '\n') 
+                line[ln] = '\0';
+            
             return line;
         }
         else
@@ -72,7 +77,7 @@ char *readLine(FILE *fp)
     }
     else
     {
-        atexit(printMemoryError);
+        atexit(print_memory_error);
         exit(EXIT_FAILURE);
     }
 }
@@ -109,9 +114,8 @@ char *fgetline(char *s, int n, FILE *file)
     int c;
     int num = 0;
     
-    while (--n > 0)
+    while ((c = fgetc(file)))
     {
-        c = getc(file);
         if (c == '\n' || c == EOF) { break; }
         else {
             *newstr++ = c;
@@ -122,12 +126,13 @@ char *fgetline(char *s, int n, FILE *file)
     
     if (num == 0 && c == EOF)
     {
+        free(s);
         return NULL;
     }
-    else if (num == 0)
-    {
-        return newstr;
-    }
+    // else if (num == 0)
+    // {
+    //     return newstr;
+    // }
     else
     {
         return newstr;
