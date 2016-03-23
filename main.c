@@ -39,8 +39,8 @@ int main(int argc, char const *argv[])
         {
             switch (argt[i])
             {
-                case INPUT_FILE_NAME:    inputFile = openFile(argv[i], argt[i]); break;
-                case OUTPUT_FILE_NAME:   outputFile = openFile(argv[i], argt[i]); break;
+                case INPUT_FILE_NAME:    inputFile = open_file(argv[i], argt[i]); break;
+                case OUTPUT_FILE_NAME:   outputFile = open_file(argv[i], argt[i]); break;
                 case OUTPUT_FORMAT_NAME: outputFormat = test_format_type(argv[i]); break;
                 case HELP_FLAG:          print_help(); break;
                 case VERSION_FLAG:       print_version(); break;

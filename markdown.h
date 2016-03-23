@@ -38,18 +38,18 @@ typedef enum MDBlockType
     ATX_HEADING_4,
     ATX_HEADING_5,
     ATX_HEADING_6,
-    
-    /* UNIMPLEMENTED */
     INDENTED_CODE_BLOCK,
     PARAGRAPH,
     SETEXT_HEADING_1,
     SETEXT_HEADING_2,
+    HORIZONTAL_RULE,
+    
+    /* UNIMPLEMENTED */
     HTML_BLOCK,
     HTML_COMMENT,
     FENCED_CODE_BLOCK_START,
     FENCED_CODE_BLOCK,
     FENCED_CODE_BLOCK_END,
-    HORIZONTAL_RULE,
     BLOCK_COMMENT,
     LINK_REF_DEFINITION,
     BLOCKQUOTE_START,
@@ -98,11 +98,11 @@ typedef enum MDInlineType
  * ======================================================================= */
 typedef enum MDInsertType
 {
-    APPEND_STRING,  /* Append the current node's string to that of the tailNode. */
-    PLACEHOLDER,    /* This is a placeholder node, they do not get inserted. */
-    INSERT_NODE,    /* Insert this node as a new node at tail of queue. */
-    APPEND_NEWLINE, /* Append a newline to the tailNode's string. */
-    UPDATE_TYPE     /* Update the previous node's blockType to the currentNodes. */
+    APPEND_STRING,  // Append the current node's string to that of the tailNode.
+    PLACEHOLDER,    // This is a placeholder node, they do not get inserted.
+    INSERT_NODE,    // Insert this node as a new node at tail of queue.
+    APPEND_NEWLINE, // Append a newline to the tailNode's string.
+    UPDATE_TYPE     // Update the previous node's blockType to the currentNodes.
 } insert_t;
 
 

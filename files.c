@@ -21,59 +21,59 @@
 #include "arguments.h"
 #include "errors.h"
 
-/* Open a file for either reading or writing data. If the file cannot
- * be opened, exit with an error dialog. Otherwise, return the file
- * pointer to the calling function.
- */
-FILE *openFile(const char fileName[], const argtype_t fileType)
+
+/* open_file(const char *, const argtype_t)
+ * =======================================================================
+ * Open a file for reading (type "r") or writing (type "w") based on the
+ * argtype_t passed to the funtion.
+ *
+ * Return a pointer to the opened file.
+ * NOTE: If the file cannot be opened, then the program will exit with an
+ *       error message and code.
+ * ======================================================================= */
+FILE *open_file(const char fileName[], const argtype_t fileType)
 {
     FILE *filePtr = NULL;
     
     if (fileType == INPUT_FILE_NAME)
     {
-        // Open file for READING
         filePtr = fopen(fileName, "r");
         
-        if (filePtr == NULL) { printf("ERROR: Input file "); }
-        else { return filePtr; }
+        if (filePtr == NULL) printf("ERROR: Input file ");
+        else return filePtr;
     }
     else if (fileType == OUTPUT_FILE_NAME)
     {
-        // Open file for WRITING
         filePtr = fopen(fileName, "w");
         
-        if (filePtr == NULL) { printf("ERROR: Output file "); }
-        else { return filePtr; }
+        if (filePtr == NULL) printf("ERROR: Output file ");
+        else return filePtr;
     }
-    
     printf("\'%s\' could not be opened.\n", fileName);
     atexit(print_usage);
     exit(EXIT_FAILURE);
 }
 
 
-/* Read exactly one line (until next newline) from the file pointed
- * to by *fp.
- */
-char *readLine(FILE *fp)
+/* read_line(FILE *)
+ * =======================================================================
+ * Read exactly one line from the input file passed to the program. This
+ * function calls get_line() to actually read the line from the file; it
+ * reads until it reaches a newline character, or the EOF character.
+ *
+ * Return an allocated string containing the line read from the file.
+ * NOTE: If the string to hold the line cannot be allocated, it will
+ *       exit the program with a memory error.
+ * ======================================================================= */
+char *read_line(FILE *fp)
 {
-    const int MAX_LINE = 1208;
+    const size_t MAX_LINE = 5000;
     char *line =(char *) malloc(sizeof(char) * MAX_LINE);
     
     if (line != NULL)
     {
-        if (fgetline(line, MAX_LINE, fp) != NULL)
-        {
-            size_t ln = strlen(line) - 1;
-            if (*line && line[ln] == '\n') 
-                line[ln] = '\0';
-            
-            return line;
-        }
-        else
-        {
-            return NULL;
-        }
+        if (get_line(line, MAX_LINE, fp) != NULL) return line;
+        else { return NULL; }
     }
     else
     {
@@ -83,58 +83,44 @@ char *readLine(FILE *fp)
 }
 
 
-/* Write `i` string's received as input to the file pointed to by 
- * `*fp`. Exit the function by printing a newline `\n`. 
- */
-void writeLine(FILE *fp, size_t i, ...)
+/* write_line(FILE *, size_t, ...)
+ * =======================================================================
+ * Write a variable number of strings to the FILE pointer, specifically, 
+ * write i strings to fp. Print a newline at after printing all strings.
+ * ======================================================================= */
+void write_line(FILE *fp, size_t i, ...)
 {
-    // stores information needed by va_start and va_end
     va_list ap;
-    
-    // initialize the va_list object
     va_start(ap, i);
+    size_t j = 0;
     
-    for (size_t j = 0; j < i; ++j)
-    {
-        fprintf(fp, "%s", va_arg(ap, char *));
-    }
+    while (j++ < i) fprintf(fp, "%s", va_arg(ap, char *));
     
     va_end(ap);
     printf("\n");
 }
 
 
-/* This is basically a rewrite of the fgets() function in clib, the
- * only difference being that it does NOT add the `\n` newline to the
- * string it reads from the file.
- */
-char *fgetline(char *s, int n, FILE *file)
+/* write_line(FILE *, size_t, ...)
+ * =======================================================================
+ * Read in at most n bytes from file, or until a newline or EOF is 
+ * reached. The bytes are written to s via the pointer newstr.
+ *
+ * Return the initialized string, or NULL if EOF was reached and no 
+ * characters were read.
+ * ======================================================================= */
+char *get_line(char *s, int n, FILE *file)
 {
-    char *newstr = s;
-    int c;
-    int num = 0;
+    char *newstr = s; // Pointer to be incremented.
+    int c;            // Character to be read
     
-    while ((c = fgetc(file)))
+    while (--n > 0 && (c = fgetc(file)))
     {
-        if (c == '\n' || c == EOF) { break; }
-        else {
-            *newstr++ = c;
-            num++;
-        }
+        if (c == '\n' || c == EOF) break;
+        else { *newstr++ = c; }
     }
     *newstr = '\0';
     
-    if (num == 0 && c == EOF)
-    {
-        free(s);
-        return NULL;
-    }
-    // else if (num == 0)
-    // {
-    //     return newstr;
-    // }
-    else
-    {
-        return newstr;
-    }
+    if (c == EOF && s == newstr) { free(s); return NULL; }
+    else return newstr;
 }

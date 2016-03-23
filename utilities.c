@@ -23,7 +23,7 @@
  * Return NULL is s is NULL, or if stop is less than start. Otherwise 
  * return the new substring.
  * ======================================================================= */
-char *create_substring(const char *s, size_t start, size_t stop)
+char *create_substr(const char *s, size_t start, size_t stop)
 {
     if (s == NULL) return NULL;
     

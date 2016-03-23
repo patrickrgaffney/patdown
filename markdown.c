@@ -38,14 +38,14 @@ MarkdownBlock *build_queue(FILE *inputFile)
     MarkdownBlock *headNode = NULL;
     MarkdownBlock *tailNode = NULL;
     
-    mdblock_t lastBlockType       = UNKNOWN; // Last block that was parsed
-    mdblock_t lastQueuedBlockType = UNKNOWN; // Last block that was added to queue
+    mdblock_t lastBlockType       = UNKNOWN; // Last block that was parsed.
+    mdblock_t lastQueuedBlockType = UNKNOWN; // Last block that was enqueued.
     
     char *line = NULL;
     
     while (1)
     {
-        line = readLine(inputFile);
+        line = read_line(inputFile);
         TempMarkdownBlock *currentBlock;
         
         if (line == NULL) break;
@@ -97,6 +97,7 @@ void insert_block_node(MarkdownBlock **head, MarkdownBlock **tail, TempMarkdownB
         }
         else { atexit(print_memory_error); exit(EXIT_FAILURE); }
     }
+    else printf("NULL\n");
 }
 
 
@@ -118,35 +119,35 @@ void print_queue(MarkdownBlock *currentNode, FILE *outputFile)
             {
                 case SETEXT_HEADING_1:
                 case ATX_HEADING_1: 
-                    writeLine(outputFile, 3, "<h1>", currentNode->blockString, "</h1>"); break;
+                    write_line(outputFile, 3, "<h1>", currentNode->blockString, "</h1>"); break;
                 case SETEXT_HEADING_2:
                 case ATX_HEADING_2: 
-                    writeLine(outputFile, 3, "<h2>", currentNode->blockString, "</h2>"); break;
+                    write_line(outputFile, 3, "<h2>", currentNode->blockString, "</h2>"); break;
                 case ATX_HEADING_3: 
-                    writeLine(outputFile, 3, "<h3>", currentNode->blockString, "</h3>"); break;
+                    write_line(outputFile, 3, "<h3>", currentNode->blockString, "</h3>"); break;
                 case ATX_HEADING_4: 
-                    writeLine(outputFile, 3, "<h4>", currentNode->blockString, "</h4>"); break;
+                    write_line(outputFile, 3, "<h4>", currentNode->blockString, "</h4>"); break;
                 case ATX_HEADING_5: 
-                    writeLine(outputFile, 3, "<h5>", currentNode->blockString, "</h5>"); break;
+                    write_line(outputFile, 3, "<h5>", currentNode->blockString, "</h5>"); break;
                 case ATX_HEADING_6: 
-                    writeLine(outputFile, 3, "<h6>", currentNode->blockString, "</h6>"); break;
+                    write_line(outputFile, 3, "<h6>", currentNode->blockString, "</h6>"); break;
                 case PARAGRAPH:
-                    writeLine(outputFile, 3, "<p>", currentNode->blockString, "</p>"); break;
+                    write_line(outputFile, 3, "<p>", currentNode->blockString, "</p>"); break;
                 case FENCED_CODE_BLOCK:
                 case INDENTED_CODE_BLOCK:
-                    writeLine(outputFile, 3, "<pre><code>", currentNode->blockString, "</code></pre>"); break;
+                    write_line(outputFile, 3, "<pre><code>", currentNode->blockString, "</code></pre>"); break;
                 case HORIZONTAL_RULE:
-                    writeLine(outputFile, 1, "<hr />"); break;
+                    write_line(outputFile, 1, "<hr />"); break;
                 case HTML_BLOCK:
-                    writeLine(outputFile, 1, currentNode->blockString); break;
+                    write_line(outputFile, 1, currentNode->blockString); break;
                 case HTML_COMMENT:
-                    writeLine(outputFile, 1, currentNode->blockString); break;
+                    write_line(outputFile, 1, currentNode->blockString); break;
                 case FENCED_CODE_BLOCK_START:
-                    writeLine(outputFile, 2, "START: ", currentNode->blockString); break;
+                    write_line(outputFile, 2, "START: ", currentNode->blockString); break;
                 case FENCED_CODE_BLOCK_END:
-                    writeLine(outputFile, 2, "END: ", currentNode->blockString); break;
+                    write_line(outputFile, 2, "END: ", currentNode->blockString); break;
                 default:
-                    writeLine(outputFile, 1, currentNode->blockString);
+                    write_line(outputFile, 1, currentNode->blockString);
             }
             currentNode = currentNode->nextBlockNode;
         }

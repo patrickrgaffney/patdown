@@ -20,34 +20,49 @@
 
 #include "arguments.h"
 
-/* ==================================================================
- * == FUNCTIONS
- * =============================================================== */
 
-/* Open a file for either reading or writing data. If the file cannot
- * be opened, exit with an error dialog. Otherwise, return the file
- * pointer to the calling function.
- */
-FILE *openFile(const char fileName[], const argtype_t fileType);
-
-
-/* Read exactly one line (until next newline) from the file pointed
- * to by *fp.
- */
-char *readLine(FILE *fp);
+/* open_file(const char *, const argtype_t)
+ * =======================================================================
+ * Open a file for reading (type "r") or writing (type "w") based on the
+ * argtype_t passed to the funtion.
+ *
+ * Return a pointer to the opened file.
+ * NOTE: If the file cannot be opened, then the program will exit with an
+ *       error message and code.
+ * ======================================================================= */
+FILE *open_file(const char fileName[], const argtype_t fileType);
 
 
-/* Write `i` string's received as input to the file pointed to by 
- * `*fp`. Exit the function by printing a newline `\n`. 
- */
-void writeLine(FILE *fp, size_t i, ...);
+/* read_line(FILE *)
+ * =======================================================================
+ * Read exactly one line from the input file passed to the program. This
+ * function calls get_line() to actually read the line from the file; it
+ * reads until it reaches a newline character, or the EOF character.
+ *
+ * Return an allocated string containing the line read from the file.
+ * NOTE: If the string to hold the line cannot be allocated, it will
+ *       exit the program with a memory error.
+ * ======================================================================= */
+char *read_line(FILE *fp);
 
 
-/* This is basically a rewrite of the fgets() function in clib, the
- * only difference being that it does NOT add the `\n` newline to the
- * string it reads from the file.
- */
-char *fgetline(char *s, int n, FILE *file);
+/* write_line(FILE *, size_t, ...)
+ * =======================================================================
+ * Write a variable number of strings to the FILE pointer, specifically, 
+ * write i strings to fp. Print a newline at after printing all strings.
+ * ======================================================================= */
+void write_line(FILE *fp, size_t i, ...);
+
+
+/* write_line(FILE *, size_t, ...)
+ * =======================================================================
+ * Read in at most n bytes from file, or until a newline or EOF is 
+ * reached. The bytes are written to s via the pointer newstr.
+ *
+ * Return the initialized string, or NULL if EOF was reached and no 
+ * characters were read.
+ * ======================================================================= */
+char *get_line(char *s, int n, FILE *file);
 
 
 #endif
