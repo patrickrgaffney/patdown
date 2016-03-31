@@ -16,6 +16,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdarg.h>
+#include <stdbool.h>
 
 #include "files.h"
 #include "arguments.h"
@@ -86,9 +87,10 @@ char *read_line(FILE *fp)
 /* write_line(FILE *, size_t, ...)
  * =======================================================================
  * Write a variable number of strings to the FILE pointer, specifically, 
- * write i strings to fp. Print a newline at after printing all strings.
+ * write i strings to fp. Print a newline if the boolean variable
+ * evaluates to true.
  * ======================================================================= */
-void write_line(FILE *fp, size_t i, ...)
+void write_line(FILE *fp, bool newline, size_t i, ...)
 {
     va_list ap;
     va_start(ap, i);
@@ -97,7 +99,8 @@ void write_line(FILE *fp, size_t i, ...)
     while (j++ < i) fprintf(fp, "%s", va_arg(ap, char *));
     
     va_end(ap);
-    printf("\n");
+    
+    if (newline) printf("\n");
 }
 
 

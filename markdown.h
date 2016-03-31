@@ -43,15 +43,14 @@ typedef enum MDBlockType
     SETEXT_HEADING_1,
     SETEXT_HEADING_2,
     HORIZONTAL_RULE,
-    
-    /* UNIMPLEMENTED */
-    HTML_BLOCK,
-    HTML_COMMENT,
     FENCED_CODE_BLOCK_START,
     FENCED_CODE_BLOCK,
-    FENCED_CODE_BLOCK_END,
-    BLOCK_COMMENT,
+    FENCED_CODE_BLOCK_STOP,
+    HTML_BLOCK,
     LINK_REF_DEFINITION,
+    
+    /* UNIMPLEMENTED */
+    BLOCK_COMMENT,
     BLOCKQUOTE_START,
     BLOCKQUOTE_TEXT,
     BLOCKQUOTE_END,
@@ -102,7 +101,8 @@ typedef enum MDInsertType
     PLACEHOLDER,    // This is a placeholder node, they do not get inserted.
     INSERT_NODE,    // Insert this node as a new node at tail of queue.
     APPEND_NEWLINE, // Append a newline to the tailNode's string.
-    UPDATE_TYPE     // Update the previous node's blockType to the currentNodes.
+    UPDATE_TYPE,    // Update the previous node's blockType to the currentNodes.
+    INSERT_LINK     // Insert a LinkRef node into the LinkRef tree.
 } insert_t;
 
 
@@ -148,7 +148,25 @@ typedef struct temporaryMDBlock
     char *blockString;
     mdblock_t blockType;
     insert_t insertType;
+    struct linkRefDefinition *linkReference;
 } TempMarkdownBlock;
+
+
+/* LinkRef
+ * =======================================================================
+ * Type to hold information obtained from parsing a link reference 
+ * definition. LinkRef nodes are created and inserted into a binary tree,
+ * which is then sorted and searched to resolve inline link references
+ * found when the inline parsing begins.
+ * ======================================================================= */
+typedef struct linkRefDefinition
+{
+    char *label;
+    char *url;
+    char *title;
+    struct linkRefDefinition *leftNode;
+    struct linkRefDefinition *rightNode;
+} LinkRef;
 
 
 /* buildQueue(FILE *)
@@ -195,11 +213,13 @@ MarkdownBlock *alloc_block(char *s, mdblock_t type);
 /* alloc_temp_block(char *, mdblock_t, insert_t)
  * =======================================================================
  * Allocate space for a TempMarkdownBlock structure, initialize it with 
- * the string, mdblock_t, and insert_t that were passed to the function.
+ * the string, mdblock_t, and insert_t that were passed to the function. A
+ * pointer to a LinkRef node can also be passed as an argument, this node
+ * will be inserted into a tree of LinkRef nodes.
  *
  * Return a pointer to the newly initialized TempMarkdownBlock structure.
  * ======================================================================= */
-TempMarkdownBlock *alloc_temp_block(char *s, mdblock_t type, insert_t insert);
+TempMarkdownBlock *alloc_temp_block(char *s, mdblock_t type, insert_t insert, LinkRef *alink);
 
 
 /* free_block(MarkdownBlock)
@@ -223,5 +243,50 @@ void free_block(MarkdownBlock *currentNode);
  *      3. Free space at currentNode.
  * ======================================================================= */
 void free_inline_queue(MarkdownInline *currentNode);
+
+
+/* insert_link_ref(LinkRef, char *, char *, char *)
+ * =======================================================================
+ * Create a new LinkRef node containing the three strings passed as 
+ * arguments. Insert the node into the tree according to the value of the 
+ * link reference.
+ * ======================================================================= */
+void insert_link_ref(LinkRef **tree, LinkRef *node);
+
+
+/* alloc_link_ref(char *, char *, char *)
+ * =======================================================================
+ * Allocate space for a new LinkRef and initialize it with the three
+ * strings passed as arguments.
+ * 
+ * Return a pointer to the newly initialized LinkRef structure.
+ * NOTE: Function will exit program if the malloc returns NULL.
+ * ======================================================================= */
+LinkRef *alloc_link_ref(char *label, char *url, char *title);
+
+
+/* print_tree(LinkRef *currentNode)
+ * =======================================================================
+ * Traverse the tree of LinkRef nodes **in order** and print their 
+ * contents to stdout.
+ * 
+ * NOTE: This function is for debugging purposes only. It it not called
+ *       during normal exection, but is included in the API for testing.
+ * ======================================================================= */
+void print_tree(LinkRef *currentNode);
+
+
+/* free_tree(LinkRef *)
+ * =======================================================================
+ * Free the space at the LinkRef structure (if it is not NULL) in the 
+ * following order:
+ *      1. Free label member (if not NULL).
+ *      2. Free url member (if not NULL).
+ *      3. Free title member (if not NULL).
+ *      4. Free space at leftNode by making a recursive call.
+ *      5. Free space at rightNode by making a recursive call.
+ *      3. Free space at currentNode.
+ * ======================================================================= */
+void free_tree(LinkRef *currentNode);
 
 #endif

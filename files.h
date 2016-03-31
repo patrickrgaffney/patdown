@@ -17,6 +17,7 @@
 
 #include <stdio.h>
 #include <stdarg.h>
+#include <stdbool.h>
 
 #include "arguments.h"
 
@@ -49,9 +50,10 @@ char *read_line(FILE *fp);
 /* write_line(FILE *, size_t, ...)
  * =======================================================================
  * Write a variable number of strings to the FILE pointer, specifically, 
- * write i strings to fp. Print a newline at after printing all strings.
+ * write i strings to fp. Print a newline if the boolean variable
+ * evaluates to true.
  * ======================================================================= */
-void write_line(FILE *fp, size_t i, ...);
+void write_line(FILE *fp, bool newline, size_t i, ...);
 
 
 /* write_line(FILE *, size_t, ...)

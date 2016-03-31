@@ -17,6 +17,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <stdbool.h>
 
 #include "markdown.h"
 #include "files.h"
@@ -35,23 +36,20 @@
  * ======================================================================= */
 MarkdownBlock *build_queue(FILE *inputFile)
 {
-    MarkdownBlock *headNode = NULL;
-    MarkdownBlock *tailNode = NULL;
-    
-    mdblock_t lastBlockType       = UNKNOWN; // Last block that was parsed.
-    mdblock_t lastQueuedBlockType = UNKNOWN; // Last block that was enqueued.
-    
-    char *line = NULL;
+    MarkdownBlock *headNode = NULL; // Head of the queue of MarkdownBlock's.
+    MarkdownBlock *tailNode = NULL; // Tail of the queue of MarkdownBlock's.
+    LinkRef *linkTree       = NULL; // Root of the tree of LinkRef's.
+    char *line              = NULL; // A line read from the input File.
     
     while (1)
     {
         line = read_line(inputFile);
         TempMarkdownBlock *currentBlock;
         
-        if (line == NULL) break;
+        if (!line) break;
         else
         {
-            currentBlock = parse_block_type(line, lastBlockType);
+            currentBlock = parse_block_type(line);
             free(line);
             
             switch (currentBlock->insertType)
@@ -63,15 +61,16 @@ MarkdownBlock *build_queue(FILE *inputFile)
                 case UPDATE_TYPE:
                     tailNode->blockType = currentBlock->blockType; break;
                 case PLACEHOLDER: break;
+                case INSERT_LINK:
+                    insert_link_ref(&linkTree, currentBlock->linkReference); break;
                 case INSERT_NODE:
-                    insert_block_node(&headNode, &tailNode, currentBlock);
-                    lastQueuedBlockType = currentBlock->blockType;
-                    break;
+                    insert_block_node(&headNode, &tailNode, currentBlock); break;
             }
-            lastBlockType = currentBlock->blockType;
         }
         free(currentBlock);
     }
+    print_tree(linkTree);
+    free_tree(linkTree);
     return headNode;
 }
 
@@ -83,13 +82,12 @@ MarkdownBlock *build_queue(FILE *inputFile)
  * ======================================================================= */
 void insert_block_node(MarkdownBlock **head, MarkdownBlock **tail, TempMarkdownBlock *temp)
 {
-    if (temp->blockString != NULL)
+    if (temp->blockString)
     {
         MarkdownBlock *newNode = alloc_block(temp->blockString, temp->blockType);
         
-        if (newNode != NULL)
-        {   
-            // If queue is empty, insert at head; otherwise insert at tail.
+        if (newNode)
+        {
             if (*head == NULL) *head = newNode;
             else (*tail)->nextBlockNode = newNode;
 
@@ -97,7 +95,6 @@ void insert_block_node(MarkdownBlock **head, MarkdownBlock **tail, TempMarkdownB
         }
         else { atexit(print_memory_error); exit(EXIT_FAILURE); }
     }
-    else printf("NULL\n");
 }
 
 
@@ -110,44 +107,43 @@ void insert_block_node(MarkdownBlock **head, MarkdownBlock **tail, TempMarkdownB
  * ======================================================================= */
 void print_queue(MarkdownBlock *currentNode, FILE *outputFile)
 {
-    if (currentNode == NULL) printf("\nNo input was provided.\n");
+    if (!currentNode) printf("\nNo input was provided.\n");
     else
     {
-        while (currentNode != NULL)
+        while (currentNode)
         {
             switch (currentNode->blockType)
             {
                 case SETEXT_HEADING_1:
                 case ATX_HEADING_1: 
-                    write_line(outputFile, 3, "<h1>", currentNode->blockString, "</h1>"); break;
+                    write_line(outputFile, true, 3, "<h1>", currentNode->blockString, "</h1>"); break;
                 case SETEXT_HEADING_2:
                 case ATX_HEADING_2: 
-                    write_line(outputFile, 3, "<h2>", currentNode->blockString, "</h2>"); break;
+                    write_line(outputFile, true, 3, "<h2>", currentNode->blockString, "</h2>"); break;
                 case ATX_HEADING_3: 
-                    write_line(outputFile, 3, "<h3>", currentNode->blockString, "</h3>"); break;
+                    write_line(outputFile, true, 3, "<h3>", currentNode->blockString, "</h3>"); break;
                 case ATX_HEADING_4: 
-                    write_line(outputFile, 3, "<h4>", currentNode->blockString, "</h4>"); break;
+                    write_line(outputFile, true, 3, "<h4>", currentNode->blockString, "</h4>"); break;
                 case ATX_HEADING_5: 
-                    write_line(outputFile, 3, "<h5>", currentNode->blockString, "</h5>"); break;
+                    write_line(outputFile, true, 3, "<h5>", currentNode->blockString, "</h5>"); break;
                 case ATX_HEADING_6: 
-                    write_line(outputFile, 3, "<h6>", currentNode->blockString, "</h6>"); break;
+                    write_line(outputFile, true, 3, "<h6>", currentNode->blockString, "</h6>"); break;
                 case PARAGRAPH:
-                    write_line(outputFile, 3, "<p>", currentNode->blockString, "</p>"); break;
-                case FENCED_CODE_BLOCK:
+                    write_line(outputFile, true, 3, "<p>", currentNode->blockString, "</p>"); break;
                 case INDENTED_CODE_BLOCK:
-                    write_line(outputFile, 3, "<pre><code>", currentNode->blockString, "</code></pre>"); break;
+                    write_line(outputFile, true, 3, "<pre><code>", currentNode->blockString, "</code></pre>"); break;
                 case HORIZONTAL_RULE:
-                    write_line(outputFile, 1, "<hr />"); break;
+                    write_line(outputFile, true, 1, "<hr />"); break;
                 case HTML_BLOCK:
-                    write_line(outputFile, 1, currentNode->blockString); break;
-                case HTML_COMMENT:
-                    write_line(outputFile, 1, currentNode->blockString); break;
+                    write_line(outputFile, true, 1, currentNode->blockString); break;
                 case FENCED_CODE_BLOCK_START:
-                    write_line(outputFile, 2, "START: ", currentNode->blockString); break;
-                case FENCED_CODE_BLOCK_END:
-                    write_line(outputFile, 2, "END: ", currentNode->blockString); break;
+                    write_line(outputFile, false, 3, "<pre><code class=\"language-", currentNode->blockString, "\">"); break;
+                case FENCED_CODE_BLOCK:
+                    write_line(outputFile, true, 1, currentNode->blockString); break;
+                case FENCED_CODE_BLOCK_STOP:
+                    write_line(outputFile, true, 1, "</code></pre>"); break;
                 default:
-                    write_line(outputFile, 1, currentNode->blockString);
+                    write_line(outputFile, true, 1, currentNode->blockString);
             }
             currentNode = currentNode->nextBlockNode;
         }
@@ -165,11 +161,19 @@ void print_queue(MarkdownBlock *currentNode, FILE *outputFile)
 MarkdownBlock *alloc_block(char *s, mdblock_t type)
 {
     MarkdownBlock *block  = malloc(sizeof(MarkdownBlock));
-    block->blockString    = s;
-    block->blockType      = type;
-    block->nextBlockNode  = NULL;
-    block->nextInlineNode = NULL;
-    return block;
+    if (block)
+    {
+        block->blockString    = s;
+        block->blockType      = type;
+        block->nextBlockNode  = NULL;
+        block->nextInlineNode = NULL;
+        return block;
+    }
+    else
+    {
+        atexit(print_memory_error);
+        exit(EXIT_FAILURE);
+    }
 }
 
 
@@ -181,14 +185,15 @@ MarkdownBlock *alloc_block(char *s, mdblock_t type)
  * Return a pointer to the newly initialized TempMarkdownBlock structure.
  * NOTE: Function will exit program if the malloc returns NULL.
  * ======================================================================= */
-TempMarkdownBlock *alloc_temp_block(char *s, mdblock_t type, insert_t insert)
+TempMarkdownBlock *alloc_temp_block(char *s, mdblock_t type, insert_t insert, LinkRef *alink)
 {
     TempMarkdownBlock *block = malloc(sizeof(TempMarkdownBlock));
     if (block)
     {
-        block->blockString       = s;
-        block->blockType         = type;
-        block->insertType        = insert;
+        block->blockString   = s;
+        block->blockType     = type;
+        block->insertType    = insert;
+        block->linkReference = alink;
         return block;
     }
     else
@@ -235,5 +240,103 @@ void free_inline_queue(MarkdownInline *currentNode)
         if (currentNode->inlineString != NULL) free(currentNode->inlineString);
         free_inline_queue(currentNode->nextInlineNode);
         free(currentNode);
+    }
+}
+
+
+/* insert_link_ref(LinkRef, char *, char *, char *)
+ * =======================================================================
+ * Create a new LinkRef node containing the three strings passed as 
+ * arguments. Insert the node into the tree according to the value of the 
+ * link reference.
+ * ======================================================================= */
+void insert_link_ref(LinkRef **tree, LinkRef *node)
+{
+    if (node)
+    {
+        if (!*tree) *tree = node;
+        else
+        {
+            int rc = strcmp(node->label, (*tree)->label);
+            
+            if (rc == 0) printf("duplicate value.\n");
+            else if (rc < 0) insert_link_ref(&((*tree)->leftNode), node);
+            else if (rc > 0) insert_link_ref(&((*tree)->rightNode), node);
+        }
+    }
+    else printf("LinkRef node was never initialized.\n");
+}
+
+
+/* alloc_link_ref(char *, char *, char *)
+ * =======================================================================
+ * Allocate space for a new LinkRef and initialize it with the three
+ * strings passed as arguments.
+ * 
+ * Return a pointer to the newly initialized LinkRef structure.
+ * NOTE: Function will exit program if the malloc returns NULL.
+ * ======================================================================= */
+LinkRef *alloc_link_ref(char *label, char *url, char *title)
+{
+    LinkRef *alink = malloc(sizeof(LinkRef));
+    if (alink)
+    {
+        alink->label     = label;
+        alink->url       = url;
+        alink->title     = title;
+        alink->leftNode  = NULL;
+        alink->rightNode = NULL;
+        return alink;
+    }
+    else
+    {
+        atexit(print_memory_error);
+        exit(EXIT_FAILURE);
+    }
+}
+
+
+/* free_tree(LinkRef *)
+ * =======================================================================
+ * Free the space at the LinkRef structure (if it is not NULL) in the 
+ * following order:
+ *      1. Free label member (if not NULL).
+ *      2. Free url member (if not NULL).
+ *      3. Free title member (if not NULL).
+ *      4. Free space at leftNode by making a recursive call.
+ *      5. Free space at rightNode by making a recursive call.
+ *      3. Free space at currentNode.
+ * ======================================================================= */
+void free_tree(LinkRef *currentNode)
+{
+    if (currentNode)
+    {
+        if (currentNode->label) free(currentNode->label);
+        if (currentNode->url) free(currentNode->url);
+        if (currentNode->title) free(currentNode->title);
+        free_tree(currentNode->leftNode);
+        free_tree(currentNode->rightNode);
+        free(currentNode);
+    }
+}
+
+
+/* print_tree(LinkRef *currentNode)
+ * =======================================================================
+ * Traverse the tree of LinkRef nodes **in order** and print their 
+ * contents to stdout.
+ * 
+ * NOTE: This function is for debugging purposes only. It it not called
+ *       during normal exection, but is included in the API for testing.
+ * ======================================================================= */
+void print_tree(LinkRef *currentNode)
+{
+    if (currentNode)
+    {
+        print_tree(currentNode->leftNode);
+        printf("\nlink label = \'%s\'\n", currentNode->label);
+        printf("link url   = \'%s\'\n", currentNode->url);
+        printf("link title = \'%s\'\n\n", currentNode->title);
+        print_tree(currentNode->rightNode);
     }
 }
