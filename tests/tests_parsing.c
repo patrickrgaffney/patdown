@@ -19,7 +19,7 @@
 #include "../parsers.h"
 #include "../markdown.h"
 #include "tests.h"
-#include "test_parsing.h"
+#include "tests_parsing.h"
 
 /* Static local functions for this file only.
  * ======================================================================= */

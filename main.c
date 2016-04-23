@@ -59,6 +59,8 @@ int main(int argc, char const *argv[])
     
     if (argt) free(argt);
     free_block(headPtr);
+    fclose(inputFile);
+    fclose(outputFile);
     
     return 0;
 }
