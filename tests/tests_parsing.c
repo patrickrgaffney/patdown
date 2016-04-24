@@ -15,6 +15,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdbool.h>
+#include <stdlib.h>
 
 #include "../parsers.h"
 #include "../markdown.h"
@@ -27,6 +28,7 @@ static void atx_heading_tests(void);
 static void horizontal_rule_tests(void);
 static void setext_heading_tests(void);
 static void indented_code_block_tests(void);
+static void fenced_code_block_tests(void);
 static void clear_parsing_variables(void);
 static void test_parser(char *line, const mdblock_t returnType, const char *returnString);
 
@@ -84,6 +86,9 @@ void main_parsing(void)
     
     printf("\n%sIndented Code Blocks:%s\n", colors.bold, colors.reset);
     indented_code_block_tests();
+    
+    printf("\n%sFenced Code Blocks:%s\n", colors.bold, colors.reset);
+    fenced_code_block_tests();
 }
 
 
@@ -158,6 +163,7 @@ static void horizontal_rule_tests(void)
     }
     test_parser("paragraph", PARAGRAPH, "paragraph");
     test_parser("----", SETEXT_HEADING_2, "-");
+    clear_parsing_variables();
 }
 
 
@@ -240,6 +246,7 @@ static void atx_heading_tests(void)
     }
     test_parser("## ", ATX_HEADING_2, "");
     test_parser("## ##", ATX_HEADING_2, "");
+    clear_parsing_variables();
 }
 
 /* [static] setext_headings_tests()
@@ -297,13 +304,14 @@ static void setext_heading_tests(void)
     }
     test_parser("paragraph", PARAGRAPH, "paragraph");
     test_parser(" = = = = ", PARAGRAPH, "= = = = ");
+    clear_parsing_variables();
 }
 
 
 /* [static] setext_headings_tests()
  * =======================================================================
- * Test the parse_setext_heading() function primarily, while checking the
- * edge cases for SETEXT_HEADING_x's.
+ * Test the parse_indented_code_block() function primarily, while checking 
+ * the edge cases for INDENTED_CODE_BLOCK.
  * ======================================================================= */
 static void indented_code_block_tests(void)
 {
@@ -366,6 +374,128 @@ static void indented_code_block_tests(void)
     test_parser("    code  ", INDENTED_CODE_BLOCK, "code  ");
 }
 
+/* [static] fenced_code_block_tests()
+ * =======================================================================
+ * Test the parse_code_fence() function primarily, while checking the
+ * edge cases for FENCED_CODE_BLOCK.
+ * ======================================================================= */
+static void fenced_code_block_tests(void)
+{
+    clear_parsing_variables();
+    if (tests.verbose)
+    {
+        printf("\n   A code fence is sequence of at least three consecutive \'`\' or \'~\' characters.\n\n");
+    }
+    test_parser("```", FENCED_CODE_BLOCK_START, "");
+    test_parser("<<", FENCED_CODE_BLOCK, "<<");
+    test_parser("     >>", FENCED_CODE_BLOCK, "     >>");
+    test_parser("```", FENCED_CODE_BLOCK_STOP, "");
+    clear_parsing_variables();
+    
+    if (tests.verbose)
+    {
+        printf("\n   Same code block, only now using \'~\' as the fence character.\n\n");
+    }
+    test_parser("~~~", FENCED_CODE_BLOCK_START, "");
+    test_parser("<<", FENCED_CODE_BLOCK, "<<");
+    test_parser("     >>", FENCED_CODE_BLOCK, "     >>");
+    test_parser("~~~", FENCED_CODE_BLOCK_STOP, "");
+    clear_parsing_variables();
+    
+    if (tests.verbose)
+    {
+        printf("\n   The closing code fence must use the same character as the opening fence.\n\n");
+    }
+    test_parser("~~~", FENCED_CODE_BLOCK_START, "");
+    test_parser("aa", FENCED_CODE_BLOCK, "aa");
+    test_parser("```", FENCED_CODE_BLOCK, "```");
+    test_parser("~~~", FENCED_CODE_BLOCK_STOP, "");
+    clear_parsing_variables();
+    
+    if (tests.verbose)
+    {
+        printf("\n   A code block can have all empty lines as its content.\n\n");
+    }
+    test_parser("```", FENCED_CODE_BLOCK_START, "");
+    test_parser("", FENCED_CODE_BLOCK, "");
+    test_parser("    ", FENCED_CODE_BLOCK, "    ");
+    test_parser(" ", FENCED_CODE_BLOCK, " ");
+    test_parser("```", FENCED_CODE_BLOCK_STOP, "");
+    clear_parsing_variables();
+    
+    if (tests.verbose)
+    {
+        printf("\n   A code block can be empty.\n\n");
+    }
+    test_parser("~~~", FENCED_CODE_BLOCK_START, "");
+    test_parser("~~~", FENCED_CODE_BLOCK_STOP, "");
+    clear_parsing_variables();
+    
+    if (tests.verbose)
+    {
+        printf("\n   Fences can be indented up to 3 spaces. Any more an its an indented code block.\n\n");
+    }
+    test_parser(" ~~~", FENCED_CODE_BLOCK_START, "");
+    test_parser("  ~~~", FENCED_CODE_BLOCK_STOP, "");
+    test_parser("    ~~~", INDENTED_CODE_BLOCK, "~~~");
+    clear_parsing_variables();
+    
+    if (tests.verbose)
+    {
+        printf("\n   Fences must be at least 3 characters long, and cannot contain internal spaces.\n\n");
+    }
+    test_parser("` ` ` ", PARAGRAPH, "` ` ` ");
+    test_parser("~~ ~", PARAGRAPH, "~~ ~");
+    clear_parsing_variables();
+    
+    if (tests.verbose)
+    {
+        printf("\n   Fenced code blocks can interrupt paragraphs, and be followed directly by");
+        printf("\n   paragraphs, without a blank line in between.\n\n");
+    }
+    test_parser("foo", PARAGRAPH, "foo");
+    test_parser("```", FENCED_CODE_BLOCK_START, "");
+    test_parser("code", FENCED_CODE_BLOCK, "code");
+    test_parser("```", FENCED_CODE_BLOCK_STOP, "");
+    test_parser("bar", PARAGRAPH, "bar");
+    clear_parsing_variables();
+    
+    if (tests.verbose)
+    {
+        printf("\n   An **info string** can be provided after the opening fence. Opening and closing\n");
+        printf("\n   spaces will be stripped, and the first word, prefixed with `language-`, is used\n");
+        printf("\n   as the value for the `class` attribute of the `code` element within the enclosing\n");
+        printf("\n   `pre` element.\n\n");
+    }
+    test_parser("```ruby", FENCED_CODE_BLOCK_START, "ruby");
+    test_parser("def foo(x)", FENCED_CODE_BLOCK, "def foo(x)");
+    test_parser("    return", FENCED_CODE_BLOCK, "    return");
+    test_parser("end", FENCED_CODE_BLOCK, "end");
+    test_parser("```", FENCED_CODE_BLOCK_STOP, "");
+    clear_parsing_variables();
+    
+    if (tests.verbose)
+    {
+        printf("\n   Any extra words/characters after the first word of the info string will be ignored.\n\n");
+    }
+    test_parser("~~~ ruby li=3 ~~~", FENCED_CODE_BLOCK_START, "ruby");
+    test_parser("def foo(x)", FENCED_CODE_BLOCK, "def foo(x)");
+    test_parser("    return", FENCED_CODE_BLOCK, "    return");
+    test_parser("end", FENCED_CODE_BLOCK, "end");
+    test_parser("~~~~~~~~~", FENCED_CODE_BLOCK_STOP, "");
+    clear_parsing_variables();
+    
+    if (tests.verbose)
+    {
+        printf("\n   Closing fences CANNOT contain info strings, they will be parsed as starting fences.\n\n");
+    }
+    test_parser("```", FENCED_CODE_BLOCK_START, "");
+    test_parser("code", FENCED_CODE_BLOCK, "code");
+    test_parser("```ruby", FENCED_CODE_BLOCK_START, "ruby");
+    test_parser("```", FENCED_CODE_BLOCK_STOP, "");
+    clear_parsing_variables();
+}
+
 
 /* [static] test_parser(char *, const mdblock_t, const char *)
  * =======================================================================
@@ -389,7 +519,8 @@ static void test_parser(char *line, const mdblock_t returnType, const char *retu
     else if (strlen(line) < 11) printf("\t\t");
     else printf("\t");
     
-    printf("is a %-20s--> becomes \'%s\'\n", blockTypes[block->blockType], block->blockString);
+    printf("is a %-25s--> becomes \'%s\'\n", blockTypes[block->blockType], block->blockString);
+    free(block);
 }
 
 

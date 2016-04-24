@@ -337,7 +337,7 @@ ParseInfo *parse_code_fence(char *s, char mark)
     {
         return alloc_parse_info(FENCED_CODE_BLOCK, 0, strlen(s), APPEND_STRING);
     }
-    else if (numberMarks < 3) { printf("NULL;\n"); return NULL;}
+    else if (numberMarks < 3) return NULL;
     
     // Optional number of spaces before info string.
     while (c == ' ') { infoStrWS++; c = *sPtr++; }
@@ -346,11 +346,11 @@ ParseInfo *parse_code_fence(char *s, char mark)
     while (isalpha(c)) { infoString++; c = *sPtr++; }
     
     start = indentation + numberMarks + infoStrWS;
-    if (infoString == 0 && mark != lastFencedBlockMark) return NULL;
-    else if (infoString == 0)
+    if (infoString == 0 && mark != lastFencedBlockMark && lastBlock == FENCED_CODE_BLOCK) return NULL;
+    else if (infoString == 0 && (lastBlock == FENCED_CODE_BLOCK || lastBlock == FENCED_CODE_BLOCK_START))
     {
         lastFencedBlockMark = ' ';
-        return alloc_parse_info(FENCED_CODE_BLOCK_STOP, 0, 1, INSERT_NODE);
+        return alloc_parse_info(FENCED_CODE_BLOCK_STOP, 0, 0, INSERT_NODE);
     }
     else 
     {
@@ -360,7 +360,7 @@ ParseInfo *parse_code_fence(char *s, char mark)
 }
 
 
-/* parse_html_block(char *,)
+/* parse_html_block(char *)
  * =======================================================================
  * HTML blocks start with a line where the first character is a left-angle
  * bracket, `<`.  Every consecutive line will be appended to this 
@@ -525,7 +525,15 @@ static ParseInfo *check_last_block_type(char *line)
 {
     ParseInfo *parse = NULL;
     
-    if (strlen(line) == 0) return alloc_parse_info(BLANK_LINE, 0, 0, PLACEHOLDER);
+    if (strlen(line) == 0) 
+    {
+        // FENCED_CODE_BLOCK's retain their blank lines.
+        if (lastBlock == FENCED_CODE_BLOCK || lastBlock == FENCED_CODE_BLOCK_START)
+        {
+            return alloc_parse_info(FENCED_CODE_BLOCK, 0, 0, INSERT_NODE);
+        }
+        else return alloc_parse_info(BLANK_LINE, 0, 0, PLACEHOLDER);
+    }
     
     switch (lastBlock)
     {

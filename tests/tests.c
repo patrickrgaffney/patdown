@@ -13,7 +13,7 @@ static void parse_test_arguments(const int argc, const char *argv[]);
 static void print_argc_error(void);
 static void print_test_usage(void);
 
-/* Global variable; initialized here and used elsewhere.
+/* Global variables; initialized here and used elsewhere.
  * ======================================================================= */
 Tests tests = {
     .all     = false,
