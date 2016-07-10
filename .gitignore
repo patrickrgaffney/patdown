@@ -4,6 +4,7 @@
 # Executable files
 *.out
 patdown
+test
 
 # OS X files
 .DS_Store
