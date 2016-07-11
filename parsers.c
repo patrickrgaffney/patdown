@@ -193,10 +193,14 @@ markdown_t *parse_setext_header(char *s)
     setextChar = (s[i] == '-' || s[i] == '=') ? s[i] : -1;
     if (setextChar == -1) return NULL;
     
-    // *n* number of spaces and *n* number of setextChar's
-    while (s[i] == ' ' || s[i] == setextChar) {
-        if (s[i++] == setextChar) numChars++;
+    // *n* number of setextChar's
+    while (s[i] == setextChar) {
+        numChars++;
+        i++;
     }
+    
+    // *n* number of spaces
+    while (s[i] == ' ') i++;
     
     if (s[i] != '\0' || numChars < 1) return NULL;
 
@@ -217,7 +221,7 @@ markdown_t *parse_indented_code_block(char *s)
     if (lastBlock == PARAGRAPH) return parse_paragraph(s);
     size_t i = indentation;
 
-    if (!s[i]) return parse_blank_line(s);
+    if (s[i] == '\0') return parse_blank_line(s);
     else if (i < 4) return NULL;
     
     return init_markdown(s, 4, strlen(s) - 1, INDENTED_CODE_BLOCK);

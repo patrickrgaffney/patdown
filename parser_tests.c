@@ -236,6 +236,82 @@ void test_setext_headers(void)
     // four spaces is too much
     run_test(PARAGRAPH, "paragraph", "paragraph") ? passed++ : failed++;
     run_test(PARAGRAPH, "       =", "=") ? passed++ : failed++;
+    
+    // the setext heading underline cannot contain internal spaces
+    run_test(PARAGRAPH, "foo", "foo") ? passed++ : failed++;
+    run_test(PARAGRAPH, "= =", "= =") ? passed++ : failed++;
+    run_test(PARAGRAPH, "bar", "bar") ? passed++ : failed++;
+    run_test(PARAGRAPH, "--- -", "--- -") ? passed++ : failed++;
+    clear_parser();
+    
+    // setext headings cannot be empty
+    run_test(PARAGRAPH, "===", "===") ? passed++ : failed++;
+    clear_parser();
+    
+    // multi-line paragraphs
+    run_test(PARAGRAPH, "foo", "foo") ? passed++ : failed++;
+    run_test(PARAGRAPH, "bar", "bar") ? passed++ : failed++;
+    run_test(SETEXT_HEADER_2, "---", NULL) ? passed++ : failed++;
+    run_test(PARAGRAPH, "bar", "bar") ? passed++ : failed++;
+    clear_parser();
+}
+
+void test_indented_code_blocks(void)
+{
+    // correct uses
+    run_test(INDENTED_CODE_BLOCK, "    code", "code") ? passed++ : failed++;
+    run_test(INDENTED_CODE_BLOCK, "      block", "  block") ? passed++ : failed++;
+    clear_parser();
+    
+    // any more than four spaces are included in the content
+    run_test(INDENTED_CODE_BLOCK, "    main() {", "main() {") ? passed++ : failed++;
+    run_test(INDENTED_CODE_BLOCK, "        int z = 8;", "    int z = 8;") ? passed++ : failed++;
+    clear_parser();
+    
+    // separate chunks can be separated by blank lines -- as long as they are indented
+    run_test(INDENTED_CODE_BLOCK, "    z = 33;", "z = 33;") ? passed++ : failed++;
+    run_test(INDENTED_CODE_BLOCK, "    ", "") ? passed++ : failed++;
+    run_test(INDENTED_CODE_BLOCK, "    print(z);", "print(z);") ? passed++ : failed++;
+    run_test(INDENTED_CODE_BLOCK, "    ", "") ? passed++ : failed++;
+    run_test(INDENTED_CODE_BLOCK, "      ", "  ") ? passed++ : failed++;
+    run_test(INDENTED_CODE_BLOCK, "    exit();", "exit();") ? passed++ : failed++;
+    clear_parser();
+    
+    // indented code blocks cannot interrupt paragraphs
+    run_test(PARAGRAPH, "foo", "foo") ? passed++ : failed++;
+    run_test(PARAGRAPH, "    code?", "code?") ? passed++ : failed++;
+    clear_parser();
+    
+    // any non-blank line with < 4 spaces of indentation ends a code block
+    run_test(INDENTED_CODE_BLOCK, "    code", "code") ? passed++ : failed++;
+    run_test(PARAGRAPH, "foo", "foo") ? passed++ : failed++;
+    clear_parser();
+    run_test(INDENTED_CODE_BLOCK, "    code", "code") ? passed++ : failed++;
+    run_test(ATX_HEADER_1, "# heading", "heading") ? passed++ : failed++;
+    clear_parser();
+    
+    // a code block can occur immediately after a heading
+    run_test(ATX_HEADER_1, "# heading", "heading") ? passed++ : failed++;
+    run_test(INDENTED_CODE_BLOCK, "    code", "code") ? passed++ : failed++;
+    clear_parser();
+    run_test(PARAGRAPH, "foo", "foo") ? passed++ : failed++;
+    run_test(SETEXT_HEADER_2, "---", NULL) ? passed++ : failed++;
+    run_test(INDENTED_CODE_BLOCK, "    code", "code") ? passed++ : failed++;
+    clear_parser();
+    
+    // the first line can be indented more than four spaces
+    run_test(INDENTED_CODE_BLOCK, "        code", "    code") ? passed++ : failed++;
+    run_test(INDENTED_CODE_BLOCK, "    code", "code") ? passed++ : failed++;
+    clear_parser();
+    
+    // trailing spaces are included in the content
+    run_test(INDENTED_CODE_BLOCK, "    code  ", "code  ") ? passed++ : failed++;
+    clear_parser();
+    
+    // Blank lines preceding an indented code block are included
+    run_test(BLANK_LINE, "    ", NULL) ? passed++ : failed++;
+    run_test(INDENTED_CODE_BLOCK, "    code", "code") ? passed++ : failed++;
+    clear_parser();
 }
 
 int main(int argc, char const **argv)
@@ -247,6 +323,8 @@ int main(int argc, char const **argv)
     test_horizontal_rule();
     printf("\n%sSETEXT HEADERS:%s\n", clrs.bold, clrs.reset);
     test_setext_headers();
+    printf("\n%sINDENTED CODE BLOCKS:%s\n", clrs.bold, clrs.reset);
+    test_indented_code_blocks();
     
     printf("\n\n%sTOTAL TESTS: %zu%s\n", clrs.bold, passed + failed, clrs.reset);
     if (failed == 0) printf("%s%sPASSED ALL %zu TESTS!%s\n", clrs.bold, clrs.green, passed, clrs.reset);
