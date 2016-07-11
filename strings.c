@@ -2,14 +2,14 @@
  * utility.c -- utility methods for generic tasks
  * 
  * Created by PAT GAFFNEY on 06/15/2016.
- * Last modified on 06/22/2016.
+ * Last modified on 07/10/2016.
  * 
  *********ultrapatbeams*/
 
 #include <stdlib.h>
 #include <stdbool.h>
 #include <string.h>
-#include "utility.h"
+#include "strings.h"
 #include "errors.h"
 
 

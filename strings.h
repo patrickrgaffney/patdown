@@ -2,17 +2,30 @@
  * utility.h -- utility methods for generic tasks
  * 
  * Created by PAT GAFFNEY on 06/15/2016.
- * Last modified on 06/22/2016.
+ * Last modified on 07/10/2016.
  * 
  *********ultrapatbeams*/
 
-#ifndef UTILITY_H
-#define UTILITY_H
+#ifndef STRINGS_H
+#define STRINGS_H
 
 #include <stddef.h>
 #include <stdbool.h>
-#include "utility.h"
 #include "errors.h"
+
+
+/******************************************************************
+ * readstring_t() -- a string block as read from the input file
+ *
+ * char *string   -- raw string read from file
+ * size_t size    -- number of chars allocated to be stored
+ * size_t numRead -- number of chars actually read from file
+ ******************************************************************/
+typedef struct {
+    char *string;
+    size_t size;
+    size_t numRead;
+} readstring_t;
 
 
 /******************************************************************

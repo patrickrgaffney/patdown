@@ -2,14 +2,14 @@
  * files.c -- opening, reading, and writing to files
  * 
  * Created by PAT GAFFNEY on 06/17/2016.
- * Last modified on 06/22/2016.
+ * Last modified on 07/10/2016.
  * 
  *********ultrapatbeams*/
 
 #include <stdio.h>
 #include "files.h"
 #include "errors.h"
-#include "utility.h"
+#include "strings.h"
 
 /******************************************************************
  * open_file() -- open a file

@@ -10,7 +10,7 @@
 #include <stdlib.h>
 #include <stdbool.h>
 #include "markdown.h"
-#include "utility.h"
+#include "strings.h"
 #include "errors.h"
 #include "parsers.h"
 #include "files.h"

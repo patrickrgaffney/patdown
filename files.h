@@ -2,7 +2,7 @@
  * files.h -- opening, reading, and writing to files
  * 
  * Created by PAT GAFFNEY on 06/17/2016.
- * Last modified on 06/21/2016.
+ * Last modified on 07/10/2016.
  * 
  *********ultrapatbeams*/
 
@@ -10,21 +10,7 @@
 #define FILES_H
 
 #include <stdio.h>
-#include "utility.h"
-
-
-/******************************************************************
- * readstring_t() -- a string block as read from the input file
- *
- * char *string   -- raw string read from file
- * size_t size    -- number of chars allocated to be stored
- * size_t numRead -- number of chars actually read from file
- ******************************************************************/
-typedef struct {
-    char *string;
-    size_t size;
-    size_t numRead;
-} readstring_t;
+#include "strings.h"
 
 
 /******************************************************************
