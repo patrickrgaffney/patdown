@@ -54,10 +54,8 @@ markdown_t *block_parser(char *line)
     size_t i = indentation = count_indentation(line);
     markdown_t *node = NULL;
     
-    if (*line == '\0') node = parse_blank_line(line);
-    else if (insideFencedCodeBlock) {
-        node = parse_fenced_code_block(line);
-    }
+    if (insideFencedCodeBlock) node = parse_fenced_code_block(line);
+    else if (*line == '\0') node = parse_blank_line(line);
     else if (i > 3) node = parse_indented_code_block(line);
 
     while (line[i] != '\0' && !node) {
