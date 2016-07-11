@@ -287,7 +287,12 @@ markdown_t *parse_fenced_code_block(char *s)
         
         // unlimited number of whitespace characters
         while (s[i] == ' ') i++;
-        if (s[i] != '\0' || ticks < 3) return NULL;
+        if (s[i] != '\0' || ticks < 3) {
+            if (insideFencedCodeBlock) {
+                return init_markdown(s, 0, strlen(s) - 1, FENCED_CODE_BLOCK);
+            }
+            else return NULL;
+        }
         
         if (insideFencedCodeBlock && tickChar == lastCodeTickChar &&
             ticks == numLastCodeTicks) {
