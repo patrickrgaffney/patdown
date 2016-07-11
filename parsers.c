@@ -39,6 +39,7 @@ static mdblock_t lastBlock = UNKNOWN;
 static size_t indentation  = 0;
 static bool insideFencedCodeBlock = false;
 static int lastCodeTickChar = 0;
+static size_t numLastCodeTicks = 0;
 
 
 /******************************************************************
@@ -290,17 +291,19 @@ markdown_t *parse_fenced_code_block(char *s)
         while (s[i] == ' ') i++;
         if (s[i] != '\0' || ticks < 3) return NULL;
         
-        if (insideFencedCodeBlock && tickChar == lastCodeTickChar) {
+        if (insideFencedCodeBlock && tickChar == lastCodeTickChar &&
+            ticks == numLastCodeTicks) {
             insideFencedCodeBlock = false;
-            lastCodeTickChar = 0;
+            numLastCodeTicks = lastCodeTickChar = 0;
             return init_markdown(NULL, 0, 0, FENCED_CODE_BLOCK_END);
         }
-        else if (insideFencedCodeBlock && tickChar != lastCodeTickChar) {
+        else if (insideFencedCodeBlock) {
             return init_markdown(s, 0, strlen(s) - 1, FENCED_CODE_BLOCK);
         }
         else {
             insideFencedCodeBlock = true;
             lastCodeTickChar = tickChar;
+            numLastCodeTicks = ticks;
             return init_markdown(NULL, 0, 0, FENCED_CODE_BLOCK_START);
         }
     }
