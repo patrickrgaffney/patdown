@@ -235,7 +235,7 @@ void test_setext_headers(void)
     
     // four spaces is too much
     run_test(PARAGRAPH, "paragraph", "paragraph") ? passed++ : failed++;
-    run_test(PARAGRAPH, "       =", " =") ? passed++ : failed++;
+    run_test(PARAGRAPH, "       =", "=") ? passed++ : failed++;
 }
 
 int main(int argc, char const **argv)

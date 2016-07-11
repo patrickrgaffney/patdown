@@ -12,6 +12,11 @@
 #include "utility.h"
 #include "errors.h"
 
+
+#define NEWLINE 1
+#define NULL_CHAR 1
+
+
 /******************************************************************
  * create_substring() -- create a substring given parameters
  * 
@@ -19,22 +24,18 @@
  * const size_t start   -- index where the substring should start
  * const size_t stop    -- index where the substring should end
  *
- * @return -- newly allocated and initialized substring
+ * @return -- newly allocated and initialized substring or NULL
  ******************************************************************/
 char *create_substring(char *s, size_t start, const size_t stop)
 {
     if (!s) return NULL;
     char *newstr = NULL;
     
-    if (stop <= start) start = stop - 1;
-    size_t size = (stop - start) + 1;
-    newstr = alloc_string(size);
-    
-    while (start <= stop) {
-        *newstr++ = s[start++];
-    }
-    *newstr = '\0';
-    return newstr - size;
+    size_t size = (stop - start) + 1; // Add 1 to be inclusive.
+    newstr = alloc_string(size + NEWLINE);
+    memcpy(newstr, s + start, size);
+    newstr[size] = '\0';
+    return newstr;
 }
 
 
@@ -86,15 +87,13 @@ char *realloc_string(char *s, const size_t size)
 char *combine_strings(char *s1, char *s2, const bool newline)
 {
     if (!s1 || !s2) return NULL;
-    size_t s1len = strlen(s1);
-    size_t s2len = strlen(s2);
-    const size_t newstrlen = s1len + s2len + 1; // newline
-    s1 = realloc_string(s1, newstrlen);
+    const size_t s1len = strlen(s1);
+    const size_t s2len = strlen(s2);
+    const size_t size = s1len + s2len + NEWLINE;
+    char *dest = alloc_string(size + NULL_CHAR);
     
-    if (newline) s1[s1len++] = '\n';
-    else s1[s1len++] = ' ';
-    while (s2len-- > 0) s1[s1len++] = *s2++;
-    
-    s1[s1len] = '\0';
-    return s1;
+    memcpy(dest, s1, s1len);
+    dest[s1len] = newline ? '\n' : ' ';
+    memcpy(dest + s1len + NEWLINE, s2, s2len + NULL_CHAR);
+    return dest;
 }
