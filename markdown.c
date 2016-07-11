@@ -2,7 +2,7 @@
  * markdown.c -- markdown structures and methods.
  * 
  * Created by PAT GAFFNEY on 06/15/2016.
- * Last modified on 06/22/2016.
+ * Last modified on 07/10/2016.
  * 
  *********ultrapatbeams*/
 
@@ -94,7 +94,7 @@ markdown_t *alloc_markdown(void)
 void insert_markdown_queue(markdown_t **head, markdown_t **tail, markdown_t *temp)
 {
     if (temp) {
-        if (*head == NULL) *head = temp;
+        if (!*head) *head = temp;
         else (*tail)->next = temp;
         *tail = temp;
     }
@@ -145,7 +145,7 @@ void free_markdown(markdown_t *node)
  ******************************************************************/
 bool update_queue(markdown_t **tail, markdown_t *temp)
 {
-    if (*tail == NULL) return false;
+    if (!*tail) return false;
     
     switch (temp->type) {
         case SETEXT_HEADER_1:

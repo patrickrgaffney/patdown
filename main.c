@@ -2,7 +2,7 @@
  * main.c -- parse arguments and begin program execution
  * 
  * Created by PAT GAFFNEY on 06/15/2016.
- * Last modified on 06/22/2016.
+ * Last modified on 07/10/2016.
  * 
  *********ultrapatbeams*/
 
@@ -48,7 +48,8 @@ static void free_argt(arg_t *types)
 
 
 /******************************************************************
- * check_output_type() -- determine if user output type is valid
+ * check_output_type() -- determine if user-provided output type is
+ *                        one of the valid, defined types
  *
  * const char *arg -- the user provided output type
  *
@@ -135,9 +136,7 @@ static arg_t *parse_arguments(const int argc, const char **argv)
         if (*argv[i] == '-') {
             types[i] = parse_flag_option(argv[i]);
         }
-        else {
-            types[i] = parse_string_option(argv[i], lastType);
-        }
+        else types[i] = parse_string_option(argv[i], lastType);
         lastType = types[i];
     }
     return types;

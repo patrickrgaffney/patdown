@@ -2,7 +2,7 @@
  * parsers.c -- markdown parsing methods
  * 
  * Created by PAT GAFFNEY on 06/15/2016.
- * Last modified on 06/22/2016.
+ * Last modified on 07/10/2016.
  * 
  *********ultrapatbeams*/
 
@@ -21,13 +21,20 @@
  ******************************************************************/
 static size_t count_indentation(char *s)
 {
-    size_t i = 0, j = 0;
-    while (s[j++] == ' ') i++;
+    size_t i = 0;
+    while (s[i] == ' ') i++;
     return i;
 }
 
 
+/******************************************************************
+ * static global variables -- used to hold state information
+ *
+ * mdblock_t lastBlock -- type of last parsed block
+ * size_t indentation  -- count of leading spaces on a line
+ ******************************************************************/
 static mdblock_t lastBlock = UNKNOWN;
+static size_t indentation  = 0;
 
 
 /******************************************************************
@@ -39,7 +46,7 @@ static mdblock_t lastBlock = UNKNOWN;
  ******************************************************************/
 markdown_t *block_parser(char *line)
 {
-    size_t i = count_indentation(line);
+    size_t i = indentation = count_indentation(line);
     markdown_t *node = NULL;
     
     if (*line == '\0') node = parse_blank_line(line);
@@ -78,10 +85,9 @@ markdown_t *block_parser(char *line)
  ******************************************************************/
 markdown_t *parse_atx_header(char *s)
 {
-    size_t i = 0, hashes = 0, trailing = 0, j = strlen(s) - 1;
+    size_t i = indentation, hashes = 0, trailing = 0, j = strlen(s) - 1;
     mdblock_t type;
     
-    i = count_indentation(s);
     if (i > 3) return NULL;
     
     while (s[i] == '#') {
@@ -130,7 +136,7 @@ markdown_t *parse_atx_header(char *s)
  ******************************************************************/
 markdown_t *parse_horizontal_rule(char *s)
 {
-    size_t i = count_indentation(s), numChars = 0;
+    size_t i = indentation, numChars = 0;
     int hrChar = -1;
     
     if (i > 3) return NULL;
@@ -162,7 +168,7 @@ markdown_t *parse_horizontal_rule(char *s)
  ******************************************************************/
 markdown_t *parse_paragraph(char *s)
 {
-    size_t i = count_indentation(s);
+    size_t i = indentation;
     size_t maxIndent = (lastBlock == PARAGRAPH) ? 10000 : 3;
 
     if (i > maxIndent) return NULL;
@@ -180,7 +186,7 @@ markdown_t *parse_paragraph(char *s)
  ******************************************************************/
 markdown_t *parse_setext_header(char *s)
 {
-    size_t i = count_indentation(s), numChars = 0;
+    size_t i = indentation, numChars = 0;
     int setextChar;
     if (lastBlock != PARAGRAPH) return NULL;
     
@@ -209,7 +215,7 @@ markdown_t *parse_setext_header(char *s)
 markdown_t *parse_indented_code_block(char *s)
 {
     if (lastBlock == PARAGRAPH) return parse_paragraph(s);
-    size_t i = count_indentation(s);
+    size_t i = indentation;
 
     if (!s[i]) return parse_blank_line(s);
     else if (i < 4) return NULL;
@@ -227,7 +233,7 @@ markdown_t *parse_indented_code_block(char *s)
  ******************************************************************/
 markdown_t *parse_blank_line(char *s)
 {
-    size_t i = count_indentation(s);
+    size_t i = indentation;
     
     if (s[i] != '\0') return NULL;
 
