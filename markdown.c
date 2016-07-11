@@ -34,14 +34,9 @@ markdown_t *markdown(FILE *inputFile)
         if (rawBlock.numRead == 0 && feof(inputFile)) break;
         temp = block_parser(rawBlock.string);
         
-        // fix this later -- currently can return NULL
-        if (!temp) continue;
-        
         // Either update the queue or insert this new node.
-        if (!update_queue(&tail, temp)) {
-            insert_markdown_queue(&head, &tail, temp);
-        }
-        else free_markdown(temp);
+        if (update_queue(&tail, temp)) free_markdown(temp);
+        else insert_markdown_queue(&head, &tail, temp);
     }
     return head;
 }
@@ -153,18 +148,20 @@ bool update_queue(markdown_t **tail, markdown_t *temp)
             (*tail)->type = temp->type;
             return true;
         case PARAGRAPH:
-            if ((*tail)->type == PARAGRAPH) {
-                (*tail)->value = combine_strings((*tail)->value, temp->value, false);
-                return true;
-            }
+            if ((*tail)->type == PARAGRAPH) goto combine;
             break;
         case INDENTED_CODE_BLOCK:
-            if ((*tail)->type == INDENTED_CODE_BLOCK) {
-                (*tail)->value = combine_strings((*tail)->value, temp->value, true);
-                return true;
-            }
+            if ((*tail)->type == INDENTED_CODE_BLOCK) goto combine_newline;
             break;
         default: break;
     }
     return false;
+    
+    combine: // Append *temp to **tail -- separated by a space.
+        (*tail)->value = combine_strings((*tail)->value, temp->value, false);
+        return true;
+    
+    combine_newline: // Append *temp to **tail -- separated by a newline.
+        (*tail)->value = combine_strings((*tail)->value, temp->value, true);
+        return true;
 }

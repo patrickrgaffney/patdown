@@ -89,7 +89,7 @@ char *combine_strings(char *s1, char *s2, const bool newline)
     if (!s1 || !s2) return NULL;
     const size_t s1len = strlen(s1);
     const size_t s2len = strlen(s2);
-    const size_t size = s1len + s2len + NEWLINE;
+    const size_t size  = s1len + s2len + NEWLINE;
     char *dest = alloc_string(size + NULL_CHAR);
     
     memcpy(dest, s1, s1len);
