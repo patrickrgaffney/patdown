@@ -2,7 +2,7 @@
  * markdown.h -- markdown structures and methods.
  * 
  * Created by PAT GAFFNEY on 06/15/2016.
- * Last modified on 06/22/2016.
+ * Last modified on 07/11/2016.
  * 
  *********ultrapatbeams*/
 
@@ -18,26 +18,28 @@
 typedef enum
 {
     ///// META
-    UNKNOWN,
-    BLANK_LINE,
+    UNKNOWN,                    // 0
+    BLANK_LINE,                 // 1
     
     ///// IMPLEMENTED
-    ATX_HEADER_1,
-    ATX_HEADER_2,
-    ATX_HEADER_3,
-    ATX_HEADER_4,
-    ATX_HEADER_5,
-    ATX_HEADER_6,
-    HORIZONTAL_RULE,
-    PARAGRAPH,
-    SETEXT_HEADER_1,
-    SETEXT_HEADER_2,
-    INDENTED_CODE_BLOCK,
+    ATX_HEADER_1,               // 2
+    ATX_HEADER_2,               // 3
+    ATX_HEADER_3,               // 4
+    ATX_HEADER_4,               // 5
+    ATX_HEADER_5,               // 6
+    ATX_HEADER_6,               // 7
+    HORIZONTAL_RULE,            // 8
+    PARAGRAPH,                  // 9
+    SETEXT_HEADER_1,            // 10
+    SETEXT_HEADER_2,            // 11
+    INDENTED_CODE_BLOCK,        // 12
+    FENCED_CODE_BLOCK_START,    // 13
+    FENCED_CODE_BLOCK,          // 14
+    FENCED_CODE_BLOCK_END,      // 15
     
     ///// UNIMPLEMENTED
     BLOCKQUOTE_START,
     BLOCKQUOTE_END,
-    FENCED_CODE_BLOCK,
     UNORDERED_LIST_START,
     UNORDERED_LIST_ITEM,
     UNORDERED_LIST_END,

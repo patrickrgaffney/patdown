@@ -2,7 +2,7 @@
  * parsers.c -- markdown parsing methods
  * 
  * Created by PAT GAFFNEY on 06/15/2016.
- * Last modified on 07/10/2016.
+ * Last modified on 07/11/2016.
  * 
  *********ultrapatbeams*/
 
@@ -32,9 +32,13 @@ static size_t count_indentation(char *s)
  *
  * mdblock_t lastBlock -- type of last parsed block
  * size_t indentation  -- count of leading spaces on a line
+ * bool insideFencedCodeBlock -- are we inside a fenced code block?
+ * int lastCodeTickChar -- last fence char used for a code block
  ******************************************************************/
 static mdblock_t lastBlock = UNKNOWN;
 static size_t indentation  = 0;
+static bool insideFencedCodeBlock = false;
+static int lastCodeTickChar = 0;
 
 
 /******************************************************************
@@ -50,7 +54,10 @@ markdown_t *block_parser(char *line)
     markdown_t *node = NULL;
     
     if (*line == '\0') node = parse_blank_line(line);
-    if (i > 3) node = parse_indented_code_block(line);
+    else if (insideFencedCodeBlock) {
+        node = parse_fenced_code_block(line);
+    }
+    else if (i > 3) node = parse_indented_code_block(line);
 
     while (line[i] != '\0' && !node) {
         switch (line[i]) {
@@ -64,6 +71,8 @@ markdown_t *block_parser(char *line)
                       break;
             case '=': node = parse_setext_header(line);
                       break;
+            case '`': node = parse_fenced_code_block(line);
+                      break; 
             default:  break;
         }
         if (!node && isalpha(line[i++])) node = parse_paragraph(line);
@@ -204,7 +213,9 @@ markdown_t *parse_setext_header(char *s)
     
     if (s[i] != '\0' || numChars < 1) return NULL;
 
-    if (setextChar == '=') return init_markdown(NULL, 0, 0, SETEXT_HEADER_1);
+    if (setextChar == '=') {
+        return init_markdown(NULL, 0, 0, SETEXT_HEADER_1);
+    }
     else return init_markdown(NULL, 0, 0, SETEXT_HEADER_2);
 }
 
@@ -246,4 +257,50 @@ markdown_t *parse_blank_line(char *s)
         return init_markdown(s, 4, strlen(s), INDENTED_CODE_BLOCK);
     }
     else return init_markdown(NULL, 0, 0, BLANK_LINE);
+}
+
+
+/******************************************************************
+ * parse_fenced_code_block() -- parse for a fenced code block
+ * 
+ * char *s -- original string read from file
+ *
+ * @return -- an markdown_t node or NULL
+ ******************************************************************/
+markdown_t *parse_fenced_code_block(char *s)
+{
+    size_t i = indentation, ticks = 0;
+    int tickChar = (s[i] == '~' || s[i] == '`') ? s[i] : -1;
+    
+    if (tickChar == -1) {
+        if (insideFencedCodeBlock) {
+            return init_markdown(s, 0, strlen(s) - 1, FENCED_CODE_BLOCK);
+        }
+        else return NULL;
+    }
+    else {
+        // either the starting fence or ending fence
+        while (s[i] == tickChar) {
+            ticks++;
+            i++;
+        }
+        
+        // unlimited number of whitespace characters
+        while (s[i] == ' ') i++;
+        if (s[i] != '\0' || ticks < 3) return NULL;
+        
+        if (insideFencedCodeBlock && tickChar == lastCodeTickChar) {
+            insideFencedCodeBlock = false;
+            lastCodeTickChar = 0;
+            return init_markdown(NULL, 0, 0, FENCED_CODE_BLOCK_END);
+        }
+        else if (insideFencedCodeBlock && tickChar != lastCodeTickChar) {
+            return init_markdown(s, 0, strlen(s) - 1, FENCED_CODE_BLOCK);
+        }
+        else {
+            insideFencedCodeBlock = true;
+            lastCodeTickChar = tickChar;
+            return init_markdown(NULL, 0, 0, FENCED_CODE_BLOCK_START);
+        }
+    }
 }

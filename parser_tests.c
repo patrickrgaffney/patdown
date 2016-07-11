@@ -43,9 +43,11 @@ static char *string[24] = {
     "SETEXT_HEADER_1",
     "SETEXT_HEADER_2",
     "INDENTED_CODE_BLOCK",
+    "FENCED_CODE_BLOCK_START",
+    "FENCED_CODE_BLOCK",
+    "FENCED_CODE_BLOCK_END",
     "BLOCKQUOTE_START",
     "BLOCKQUOTE_END",
-    "FENCED_CODE_BLOCK",
     "UNORDERED_LIST_START",
     "UNORDERED_LIST_ITEM",
     "UNORDERED_LIST_END",
@@ -314,6 +316,12 @@ void test_indented_code_blocks(void)
     clear_parser();
 }
 
+void test_fenced_code_blocks(void)
+{
+    // basic usage with backticks
+    
+}
+
 int main(int argc, char const **argv)
 {
     printf("Begin running tests...\n\n");
@@ -325,6 +333,8 @@ int main(int argc, char const **argv)
     test_setext_headers();
     printf("\n%sINDENTED CODE BLOCKS:%s\n", clrs.bold, clrs.reset);
     test_indented_code_blocks();
+    printf("\n%sFENCED CODE BLOCKS:%s\n", clrs.bold, clrs.reset);
+    test_fenced_code_blocks();
     
     printf("\n\n%sTOTAL TESTS: %zu%s\n", clrs.bold, passed + failed, clrs.reset);
     if (failed == 0) printf("%s%sPASSED ALL %zu TESTS!%s\n", clrs.bold, clrs.green, passed, clrs.reset);

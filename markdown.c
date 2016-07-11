@@ -2,7 +2,7 @@
  * markdown.c -- markdown structures and methods.
  * 
  * Created by PAT GAFFNEY on 06/15/2016.
- * Last modified on 07/10/2016.
+ * Last modified on 07/11/2016.
  * 
  *********ultrapatbeams*/
 
@@ -150,8 +150,10 @@ bool update_queue(markdown_t **tail, markdown_t *temp)
         case PARAGRAPH:
             if ((*tail)->type == PARAGRAPH) goto combine;
             break;
+        case FENCED_CODE_BLOCK:
         case INDENTED_CODE_BLOCK:
             if ((*tail)->type == INDENTED_CODE_BLOCK) goto combine_newline;
+            else if ((*tail)->type == FENCED_CODE_BLOCK) goto combine_newline;
             break;
         default: break;
     }
