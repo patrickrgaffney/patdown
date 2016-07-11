@@ -71,6 +71,7 @@ markdown_t *block_parser(char *line)
                       break;
             case '=': node = parse_setext_header(line);
                       break;
+            case '~':
             case '`': node = parse_fenced_code_block(line);
                       break; 
             default:  break;
