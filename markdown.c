@@ -32,11 +32,13 @@ markdown_t *markdown(FILE *inputFile)
     while (true) {
         rawBlock = read_line(inputFile);
         if (rawBlock->len == 0 && feof(inputFile)) break;
-        temp = block_parser(rawBlock->string);
+        temp = block_parser(rawBlock);
         
         // Either update the queue or insert this new node.
         if (update_queue(&tail, temp)) free_markdown(temp);
         else insert_markdown_queue(&head, &tail, temp);
+        
+        free(rawBlock);
     }
     return head;
 }
@@ -52,7 +54,7 @@ markdown_t *markdown(FILE *inputFile)
  *
  * @return -- an initialized markdown_t node
  ******************************************************************/
-markdown_t *init_markdown(char *s, const size_t start, const size_t stop, const mdblock_t type)
+markdown_t *init_markdown(string_t *s, const size_t start, const size_t stop, const mdblock_t type)
 {
     markdown_t *line = alloc_markdown();
     line->value = create_substring(s, start, stop);
@@ -106,7 +108,7 @@ void insert_markdown_queue(markdown_t **head, markdown_t **tail, markdown_t *tem
 void print_markdown_queue(markdown_t *node)
 {
     if (node) {
-        printf("%d: \'%s\'\n", node->type, node->value);
+        printf("%d: \'%s\'\n", node->type, node->value->string);
         print_markdown_queue(node->next);
     }
 }
@@ -123,7 +125,7 @@ void print_markdown_queue(markdown_t *node)
 void free_markdown(markdown_t *node)
 {
     if (node) {
-        free(node->value);
+        if (node->value) free(node->value->string);
         free(node->next);
         free(node);
     }

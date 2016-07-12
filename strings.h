@@ -60,7 +60,7 @@ string_t *init_stringt(const size_t size);
  *
  * @return -- newly allocated and initialized substring
  ******************************************************************/
-char *create_substring(char *s, size_t start, const size_t stop);
+string_t *create_substring(string_t *s, size_t start, const size_t stop);
 
 
 /******************************************************************
@@ -95,6 +95,6 @@ char *realloc_string(char *s, const size_t size);
  *
  * @return -- the combined string, which occurs on s1
  ******************************************************************/
-char *combine_strings(char *s1, char *s2, const bool newline);
+string_t *combine_strings(string_t *s1, string_t *s2, const bool newline);
 
 #endif

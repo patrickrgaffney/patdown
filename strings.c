@@ -26,15 +26,16 @@
  *
  * @return -- newly allocated and initialized substring or NULL
  ******************************************************************/
-char *create_substring(char *s, size_t start, const size_t stop)
+string_t *create_substring(string_t *s, size_t start, const size_t stop)
 {
-    if (!s) return NULL;
-    char *newstr = NULL;
-    
+    string_t *newstr = NULL;
     size_t size = (stop - start) + 1; // Add 1 to be inclusive.
-    newstr = alloc_string(size + NEWLINE);
-    memcpy(newstr, s + start, size);
-    newstr[size] = '\0';
+    newstr = init_stringt(size + NEWLINE);
+    if (!s || !s->string) return newstr;
+    
+    newstr->len = size;
+    memcpy(newstr->string, s->string + start, size);
+    newstr->string[size] = '\0';
     return newstr;
 }
 
@@ -119,16 +120,16 @@ char *realloc_string(char *s, const size_t size)
  *
  * @return -- the combined string, which occurs on s1
  ******************************************************************/
-char *combine_strings(char *s1, char *s2, const bool newline)
+string_t *combine_strings(string_t *s1, string_t *s2, const bool newline)
 {
     if (!s1 || !s2) return NULL;
-    const size_t s1len = strlen(s1);
-    const size_t s2len = strlen(s2);
-    const size_t size  = s1len + s2len + NEWLINE;
-    char *dest = alloc_string(size + NULL_CHAR);
     
-    memcpy(dest, s1, s1len);
-    dest[s1len] = newline ? '\n' : ' ';
-    memcpy(dest + s1len + NEWLINE, s2, s2len + NULL_CHAR);
+    const size_t size  = s1->len + s2->len + NEWLINE;
+    string_t *dest = init_stringt(size + NULL_CHAR);
+    dest->len = size;
+    
+    memcpy(dest->string, s1->string, s1->len);
+    dest->string[s1->len + 1] = newline ? '\n' : ' ';
+    memcpy(dest->string + s1->len + NEWLINE, s2->string, s2->len + NULL_CHAR);
     return dest;
 }

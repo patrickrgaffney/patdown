@@ -47,17 +47,17 @@ static bool insideFencedCodeBlock = false;
  *
  * @return -- an markdown_t node or NULL
  ******************************************************************/
-markdown_t *block_parser(char *line)
+markdown_t *block_parser(string_t *line)
 {
-    size_t i = indentation = count_indentation(line);
+    size_t i = indentation = count_indentation(line->string);
     markdown_t *node = NULL;
-    
+
     if (insideFencedCodeBlock) node = parse_fenced_code_block(line);
-    else if (*line == '\0') node = parse_blank_line(line);
+    else if (*(line->string) == '\0') node = parse_blank_line(line);
     else if (i > 3) node = parse_indented_code_block(line);
 
-    while (line[i] != '\0' && !node) {
-        switch (line[i]) {
+    while (line->string[i] != '\0' && !node) {
+        switch (line->string[i]) {
             case '#': node = parse_atx_header(line);
                       break;
             case '-': node = parse_horizontal_rule(line);
@@ -73,9 +73,9 @@ markdown_t *block_parser(char *line)
                       break; 
             default:  break;
         }
-        if (!node && isalpha(line[i++])) node = parse_paragraph(line);
+        if (!node && isalpha(line->string[i++])) node = parse_paragraph(line);
     }
-    if (!node) node = init_markdown(line, 0, strlen(line) - 1, PARAGRAPH);
+    if (!node) node = init_markdown(line, 0, line->len, PARAGRAPH);
     lastBlock = node->type;
     return node;
 }
@@ -88,35 +88,35 @@ markdown_t *block_parser(char *line)
  *
  * @return -- an markdown_t node or NULL
  ******************************************************************/
-markdown_t *parse_atx_header(char *s)
+markdown_t *parse_atx_header(string_t *s)
 {
-    size_t i = indentation, hashes = 0, trailing = 0, j = strlen(s) - 1;
+    size_t i = indentation, hashes = 0, trailing = 0, j = s->len;
     mdblock_t type;
     
     if (i > 3) return NULL;
     
-    while (s[i] == '#') {
+    while (s->string[i] == '#') {
         hashes++;
         i++;
     }
-    if (hashes < 1 || hashes > 6 || s[i] != ' ') {
+    if (hashes < 1 || hashes > 6 || s->string[i] != ' ') {
         return init_markdown(s, i - hashes, j, PARAGRAPH);
     }
     
     // 1-unlimited spaces between hashes and first word
-    while (s[i] == ' ') i++;
+    while (s->string[i] == ' ') i++;
     
     // remove all spaces at end of string
-    while (s[j] == ' ') j--;
+    while (s->string[j] == ' ') j--;
     
     // remove all trailing hashes if they are followed by 1-inf spaces
-    while (s[j] == '#') {
+    while (s->string[j] == '#') {
         j--;
         trailing++;
     }
-    if (s[j] != ' ') j += trailing;
+    if (s->string[j] != ' ') j += trailing;
     else {
-        while (s[j] == ' ') j--;
+        while (s->string[j] == ' ') j--;
     }
     
     switch (hashes) {
@@ -139,11 +139,10 @@ markdown_t *parse_atx_header(char *s)
  *
  * @return -- an markdown_t node or NULL
  ******************************************************************/
-markdown_t *parse_horizontal_rule(char *s)
+markdown_t *parse_horizontal_rule(string_t *s)
 {
-    
     size_t i = indentation, numChars = 0;
-    int hrChar = (s[i] == '*' || s[i] == '_' || s[i] == '-') ? s[i] : -1;
+    int hrChar = (s->string[i] == '*' || s->string[i] == '_' || s->string[i] == '-') ? s->string[i] : -1;
     
     if (i > 3) return NULL;
     
@@ -153,11 +152,11 @@ markdown_t *parse_horizontal_rule(char *s)
     }
     
     // *n* number of spaces and *n* number of hrChar's
-    while (s[i] == ' ' || s[i] == hrChar) {
-        if (s[i++] == hrChar) numChars++;
+    while (s->string[i] == ' ' || s->string[i] == hrChar) {
+        if (s->string[i++] == hrChar) numChars++;
     }
     
-    if (s[i] != '\0' || numChars < 3) {
+    if (s->string[i] != '\0' || numChars < 3) {
         return parse_paragraph(s);
     }
     return init_markdown(NULL, 0, 0, HORIZONTAL_RULE);
@@ -171,14 +170,14 @@ markdown_t *parse_horizontal_rule(char *s)
  *
  * @return -- an markdown_t node or NULL
  ******************************************************************/
-markdown_t *parse_paragraph(char *s)
+markdown_t *parse_paragraph(string_t *s)
 {
     size_t i = indentation;
     size_t maxIndent = (lastBlock == PARAGRAPH) ? 10000 : 3;
 
     if (i > maxIndent) return NULL;
 
-    return init_markdown(s, i, strlen(s) - 1, PARAGRAPH);
+    return init_markdown(s, i, s->len, PARAGRAPH);
 }
 
 
@@ -189,25 +188,25 @@ markdown_t *parse_paragraph(char *s)
  *
  * @return -- an markdown_t node or NULL
  ******************************************************************/
-markdown_t *parse_setext_header(char *s)
+markdown_t *parse_setext_header(string_t *s)
 {
     size_t i = indentation, numChars = 0;
     int setextChar;
     if (lastBlock != PARAGRAPH) return NULL;
     
-    setextChar = (s[i] == '-' || s[i] == '=') ? s[i] : -1;
+    setextChar = (s->string[i] == '-' || s->string[i] == '=') ? s->string[i] : -1;
     if (setextChar == -1) return NULL;
     
     // *n* number of setextChar's
-    while (s[i] == setextChar) {
+    while (s->string[i] == setextChar) {
         numChars++;
         i++;
     }
     
     // *n* number of spaces
-    while (s[i] == ' ') i++;
+    while (s->string[i] == ' ') i++;
     
-    if (s[i] != '\0' || numChars < 1) return NULL;
+    if (s->string[i] != '\0' || numChars < 1) return NULL;
 
     if (setextChar == '=') {
         return init_markdown(NULL, 0, 0, SETEXT_HEADER_1);
@@ -223,15 +222,15 @@ markdown_t *parse_setext_header(char *s)
  *
  * @return -- an markdown_t node or NULL
  ******************************************************************/
-markdown_t *parse_indented_code_block(char *s)
+markdown_t *parse_indented_code_block(string_t *s)
 {
     if (lastBlock == PARAGRAPH) return parse_paragraph(s);
     size_t i = indentation;
 
-    if (s[i] == '\0') return parse_blank_line(s);
+    if (s->string[i] == '\0') return parse_blank_line(s);
     else if (i < 4) return NULL;
     
-    return init_markdown(s, 4, strlen(s) - 1, INDENTED_CODE_BLOCK);
+    return init_markdown(s, 4, s->len, INDENTED_CODE_BLOCK);
 }
 
 
@@ -242,15 +241,15 @@ markdown_t *parse_indented_code_block(char *s)
  *
  * @return -- an markdown_t node or NULL
  ******************************************************************/
-markdown_t *parse_blank_line(char *s)
+markdown_t *parse_blank_line(string_t *s)
 {
     size_t i = indentation;
     
-    if (s[i] != '\0') return NULL;
+    if (s->string[i] != '\0') return NULL;
 
     // preserve blank lines inside an INDENTED_CODE_BLOCK
     if (lastBlock == INDENTED_CODE_BLOCK && i >= 4) {
-        return init_markdown(s, 4, strlen(s), INDENTED_CODE_BLOCK);
+        return init_markdown(s, 4, s->len, INDENTED_CODE_BLOCK);
     }
     else return init_markdown(NULL, 0, 0, BLANK_LINE);
 }
@@ -263,30 +262,30 @@ markdown_t *parse_blank_line(char *s)
  *
  * @return -- an markdown_t node or NULL
  ******************************************************************/
-markdown_t *parse_fenced_code_block(char *s)
+markdown_t *parse_fenced_code_block(string_t *s)
 {
     static int lastFenceChar = 0; // Last char used for a fence
     static size_t lastFenceLen = 0; // Length of last fence
     size_t i = indentation, ticks = -i, start = 0;
-    int fence = (s[i] == '~' || s[i] == '`') ? s[i] : -1;;
+    int fence = (s->string[i] == '~' || s->string[i] == '`') ? s->string[i] : -1;;
     
-    while (s[i] == fence) i++;
+    while (s->string[i] == fence) i++;
     if ((ticks += i) < 3 && !insideFencedCodeBlock) return false;
-    while (s[i] == ' ') i++;
+    while (s->string[i] == ' ') i++;
     
     // When inside a block check for the end, else just append to block
     if (insideFencedCodeBlock) {
-        if (s[i] != '\0' || lastFenceChar != fence || lastFenceLen != ticks) {
-            return init_markdown(s, 0, strlen(s) - 1, FENCED_CODE_BLOCK);
+        if (s->string[i] != '\0' || lastFenceChar != fence || lastFenceLen != ticks) {
+            return init_markdown(s, 0, s->len, FENCED_CODE_BLOCK);
         }
         else insideFencedCodeBlock = false;
         return init_markdown(NULL, 0, 0, FENCED_CODE_BLOCK_END);
     }
     else {
         // accept an info string
-        if (isalpha(s[i])) {
+        if (isalpha(s->string[i])) {
             start = i;
-            while (isalpha(s[i])) i++;
+            while (isalpha(s->string[i])) i++;
         }
         lastFenceChar = fence;
         lastFenceLen  = ticks;

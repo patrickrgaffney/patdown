@@ -18,7 +18,7 @@
  *
  * @return -- an markdown_t node or NULL
  ******************************************************************/
-markdown_t *block_parser(char *line);
+markdown_t *block_parser(string_t *line);
 
 
 /******************************************************************
@@ -28,7 +28,7 @@ markdown_t *block_parser(char *line);
  *
  * @return -- an markdown_t node or NULL
  ******************************************************************/
-markdown_t *parse_atx_header(char *s);
+markdown_t *parse_atx_header(string_t *s);
 
 
 /******************************************************************
@@ -38,7 +38,7 @@ markdown_t *parse_atx_header(char *s);
  *
  * @return -- an markdown_t node or NULL
  ******************************************************************/
-markdown_t *parse_horizontal_rule(char *s);
+markdown_t *parse_horizontal_rule(string_t *s);
 
 
 /******************************************************************
@@ -48,7 +48,7 @@ markdown_t *parse_horizontal_rule(char *s);
  *
  * @return -- an markdown_t node or NULL
  ******************************************************************/
-markdown_t *parse_paragraph(char *s);
+markdown_t *parse_paragraph(string_t *s);
 
 
 /******************************************************************
@@ -58,7 +58,7 @@ markdown_t *parse_paragraph(char *s);
  *
  * @return -- an markdown_t node or NULL
  ******************************************************************/
-markdown_t *parse_setext_header(char *s);
+markdown_t *parse_setext_header(string_t *s);
 
 
 /******************************************************************
@@ -68,7 +68,7 @@ markdown_t *parse_setext_header(char *s);
  *
  * @return -- an markdown_t node or NULL
  ******************************************************************/
-markdown_t *parse_indented_code_block(char *s);
+markdown_t *parse_indented_code_block(string_t *s);
 
 
 /******************************************************************
@@ -78,7 +78,7 @@ markdown_t *parse_indented_code_block(char *s);
  *
  * @return -- an markdown_t node or NULL
  ******************************************************************/
-markdown_t *parse_blank_line(char *s);
+markdown_t *parse_blank_line(string_t *s);
 
 
 /******************************************************************
@@ -88,6 +88,6 @@ markdown_t *parse_blank_line(char *s);
  *
  * @return -- an markdown_t node or NULL
  ******************************************************************/
-markdown_t *parse_fenced_code_block(char *s);
+markdown_t *parse_fenced_code_block(string_t *s);
 
 #endif

@@ -56,7 +56,7 @@ string_t *read_line(FILE *inputFile)
     
     while ((c = getc(inputFile)) != EOF && c != '\n') {
         if (--lim == 0) {
-            lim = newstr->size * order++;
+            lim = newstr->size * ++order;
             newstr->size = lim;
             newstr->string = realloc_string(newstr->string, newstr->size);
         }
@@ -68,7 +68,6 @@ string_t *read_line(FILE *inputFile)
         }
         else newstr->string[i++] = c;
     }
-    
     newstr->len = i;
     newstr->string[i] = '\0';
     return newstr;

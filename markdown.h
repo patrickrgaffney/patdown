@@ -11,6 +11,8 @@
 
 #include <stdio.h>
 #include <stdbool.h>
+#include "strings.h"
+
 
 /******************************************************************
  * mdblock_t -- enumerated values for a markdown_t block
@@ -60,7 +62,7 @@ typedef enum
  ******************************************************************/
 typedef struct markdown_t
 {
-    char *value;
+    string_t *value;
     mdblock_t type;
     struct markdown_t *next;
 } markdown_t;
@@ -86,7 +88,7 @@ markdown_t *markdown(FILE *inputFile);
  *
  * @return -- an initialized markdown_t node
  ******************************************************************/
-markdown_t *init_markdown(char *s, const size_t start, 
+markdown_t *init_markdown(string_t *s, const size_t start, 
                           const size_t stop, const mdblock_t type);
 
 
