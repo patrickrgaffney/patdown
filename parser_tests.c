@@ -11,6 +11,8 @@
 #include <stdlib.h>
 #include "parsers.h"
 #include "markdown.h"
+#include "strings.h"
+
 
 typedef struct {
     char *green;
@@ -64,13 +66,19 @@ static size_t failed = 0;
 
 static void clear_parser(void)
 {
-    block_parser("");
+    string_t *str = init_stringt(1);
+    str->len = 0;
+    str->string = "";
+    block_parser(str);
 }
 
 
 static bool run_test(mdblock_t type, char *raw, char *parsed)
 {
-    markdown_t *node = block_parser(raw);
+    string_t *str = init_stringt(strlen(raw));
+    str->string   = raw;
+    str->len      = strlen(raw) - 1;
+    markdown_t *node = block_parser(str);
     bool passed = false;
     
     if (!parsed) {
@@ -83,17 +91,18 @@ static bool run_test(mdblock_t type, char *raw, char *parsed)
         }
     }
     else {
-        if (node->type == type && strcmp(parsed, node->value) == 0) {
+        if (node->type == type && strcmp(parsed, node->value->string) == 0) {
             printf("%sPASSED:%s \'%s\' -> \'%s\' as %s\n", clrs.green, 
-                   clrs.reset, raw, node->value, string[node->type]);
+                   clrs.reset, raw, node->value->string, string[node->type]);
             passed = true;
         }
         else {
             printf("%sFAILED:%s \'%s\' -> \'%s\' as %s\n", clrs.red, 
-                   clrs.reset, raw, node->value, string[node->type]);
+                   clrs.reset, raw, node->value->string, string[node->type]);
         }
     }
     if (node) free(node);
+    if (str) free(str);
     return passed;
 }
 
