@@ -2,7 +2,7 @@
  * files.c -- opening, reading, and writing to files
  * 
  * Created by PAT GAFFNEY on 06/17/2016.
- * Last modified on 07/10/2016.
+ * Last modified on 07/12/2016.
  * 
  *********ultrapatbeams*/
 
@@ -10,6 +10,7 @@
 #include "files.h"
 #include "errors.h"
 #include "strings.h"
+
 
 /******************************************************************
  * open_file() -- open a file
@@ -48,30 +49,27 @@ void close_file(FILE *io)
  *
  * @return -- readstring_t structure containing string from file
  ******************************************************************/
-readstring_t read_line(FILE *inputFile)
+string_t *read_line(FILE *inputFile)
 {
     int c = 0, i = 0, lim = 2500, order = 1;
-    readstring_t newstr = {
-        .string  = alloc_string(lim),
-        .size    = 2500,
-        .numRead = 0
-    };
+    string_t *newstr = init_stringt(lim);
     
     while ((c = getc(inputFile)) != EOF && c != '\n') {
         if (--lim == 0) {
-            lim = newstr.size * order++;
-            newstr.size = lim;
-            newstr.string = realloc_string(newstr.string, newstr.size);
+            lim = newstr->size * order++;
+            newstr->size = lim;
+            newstr->string = realloc_string(newstr->string, newstr->size);
         }
         
         // Convert all tabs to 4 spaces -- makes for easier parsing.
         if (c == '\t') {
-            for (size_t j = 0; j < 4; j++) newstr.string[i++] = ' ';
+            for (size_t j = 0; j < 4; j++) newstr->string[i++] = ' ';
+            lim -= 4;
         }
-        else newstr.string[i++] = c;
+        else newstr->string[i++] = c;
     }
     
-    newstr.numRead = i;
-    newstr.string[i] = '\0';
+    newstr->len = i;
+    newstr->string[i] = '\0';
     return newstr;
 }

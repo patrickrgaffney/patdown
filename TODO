@@ -1,0 +1,2 @@
+- Update `markdown_t` nodes to use the new `string_t` type instead of `char *`
+    - This will save us from called `strlen(s)` repeatedly.

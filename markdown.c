@@ -2,7 +2,7 @@
  * markdown.c -- markdown structures and methods.
  * 
  * Created by PAT GAFFNEY on 06/15/2016.
- * Last modified on 07/11/2016.
+ * Last modified on 07/12/2016.
  * 
  *********ultrapatbeams*/
 
@@ -26,13 +26,13 @@
 markdown_t *markdown(FILE *inputFile)
 {
     markdown_t *head = NULL, *tail = NULL, *temp = NULL;
-    readstring_t rawBlock;
+    string_t *rawBlock;
     if (!inputFile) return NULL;
     
     while (true) {
         rawBlock = read_line(inputFile);
-        if (rawBlock.numRead == 0 && feof(inputFile)) break;
-        temp = block_parser(rawBlock.string);
+        if (rawBlock->len == 0 && feof(inputFile)) break;
+        temp = block_parser(rawBlock->string);
         
         // Either update the queue or insert this new node.
         if (update_queue(&tail, temp)) free_markdown(temp);

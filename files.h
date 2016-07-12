@@ -2,7 +2,7 @@
  * files.h -- opening, reading, and writing to files
  * 
  * Created by PAT GAFFNEY on 06/17/2016.
- * Last modified on 07/10/2016.
+ * Last modified on 07/12/2016.
  * 
  *********ultrapatbeams*/
 
@@ -29,9 +29,9 @@ FILE *open_file(const char *fileName);
  *
  * FILE *inputFile -- file from which characters are read
  *
- * @return -- readstring_t structure as read from file
+ * @return -- string_t structure as read from file
  ******************************************************************/
-readstring_t read_line(FILE *inputFile);
+string_t *read_line(FILE *inputFile);
 
 
 /******************************************************************

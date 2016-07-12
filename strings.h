@@ -1,8 +1,8 @@
 /* 
- * utility.h -- utility methods for generic tasks
+ * strings.h -- string handling utilities
  * 
  * Created by PAT GAFFNEY on 06/15/2016.
- * Last modified on 07/10/2016.
+ * Last modified on 07/12/2016.
  * 
  *********ultrapatbeams*/
 
@@ -15,17 +15,40 @@
 
 
 /******************************************************************
- * readstring_t() -- a string block as read from the input file
+ * string_t() -- a dynamic string type
  *
- * char *string   -- raw string read from file
- * size_t size    -- number of chars allocated to be stored
- * size_t numRead -- number of chars actually read from file
+ * char *string -- raw string read from file
+ * size_t size  -- number of chars allocated to be stored
+ * size_t len   -- number of chars stored in *string
+*                  NOTE: this doesn't include the NULL char '\0'
  ******************************************************************/
 typedef struct {
     char *string;
     size_t size;
-    size_t numRead;
-} readstring_t;
+    size_t len;
+} string_t;
+
+
+/******************************************************************
+ * alloc_stringt() -- allocate space for a new string type 
+ *
+ * const size_t size -- size of the new string
+ *
+ * @throws -- throw_memory_error() if string cannot be allocated
+ * @return -- an allocated string_t type
+ ******************************************************************/
+string_t *alloc_stringt(const size_t size);
+
+
+/******************************************************************
+ * init_stringt() -- initiate a new string type, string_t
+ *
+ * const size_t size -- size of the new string
+ *
+ * @throws -- throw_memory_error() if string cannot be allocated
+ * @return -- an allocated and initialized string_t type
+ ******************************************************************/
+string_t *init_stringt(const size_t size);
 
 
 /******************************************************************

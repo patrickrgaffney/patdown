@@ -2,7 +2,7 @@
  * parsers.c -- markdown parsing methods
  * 
  * Created by PAT GAFFNEY on 06/15/2016.
- * Last modified on 07/11/2016.
+ * Last modified on 07/12/2016.
  * 
  *********ultrapatbeams*/
 
@@ -75,9 +75,7 @@ markdown_t *block_parser(char *line)
         }
         if (!node && isalpha(line[i++])) node = parse_paragraph(line);
     }
-    // DEFAULTING TO PARAGRAPH *** THIS IS DANGEROUS
     if (!node) node = init_markdown(line, 0, strlen(line) - 1, PARAGRAPH);
-
     lastBlock = node->type;
     return node;
 }
@@ -143,12 +141,12 @@ markdown_t *parse_atx_header(char *s)
  ******************************************************************/
 markdown_t *parse_horizontal_rule(char *s)
 {
+    
     size_t i = indentation, numChars = 0;
-    int hrChar = -1;
+    int hrChar = (s[i] == '*' || s[i] == '_' || s[i] == '-') ? s[i] : -1;
     
     if (i > 3) return NULL;
     
-    hrChar = (s[i] == '*' || s[i] == '_' || s[i] == '-') ? s[i] : -1;
     if (hrChar == -1) return NULL;
     else if (hrChar == '-' && lastBlock == PARAGRAPH) {
         return parse_setext_header(s);
