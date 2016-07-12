@@ -38,8 +38,6 @@ static size_t count_indentation(char *s)
 static mdblock_t lastBlock = UNKNOWN;
 static size_t indentation  = 0;
 static bool insideFencedCodeBlock = false;
-static int lastCodeTickChar = 0;
-static size_t numLastCodeTicks = 0;
 
 
 /******************************************************************
@@ -269,45 +267,35 @@ markdown_t *parse_blank_line(char *s)
  ******************************************************************/
 markdown_t *parse_fenced_code_block(char *s)
 {
-    size_t i = indentation, ticks = 0;
-    int tickChar = (s[i] == '~' || s[i] == '`') ? s[i] : -1;
+    static int lastFenceChar = 0; // Last char used for a fence
+    static size_t lastFenceLen = 0; // Length of last fence
+    size_t i = indentation, ticks = -i, start = 0;
+    int fence = (s[i] == '~' || s[i] == '`') ? s[i] : -1;;
     
-    if (tickChar == -1) {
-        if (insideFencedCodeBlock) {
+    while (s[i] == fence) i++;
+    if ((ticks += i) < 3 && !insideFencedCodeBlock) return false;
+    while (s[i] == ' ') i++;
+    
+    // When inside a block check for the end, else just append to block
+    if (insideFencedCodeBlock) {
+        if (s[i] != '\0' || lastFenceChar != fence || lastFenceLen != ticks) {
             return init_markdown(s, 0, strlen(s) - 1, FENCED_CODE_BLOCK);
         }
-        else return NULL;
+        else insideFencedCodeBlock = false;
+        return init_markdown(NULL, 0, 0, FENCED_CODE_BLOCK_END);
     }
     else {
-        // either the starting fence or ending fence
-        while (s[i] == tickChar) {
-            ticks++;
-            i++;
+        // accept an info string
+        if (isalpha(s[i])) {
+            start = i;
+            while (isalpha(s[i])) i++;
         }
-        
-        // unlimited number of whitespace characters
-        while (s[i] == ' ') i++;
-        if (s[i] != '\0' || ticks < 3) {
-            if (insideFencedCodeBlock) {
-                return init_markdown(s, 0, strlen(s) - 1, FENCED_CODE_BLOCK);
-            }
-            else return NULL;
+        lastFenceChar = fence;
+        lastFenceLen  = ticks;
+        insideFencedCodeBlock = true;
+        if (start > 0) {
+            return init_markdown(s, start, --i, FENCED_CODE_BLOCK_START);
         }
-        
-        if (insideFencedCodeBlock && tickChar == lastCodeTickChar &&
-            ticks == numLastCodeTicks) {
-            insideFencedCodeBlock = false;
-            numLastCodeTicks = lastCodeTickChar = 0;
-            return init_markdown(NULL, 0, 0, FENCED_CODE_BLOCK_END);
-        }
-        else if (insideFencedCodeBlock) {
-            return init_markdown(s, 0, strlen(s) - 1, FENCED_CODE_BLOCK);
-        }
-        else {
-            insideFencedCodeBlock = true;
-            lastCodeTickChar = tickChar;
-            numLastCodeTicks = ticks;
-            return init_markdown(NULL, 0, 0, FENCED_CODE_BLOCK_START);
-        }
+        else return init_markdown(NULL, 0, 0, FENCED_CODE_BLOCK_START);
     }
 }

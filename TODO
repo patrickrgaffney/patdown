@@ -1,3 +1,0 @@
-- implement *info string* for a `FENCED_CODE_BLOCK_START`
-    - probably use it as the string value for this node
-    - maybe use a helper function?
