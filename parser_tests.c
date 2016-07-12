@@ -2,12 +2,13 @@
  * tests.c -- unit tests for the parsers
  * 
  * Created by PAT GAFFNEY on 06/22/2016.
- * Last modified on 06/22/2016.
+ * Last modified on 07/11/2016.
  * 
  *********ultrapatbeams*/
 
 #include <stdio.h>
 #include <string.h>
+#include <stdlib.h>
 #include "parsers.h"
 #include "markdown.h"
 
@@ -29,7 +30,7 @@ colors_t clrs = {
     .bold    = "\x1b[1m"
 };
 
-static char *string[24] = {
+static char *string[26] = {
     "UNKNOWN",
     "BLANK_LINE",
     "ATX_HEADER_1",
@@ -92,6 +93,7 @@ static bool run_test(mdblock_t type, char *raw, char *parsed)
                    clrs.reset, raw, node->value, string[node->type]);
         }
     }
+    if (node) free(node);
     return passed;
 }
 
@@ -319,7 +321,83 @@ void test_indented_code_blocks(void)
 void test_fenced_code_blocks(void)
 {
     // basic usage with backticks
+    run_test(FENCED_CODE_BLOCK_START, "```", NULL) ? passed++ : failed++;
+    run_test(FENCED_CODE_BLOCK, "code", "code") ? passed++ : failed++;
+    run_test(FENCED_CODE_BLOCK, "    more code", "    more code") ? passed++ : failed++;
+    run_test(FENCED_CODE_BLOCK_END, "```", NULL) ? passed++ : failed++;
+    clear_parser();
     
+    // basic usage with tildas
+    run_test(FENCED_CODE_BLOCK_START, "~~~", NULL) ? passed++ : failed++;
+    run_test(FENCED_CODE_BLOCK, "code", "code") ? passed++ : failed++;
+    run_test(FENCED_CODE_BLOCK, "    more code", "    more code") ? passed++ : failed++;
+    run_test(FENCED_CODE_BLOCK_END, "~~~", NULL) ? passed++ : failed++;
+    clear_parser();
+    
+    // closing code fence must use the same character as the opening fence
+    run_test(FENCED_CODE_BLOCK_START, "```", NULL) ? passed++ : failed++;
+    run_test(FENCED_CODE_BLOCK, "~~~", "~~~") ? passed++ : failed++;
+    run_test(FENCED_CODE_BLOCK_END, "```", NULL) ? passed++ : failed++;
+    clear_parser();
+    run_test(FENCED_CODE_BLOCK_START, "~~~", NULL) ? passed++ : failed++;
+    run_test(FENCED_CODE_BLOCK, "```", "```") ? passed++ : failed++;
+    run_test(FENCED_CODE_BLOCK_END, "~~~", NULL) ? passed++ : failed++;
+    clear_parser();
+    
+    // closing code fence must be at least as long as the opening fence
+    run_test(FENCED_CODE_BLOCK_START, "`````", NULL) ? passed++ : failed++;
+    run_test(FENCED_CODE_BLOCK, "```", "```") ? passed++ : failed++;
+    run_test(FENCED_CODE_BLOCK_END, "`````", NULL) ? passed++ : failed++;
+    clear_parser();
+    run_test(FENCED_CODE_BLOCK_START, "~~~", NULL) ? passed++ : failed++;
+    run_test(FENCED_CODE_BLOCK, "~~~~~~~", "~~~~~~~") ? passed++ : failed++;
+    run_test(FENCED_CODE_BLOCK_END, "~~~", NULL) ? passed++ : failed++;
+    clear_parser();
+    
+    // a code block can have all empty lines as its content
+    run_test(FENCED_CODE_BLOCK_START, "~~~", NULL) ? passed++ : failed++;
+    run_test(FENCED_CODE_BLOCK, "", "") ? passed++ : failed++;
+    run_test(FENCED_CODE_BLOCK_END, "~~~", NULL) ? passed++ : failed++;
+    clear_parser();
+    
+    // a code block can be empty
+    run_test(FENCED_CODE_BLOCK_START, "~~~", NULL) ? passed++ : failed++;
+    run_test(FENCED_CODE_BLOCK_END, "~~~", NULL) ? passed++ : failed++;
+    clear_parser();
+    
+    // fence code blocks can be indented up to four spaces
+    // indentation of opening fence doesnt have to match closing fence
+    run_test(FENCED_CODE_BLOCK_START, "  ~~~", NULL) ? passed++ : failed++;
+    run_test(FENCED_CODE_BLOCK_END, "~~~", NULL) ? passed++ : failed++;
+    clear_parser();
+    
+    // more than four spaces is an indented code block
+    run_test(INDENTED_CODE_BLOCK, "    ~~~", NULL) ? passed++ : failed++;
+    run_test(INDENTED_CODE_BLOCK, "    ~~~", NULL) ? passed++ : failed++;
+    clear_parser();
+    
+    // fenced code blocks can interrupt paragraphs 
+    // and can be followed directly by paragraphs
+    run_test(PARAGRAPH, "paragraph", "paragraph") ? passed++ : failed++;
+    run_test(FENCED_CODE_BLOCK_START, "~~~", NULL) ? passed++ : failed++;
+    run_test(FENCED_CODE_BLOCK, "code", "code") ? passed++ : failed++;
+    run_test(FENCED_CODE_BLOCK_END, "~~~", NULL) ? passed++ : failed++;
+    run_test(PARAGRAPH, "paragraph", "paragraph") ? passed++ : failed++;
+    
+    // an info string can be provided after the opening fence
+    run_test(FENCED_CODE_BLOCK_START, "```ruby", "ruby") ? passed++ : failed++;
+    run_test(FENCED_CODE_BLOCK, "def foo(x)", "def foo(x)") ? passed++ : failed++;
+    run_test(FENCED_CODE_BLOCK_END, "```", NULL) ? passed++ : failed++;
+    
+    // only the first word of an info-string is saved
+    run_test(FENCED_CODE_BLOCK_START, "```ruby startline=3", "ruby") ? passed++ : failed++;
+    run_test(FENCED_CODE_BLOCK, "def foo(x)", "def foo(x)") ? passed++ : failed++;
+    run_test(FENCED_CODE_BLOCK_END, "```", NULL) ? passed++ : failed++;
+    
+    // closing fences cannot have info-strings
+    run_test(FENCED_CODE_BLOCK_START, "```ruby     ", "ruby") ? passed++ : failed++;
+    run_test(FENCED_CODE_BLOCK, "```ruby     ", "```ruby     ") ? passed++ : failed++;
+    run_test(FENCED_CODE_BLOCK_END, "```", NULL) ? passed++ : failed++;
 }
 
 int main(int argc, char const **argv)
