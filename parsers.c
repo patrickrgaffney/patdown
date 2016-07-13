@@ -49,6 +49,7 @@ static bool insideFencedCodeBlock = false;
  ******************************************************************/
 markdown_t *block_parser(string_t *line)
 {
+    printf("s->len = %zu\n", line->len);
     size_t i = indentation = count_indentation(line->string);
     markdown_t *node = NULL;
 
@@ -75,7 +76,7 @@ markdown_t *block_parser(string_t *line)
         }
         if (!node && isalpha(line->string[i++])) node = parse_paragraph(line);
     }
-    if (!node) node = init_markdown(line, 0, line->len, PARAGRAPH);
+    if (!node) node = init_markdown(line, 0, line->len - 1, PARAGRAPH);
     lastBlock = node->type;
     return node;
 }
@@ -90,7 +91,7 @@ markdown_t *block_parser(string_t *line)
  ******************************************************************/
 markdown_t *parse_atx_header(string_t *s)
 {
-    size_t i = indentation, hashes = 0, trailing = 0, j = s->len;
+    size_t i = indentation, hashes = 0, trailing = 0, j = s->len - 1;
     mdblock_t type;
     
     if (i > 3) return NULL;
@@ -128,6 +129,7 @@ markdown_t *parse_atx_header(string_t *s)
         case 6: type = ATX_HEADER_6; break;
         default: break;
     }
+    printf("i = %zu, j = %zu\n", i, j);
     return init_markdown(s, i, j, type);
 }
 
@@ -177,7 +179,7 @@ markdown_t *parse_paragraph(string_t *s)
 
     if (i > maxIndent) return NULL;
 
-    return init_markdown(s, i, s->len, PARAGRAPH);
+    return init_markdown(s, i, s->len - 1, PARAGRAPH);
 }
 
 
@@ -230,7 +232,7 @@ markdown_t *parse_indented_code_block(string_t *s)
     if (s->string[i] == '\0') return parse_blank_line(s);
     else if (i < 4) return NULL;
     
-    return init_markdown(s, 4, s->len, INDENTED_CODE_BLOCK);
+    return init_markdown(s, 4, s->len - 1, INDENTED_CODE_BLOCK);
 }
 
 
@@ -249,9 +251,12 @@ markdown_t *parse_blank_line(string_t *s)
 
     // preserve blank lines inside an INDENTED_CODE_BLOCK
     if (lastBlock == INDENTED_CODE_BLOCK && i >= 4) {
-        return init_markdown(s, 4, s->len, INDENTED_CODE_BLOCK);
+        return init_markdown(s, 4, s->len - 1, INDENTED_CODE_BLOCK);
     }
-    else return init_markdown(NULL, 0, 0, BLANK_LINE);
+    else {
+        printf("returning BLANK_LINE\n");
+        return init_markdown(NULL, 0, 0, BLANK_LINE);
+    }
 }
 
 
@@ -276,7 +281,7 @@ markdown_t *parse_fenced_code_block(string_t *s)
     // When inside a block check for the end, else just append to block
     if (insideFencedCodeBlock) {
         if (s->string[i] != '\0' || lastFenceChar != fence || lastFenceLen != ticks) {
-            return init_markdown(s, 0, s->len, FENCED_CODE_BLOCK);
+            return init_markdown(s, 0, s->len - 1, FENCED_CODE_BLOCK);
         }
         else insideFencedCodeBlock = false;
         return init_markdown(NULL, 0, 0, FENCED_CODE_BLOCK_END);

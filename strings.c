@@ -12,7 +12,6 @@
 #include "strings.h"
 #include "errors.h"
 
-
 #define NEWLINE 1
 #define NULL_CHAR 1
 
@@ -30,9 +29,12 @@ string_t *create_substring(string_t *s, size_t start, const size_t stop)
 {
     string_t *newstr = NULL;
     size_t size = (stop - start) + 1; // Add 1 to be inclusive.
-    newstr = init_stringt(size + NEWLINE);
-    if (!s || !s->string) return newstr;
+    if (!s) {
+        newstr = init_stringt(0);
+        return newstr;
+    }
     
+    newstr = init_stringt(size + NEWLINE);
     newstr->len = size;
     memcpy(newstr->string, s->string + start, size);
     newstr->string[size] = '\0';
@@ -77,7 +79,7 @@ string_t *alloc_stringt(const size_t size)
 /******************************************************************
  * init_stringt() -- initiate a new string type, string_t
  *
- * const size_t size -- size of the new string
+ * const size_t size -- size of the new string (0 == NULL string)
  *
  * @throws -- throw_memory_error() if string cannot be allocated
  * @return -- an allocated and initialized string_t type
@@ -85,9 +87,16 @@ string_t *alloc_stringt(const size_t size)
 string_t *init_stringt(const size_t size)
 {
     string_t *str = alloc_stringt(size);
-    str->size   = size;
-    str->len    = 0;
-    str->string = alloc_string(size);
+    if (size == 0) {
+        str->size   = 0;
+        str->len    = 0;
+        str->string = NULL;
+    }
+    else {
+        str->size   = size;
+        str->len    = 0;
+        str->string = alloc_string(size);
+    }
     return str;
 }
 

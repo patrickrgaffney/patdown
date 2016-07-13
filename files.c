@@ -13,7 +13,7 @@
 
 
 /******************************************************************
- * open_file() -- open a file
+ * open_file() -- open a file stream
  *
  * const char *fileName -- name of file to be opened
  *
@@ -30,7 +30,7 @@ FILE *open_file(const char *fileName)
 
 
 /******************************************************************
- * close_file() -- close a file
+ * close_file() -- close a file stream
  *
  * FILE *stream -- file stream to be closed
  *
@@ -69,6 +69,7 @@ string_t *read_line(FILE *inputFile)
         else newstr->string[i++] = c;
     }
     newstr->len = i;
+    printf("read %d chars\n", i);
     newstr->string[i] = '\0';
     return newstr;
 }
