@@ -2,7 +2,7 @@
  * tests.c -- unit tests for the parsers
  * 
  * Created by PAT GAFFNEY on 06/22/2016.
- * Last modified on 07/11/2016.
+ * Last modified on 07/12/2016.
  * 
  *********ultrapatbeams*/
 
@@ -77,7 +77,7 @@ static bool run_test(mdblock_t type, char *raw, char *parsed)
 {
     string_t *str = init_stringt(strlen(raw));
     str->string   = raw;
-    str->len      = strlen(raw) - 1;
+    str->len      = strlen(raw);
     markdown_t *node = block_parser(str);
     bool passed = false;
     
