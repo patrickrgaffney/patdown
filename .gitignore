@@ -11,6 +11,8 @@ test
 
 # Example Input/Output files.
 *.md
+!README.md
+!readme.md
 
 # valgrind files
 *.dSYM
