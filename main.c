@@ -187,7 +187,7 @@ int main(int argc, char const **argv)
     
     queue = markdown(opts.inputFile);
     print_markdown_queue(queue);
-   
+    close_file(opts.inputFile);
     free_argt(type);
     free_markdown(queue);
     return EXIT_SUCCESS;

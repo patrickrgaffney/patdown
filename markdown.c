@@ -38,8 +38,9 @@ markdown_t *markdown(FILE *inputFile)
         if (update_queue(&tail, temp)) free_markdown(temp);
         else insert_markdown_queue(&head, &tail, temp);
         
-        free(rawBlock);
+        free_stringt(rawBlock);
     }
+    free_stringt(rawBlock);
     return head;
 }
 
@@ -125,8 +126,8 @@ void print_markdown_queue(markdown_t *node)
 void free_markdown(markdown_t *node)
 {
     if (node) {
-        if (node->value) free(node->value->string);
-        free(node->next);
+        free_stringt(node->value);
+        free_markdown(node->next);
         free(node);
     }
 }
@@ -163,6 +164,7 @@ bool update_queue(markdown_t **tail, markdown_t *temp)
     
     combine: // Append *temp to **tail -- separated by a space.
         (*tail)->value = combine_strings((*tail)->value, temp->value, false);
+        free_markdown(temp);
         return true;
     
     combine_newline: // Append *temp to **tail -- separated by a newline.

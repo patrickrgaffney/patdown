@@ -102,6 +102,22 @@ string_t *init_stringt(const size_t size)
 
 
 /******************************************************************
+ * free_stringt() -- free string_t node, if it exists
+ *
+ * string_t *s -- string node to be free'd
+ *
+ * @noreturn  -- control returned to the caller
+ ******************************************************************/
+void free_stringt(string_t *s)
+{
+    if (s) {
+        if (s->string) free(s->string);
+        free(s);
+    }
+}
+
+
+/******************************************************************
  * realloc_string() -- reallocate size of a string
  *
  * char *s           -- originally allocated string
@@ -145,5 +161,8 @@ string_t *combine_strings(string_t *s1, string_t *s2, const bool newline)
     
     // Copy the second string over to dest->string
     memcpy(dest->string + s1->len + NEWLINE, s2->string, s2->len + NULL_CHAR);
+    
+    // free s1 -- it is being overwritten on return
+    free_stringt(s1);
     return dest;
 }

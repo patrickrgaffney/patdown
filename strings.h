@@ -52,6 +52,16 @@ string_t *init_stringt(const size_t size);
 
 
 /******************************************************************
+ * free_stringt() -- free string_t node, if it exists
+ *
+ * string_t *s -- string node to be free'd
+ *
+ * @noreturn  -- control returned to the caller
+ ******************************************************************/
+void free_stringt(string_t *s);
+
+
+/******************************************************************
  * create_substring() -- create a substring given parameters
  * 
  * char *s              -- original string
