@@ -49,7 +49,6 @@ static bool insideFencedCodeBlock = false;
  ******************************************************************/
 markdown_t *block_parser(string_t *line)
 {
-    printf("s->len = %zu\n", line->len);
     size_t i = indentation = count_indentation(line->string);
     markdown_t *node = NULL;
 
@@ -129,7 +128,6 @@ markdown_t *parse_atx_header(string_t *s)
         case 6: type = ATX_HEADER_6; break;
         default: break;
     }
-    printf("i = %zu, j = %zu\n", i, j);
     return init_markdown(s, i, j, type);
 }
 
@@ -253,10 +251,7 @@ markdown_t *parse_blank_line(string_t *s)
     if (lastBlock == INDENTED_CODE_BLOCK && i >= 4) {
         return init_markdown(s, 4, s->len - 1, INDENTED_CODE_BLOCK);
     }
-    else {
-        printf("returning BLANK_LINE\n");
-        return init_markdown(NULL, 0, 0, BLANK_LINE);
-    }
+    else return init_markdown(NULL, 0, 0, BLANK_LINE);
 }
 
 

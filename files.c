@@ -69,7 +69,6 @@ string_t *read_line(FILE *inputFile)
         else newstr->string[i++] = c;
     }
     newstr->len = i;
-    printf("read %d chars\n", i);
     newstr->string[i] = '\0';
     return newstr;
 }

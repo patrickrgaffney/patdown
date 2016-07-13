@@ -31,7 +31,7 @@ string_t *create_substring(string_t *s, size_t start, const size_t stop)
     size_t size = (stop - start) + 1; // Add 1 to be inclusive.
     if (!s) {
         newstr = init_stringt(0);
-        return newstr;
+        return newstr; // newstr->string == NULL
     }
     
     newstr = init_stringt(size + NEWLINE);
@@ -133,12 +133,17 @@ string_t *combine_strings(string_t *s1, string_t *s2, const bool newline)
 {
     if (!s1 || !s2) return NULL;
     
-    const size_t size  = s1->len + s2->len + NEWLINE;
+    const size_t size = s1->len + s2->len + NEWLINE;
     string_t *dest = init_stringt(size + NULL_CHAR);
     dest->len = size;
     
+    // Copy the first string over to dest->string
     memcpy(dest->string, s1->string, s1->len);
-    dest->string[s1->len + 1] = newline ? '\n' : ' ';
+    
+    // Add the newline/space char at dest->string[s1->len]
+    dest->string[s1->len] = newline ? '\n' : ' ';
+    
+    // Copy the second string over to dest->string
     memcpy(dest->string + s1->len + NEWLINE, s2->string, s2->len + NULL_CHAR);
     return dest;
 }
