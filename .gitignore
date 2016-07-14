@@ -12,7 +12,7 @@ test
 # Example Input/Output files.
 *.md
 !README.md
-!readme.md
+!TODO.md
 
 # valgrind files
 *.dSYM

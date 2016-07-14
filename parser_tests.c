@@ -409,6 +409,35 @@ void test_fenced_code_blocks(void)
     run_test(FENCED_CODE_BLOCK_END, "```", NULL) ? passed++ : failed++;
 }
 
+void test_paragraphs(void)
+{
+    // normal use
+    run_test(PARAGRAPH, "aaa", "aaa") ? passed++ : failed++;
+    run_test(BLANK_LINE, "", NULL) ? passed++ : failed++;
+    run_test(PARAGRAPH, "bbb", "bbb") ? passed++ : failed++;
+    
+    // paragraphs can span multiple lines
+    run_test(PARAGRAPH, "first", "first") ? passed++ : failed++;
+    run_test(PARAGRAPH, "still first", "still first") ? passed++ : failed++;
+    
+    // leading spaces are skipped
+    run_test(PARAGRAPH, "  aa", "aa") ? passed++ : failed++;
+    run_test(PARAGRAPH, " b", "b") ? passed++ : failed++;
+    
+    // lines after the first can be indented any amount, since 
+    // indented code blocks cannot interrupt paragraphs
+    run_test(PARAGRAPH, "aaa", "aaa") ? passed++ : failed++;
+    run_test(PARAGRAPH, "             bbb", "bbb") ? passed++ : failed++;
+    run_test(PARAGRAPH, "        ccc", "ccc") ? passed++ : failed++;
+    clear_parser();
+    
+    // if the first line is indented more than four lines its an
+    // indented code block
+    run_test(INDENTED_CODE_BLOCK, "    aaa", "aaa") ? passed++ : failed++;
+    run_test(PARAGRAPH, "bbb", "bbb") ? passed++ : failed++;
+}
+
+
 int main(int argc, char const **argv)
 {
     printf("Begin running tests...\n\n");
@@ -422,6 +451,8 @@ int main(int argc, char const **argv)
     test_indented_code_blocks();
     printf("\n%sFENCED CODE BLOCKS:%s\n", clrs.bold, clrs.reset);
     test_fenced_code_blocks();
+    printf("\n%sPARAGRAPHS:%s\n", clrs.bold, clrs.reset);
+    test_paragraphs();
     
     printf("\n\n%sTOTAL TESTS: %zu%s\n", clrs.bold, passed + failed, clrs.reset);
     if (failed == 0) printf("%s%sPASSED ALL %zu TESTS!%s\n", clrs.bold, clrs.green, passed, clrs.reset);
