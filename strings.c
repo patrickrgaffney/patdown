@@ -2,13 +2,14 @@
  * strings.h -- string handling utilities
  * 
  * Created by PAT GAFFNEY on 06/15/2016.
- * Last modified on 07/12/2016.
+ * Last modified on 07/13/2016.
  * 
  *********ultrapatbeams*/
 
 #include <stdlib.h>
 #include <stdbool.h>
 #include <string.h>
+#include <stdio.h>
 #include "strings.h"
 #include "errors.h"
 
@@ -23,7 +24,9 @@
  * const size_t start   -- index where the substring should start
  * const size_t stop    -- index where the substring should end
  *
- * @return -- newly allocated and initialized substring or NULL
+ * @return -- newly allocated and initialized substring
+ * @note   -- If *s is NULL, returns an allocated string_t node 
+ *            with all members initiated to NULL or 0.
  ******************************************************************/
 string_t *create_substring(string_t *s, size_t start, const size_t stop)
 {
@@ -136,31 +139,22 @@ char *realloc_string(char *s, const size_t size)
 
 
 /******************************************************************
- * combine_strings() -- append a string to the end of another
+ * combine_strings() -- combine two string_t nodes into one
  *
- * char *s1 -- the string on which the append will happen
- * char *s2 -- the string which will be appended
- * const bool newline -- true puts a newline ('\n') between s1 and 
- *                       s2, false separates them with a space (' ')
- *
- * @return -- the combined string, which occurs on s1
+ * const char *fmt -- the format string for snprintf()
+ * string_t *s1 -- the leading string
+ * string_t *s2 -- the trailing string
+ * const size_t size -- # of characters to be written to new string
+ * 
+ * @return -- a new string_t node containing *s1 and *s2 as 
+ *            dictated by the format string
  ******************************************************************/
-string_t *combine_strings(string_t *s1, string_t *s2, const bool newline)
+string_t *combine_strings(const char *fmt, string_t *s1, string_t *s2, const size_t size)
 {
     if (!s1 || !s2) return NULL;
-    
-    const size_t size = s1->len + s2->len + NEWLINE;
     string_t *dest = init_stringt(size + NULL_CHAR);
     dest->len = size;
-    
-    // Copy the first string over to dest->string
-    memcpy(dest->string, s1->string, s1->len);
-    
-    // Add the newline/space char at dest->string[s1->len]
-    dest->string[s1->len] = newline ? '\n' : ' ';
-    
-    // Copy the second string over to dest->string
-    memcpy(dest->string + s1->len + NEWLINE, s2->string, s2->len + NULL_CHAR);
+    snprintf(dest->string, size + NULL_CHAR, fmt, s1->string, s2->string);
     
     // free s1 -- it is being overwritten on return
     free_stringt(s1);

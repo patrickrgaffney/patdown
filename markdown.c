@@ -147,27 +147,35 @@ bool update_queue(markdown_t **tail, markdown_t *temp)
     
     switch (temp->type) {
         case SETEXT_HEADER_1:
-        case SETEXT_HEADER_2:
+        case SETEXT_HEADER_2: {
             (*tail)->type = temp->type;
             return true;
-        case PARAGRAPH:
+        }
+        case PARAGRAPH: {
             if ((*tail)->type == PARAGRAPH) goto combine;
             break;
+        }
         case FENCED_CODE_BLOCK:
-        case INDENTED_CODE_BLOCK:
+        case INDENTED_CODE_BLOCK: {
             if ((*tail)->type == INDENTED_CODE_BLOCK) goto combine_newline;
             else if ((*tail)->type == FENCED_CODE_BLOCK) goto combine_newline;
             break;
+        }
         default: break;
     }
     return false;
     
-    combine: // Append *temp to **tail -- separated by a space.
-        (*tail)->value = combine_strings((*tail)->value, temp->value, false);
-        free_markdown(temp);
+    combine: {
+        const size_t size = (*tail)->value->len + temp->value->len + 1;
+        (*tail)->value = combine_strings("%s %s", (*tail)->value, temp->value, size);
         return true;
+    }
     
-    combine_newline: // Append *temp to **tail -- separated by a newline.
-        (*tail)->value = combine_strings((*tail)->value, temp->value, true);
+    combine_newline: {
+        const size_t size = (*tail)->value->len + temp->value->len + 1;
+        (*tail)->value = combine_strings("%s\n%s", (*tail)->value, temp->value, size);
+        printf("newvalue = \'%s\'\n", (*tail)->value->string);
+        printf("size of newvalue = %zu\n", (*tail)->value->len);
         return true;
+    }
 }

@@ -96,15 +96,16 @@ char *realloc_string(char *s, const size_t size);
 
 
 /******************************************************************
- * combine_strings() -- append a string to the end of another
+ * combine_strings() -- combine two string_t nodes into one
  *
- * char *s1 -- the string on which the append will happen
- * char *s2 -- the string which will be appended
- * const bool newline -- true puts a newline ('\n') between s1 and 
- *                       s2, false separates them with a space (' ')
- *
- * @return -- the combined string, which occurs on s1
+ * const char *fmt -- the format string for snprintf()
+ * string_t *s1 -- the leading string
+ * string_t *s2 -- the trailing string
+ * const size_t size -- # of characters to be written to new string
+ * 
+ * @return -- a new string_t node containing *s1 and *s2 as 
+ *            dictated by the format string
  ******************************************************************/
-string_t *combine_strings(string_t *s1, string_t *s2, const bool newline);
+string_t *combine_strings(const char *fmt, string_t *s1, string_t *s2, const size_t size)
 
 #endif

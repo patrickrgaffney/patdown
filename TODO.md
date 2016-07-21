@@ -1,3 +1,5 @@
+### 1. fix line breaks (`<br>`) inside paragraphs
+
 - fix PARAGRAPH's so that we can later parse for line breaks
     - as of right now, if two lines in a row, it will be impossible to parse line breaks later
 
