@@ -2,7 +2,7 @@
  * strings.h -- string handling utilities
  * 
  * Created by PAT GAFFNEY on 06/15/2016.
- * Last modified on 07/12/2016.
+ * Last modified on 07/20/2016.
  * 
  *********ultrapatbeams*/
 
