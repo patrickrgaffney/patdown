@@ -2,7 +2,7 @@
  * markdown.h -- markdown structures and methods.
  * 
  * Created by PAT GAFFNEY on 06/15/2016.
- * Last modified on 07/11/2016.
+ * Last modified on 07/21/2016.
  * 
  *********ultrapatbeams*/
 
@@ -51,6 +51,24 @@ typedef enum
     LINK_REFERENCE_DEF,
     HTML_BLOCK
 } mdblock_t;
+
+
+/******************************************************************
+ * mdinline_t -- enumerated values for a markdown_t inline span
+ ******************************************************************/
+typedef enum
+{
+    ESCAPED_CHAR,
+    HTML_ENTITY,
+    CODE_SPAN,
+    EMPHASIS_SPAN,
+    STRONG_SPAN,
+    LINK_REFERENCE,
+    IMAGE_REFERENCE,
+    AUTOLINK,
+    HTML_INLINE,
+    LINE_BREAK
+} mdinline_t;
 
 
 /******************************************************************
