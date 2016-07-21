@@ -106,6 +106,6 @@ char *realloc_string(char *s, const size_t size);
  * @return -- a new string_t node containing *s1 and *s2 as 
  *            dictated by the format string
  ******************************************************************/
-string_t *combine_strings(const char *fmt, string_t *s1, string_t *s2, const size_t size)
+string_t *combine_strings(const char *fmt, string_t *s1, string_t *s2, const size_t size);
 
 #endif

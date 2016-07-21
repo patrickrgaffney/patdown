@@ -33,11 +33,35 @@ static size_t count_indentation(char *s)
  * mdblock_t lastBlock -- type of last parsed block
  * size_t indentation  -- count of leading spaces on a line
  * bool insideFencedCodeBlock -- are we inside a fenced code block?
- * int lastCodeTickChar -- last fence char used for a code block
  ******************************************************************/
 static mdblock_t lastBlock = UNKNOWN;
 static size_t indentation  = 0;
 static bool insideFencedCodeBlock = false;
+
+
+/******************************************************************
+ * ready_parser() -- get the parser ready for this line of input
+ * 
+ * char *line -- line read from input file
+ *
+ * @return -- a complete markdown_t node or NULL
+ ******************************************************************/
+static markdown_t *ready_parser(string_t *line)
+{
+    size_t i = indentation = count_indentation(line->string);
+    markdown_t *node = NULL;
+    
+    if (insideFencedCodeBlock) {
+        node = parse_fenced_code_block(line);
+    }
+    else if (*(line->string) == '\0') {
+        node = parse_blank_line(line);
+    }
+    else if (i > 3) {
+        node = parse_indented_code_block(line);
+    }
+    return node;
+}
 
 
 /******************************************************************
@@ -49,12 +73,8 @@ static bool insideFencedCodeBlock = false;
  ******************************************************************/
 markdown_t *block_parser(string_t *line)
 {
-    size_t i = indentation = count_indentation(line->string);
-    markdown_t *node = NULL;
-
-    if (insideFencedCodeBlock) node = parse_fenced_code_block(line);
-    else if (*(line->string) == '\0') node = parse_blank_line(line);
-    else if (i > 3) node = parse_indented_code_block(line);
+    markdown_t *node = ready_parser(line);
+    size_t i = indentation;
 
     while (line->string[i] != '\0' && !node) {
         switch (line->string[i]) {
@@ -73,7 +93,9 @@ markdown_t *block_parser(string_t *line)
                       break; 
             default:  break;
         }
-        if (!node && isalpha(line->string[i++])) node = parse_paragraph(line);
+        if (!node && isalpha(line->string[i++])) {
+            node = parse_paragraph(line);
+        }
     }
     if (!node) node = init_markdown(line, 0, line->len - 1, PARAGRAPH);
     lastBlock = node->type;
