@@ -37,6 +37,7 @@ static size_t count_indentation(char *s)
 static mdblock_t lastBlock = UNKNOWN;
 static size_t indentation  = 0;
 static bool insideFencedCodeBlock = false;
+static bool insideHTMLComment     = false;
 
 
 /******************************************************************
@@ -53,6 +54,9 @@ static markdown_t *ready_parser(string_t *line)
     
     if (insideFencedCodeBlock) {
         node = parse_fenced_code_block(line);
+    }
+    else if (lastBlock == HTML_BLOCK) {
+        node = parse_html_block(line);
     }
     else if (*(line->string) == '\0') {
         node = parse_blank_line(line);
@@ -91,6 +95,8 @@ markdown_t *block_parser(string_t *line)
             case '~':
             case '`': node = parse_fenced_code_block(line);
                       break; 
+            case '<': node = parse_html_block(line);
+                      break;
             default:  break;
         }
         if (!node && isalpha(line->string[i++])) {
@@ -316,5 +322,134 @@ markdown_t *parse_fenced_code_block(string_t *s)
             return init_markdown(s, start, --i, FENCED_CODE_BLOCK_START);
         }
         else return init_markdown(NULL, 0, 0, FENCED_CODE_BLOCK_START);
+    }
+}
+
+static bool match_html_element(char *e, const size_t len)
+{
+    static char *len2Elements[16] = {
+        "dd", "dl", "dt", "h1", "h2", "h3", "h4", "h5", "h6", "hr", "li",
+        "ol", "td", "th", "tr", "ul"
+    };
+    static char *len3Elements[5] = {"col", "dir", "div", "nav", "pre"};
+    static char *len4Elements[9] = {
+        "base", "body", "form", "head", "html", "link", "main", "menu", "meta"
+    };
+    static char *len5Elements[10] = {
+        "aside", "frame", "param", "style", "table", "tbody", "tfoot", 
+        "thead", "title", "track"
+    };
+    static char *len6Elements[10] = {
+        "center", "dialog", "figure", "footer", "header", "iframe", "legend",
+        "option", "script", "source"
+    };
+    static char *bigElements[15] = {
+        "address", "article", "basefont", "blockquote", "caption", "colgroup", 
+        "details", "fieldset", "figcaption", "frameset", "menuitem", "noframes", 
+        "optgroup", "section", "summary"
+    };
+    
+    if (len == 0) return NULL;
+    if (len == 1) {
+        if (strcmp(e, "p") == 0) return true;
+    }
+    else if (len == 2) {
+        for (size_t i = 0; i < 16; i++) {
+            if (strcmp(e, len2Elements[i]) == 0) return true;
+        }
+        return false;
+    }
+    else if (len == 3) {
+        for (size_t i = 0; i < 5; i++) {
+            if (strcmp(e, len3Elements[i]) == 0) return true;
+        }
+        return false;
+    }
+    else if (len == 4) {
+        for (size_t i = 0; i < 9; i++) {
+            if (strcmp(e, len4Elements[i]) == 0) return true;
+        }
+        return false;
+    }
+    else if (len == 5) {
+        for (size_t i = 0; i < 10; i++) {
+            if (strcmp(e, len5Elements[i]) == 0) return true;
+        }
+        return false;
+    }
+    else if (len == 6) {
+        for (size_t i = 0; i < 10; i++) {
+            if (strcmp(e, len6Elements[i]) == 0) return true;
+        }
+        return false;
+    }
+    else {
+        for (size_t i = 0; i < 15; i++) {
+            if (strcmp(e, bigElements[i]) == 0) return true;
+        }
+        return false;
+    }
+    return false;
+}
+
+markdown_t *parse_html_block(string_t *s)
+{
+    size_t i = indentation, j = 0;
+    char element[15];
+    
+    if (i > 3 && (lastBlock != HTML_BLOCK || lastBlock != HTML_COMMENT))
+    {
+        return NULL;
+    }
+    else if (s->string[i] == '\0') return parse_blank_line(s);
+    else {
+        if (lastBlock == HTML_BLOCK) {
+            return init_markdown(s, 0, s->len - 1, HTML_BLOCK);
+        }
+        else if (s->string[i++] != '<') return NULL;
+        
+        // get the name of the element
+        while (isalpha(s->string[i]) || isdigit(s->string[i])) {
+            element[j++] = s->string[i++];
+        }
+        element[j] = '\0';
+        
+        if (match_html_element(element, j)) {
+            return init_markdown(s, 0, s->len - 1, HTML_BLOCK);
+        }
+        else if (s->string[i] == '!') {
+            return parse_html_comment(s);
+        }
+        else return NULL;
+    }
+}
+
+markdown_t *parse_html_comment(string_t *s)
+{
+    size_t i = indentation;
+    
+    if (insideHTMLComment) {
+        // if inside a comment, check for its ending tag
+        while (s->string[i] != '-') i++;
+        
+        if (s->string[i] == '-' && s->string[i + 1] == '-' && s->string[i + 2] == '>') {
+            insideHTMLComment = false;
+            return init_markdown(NULL, 0, 0, HTML_COMMENT);
+        }
+        else return NULL;
+    }
+    else {
+        // not inside a comment, check for its starting tag
+        if (s->string[i++] == '<') {
+            if (s->string[i++] == '!') {
+                if (s->string[i] == '-' && s->string[i + 1] == '-') {
+                    insideHTMLComment = true;
+                    return init_markdown(NULL, 0, 0, HTML_COMMENT);
+                }
+                else return NULL;
+            }
+            else return NULL;
+        }
+        else return NULL;
     }
 }

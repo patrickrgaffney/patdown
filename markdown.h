@@ -19,7 +19,7 @@
  ******************************************************************/
 typedef enum
 {
-    ///// META
+    ///// META                  // VALUE
     UNKNOWN,                    // 0
     BLANK_LINE,                 // 1
     
@@ -38,6 +38,8 @@ typedef enum
     FENCED_CODE_BLOCK_START,    // 13
     FENCED_CODE_BLOCK,          // 14
     FENCED_CODE_BLOCK_END,      // 15
+    HTML_BLOCK,                 // 16
+    HTML_COMMENT,               // 17
     
     ///// UNIMPLEMENTED
     BLOCKQUOTE_START,
@@ -48,8 +50,7 @@ typedef enum
     ORDERED_LIST_START,
     ORDERED_LIST_ITEM,
     ORDERED_LIST_END,
-    LINK_REFERENCE_DEF,
-    HTML_BLOCK
+    LINK_REFERENCE_DEF
 } mdblock_t;
 
 

@@ -90,4 +90,7 @@ markdown_t *parse_blank_line(string_t *s);
  ******************************************************************/
 markdown_t *parse_fenced_code_block(string_t *s);
 
+markdown_t *parse_html_block(string_t *s);
+markdown_t *parse_html_comment(string_t *s);
+
 #endif
