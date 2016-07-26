@@ -328,7 +328,7 @@ markdown_t *parse_fenced_code_block(string_t *s)
 static bool match_html_element(char *e, const size_t len)
 {
     static char *len2Elements[6] = {"dd", "dl", "dt", "td", "th", "tr"};
-    static char *len3Elements[5] = {"col", "dir", "div", "nav", "pre"};
+    static char *len3Elements[4] = {"col", "dir", "div", "nav"};
     static char *len4Elements[9] = {
         "base", "body", "form", "head", "html", "link", "main", "menu", "meta"
     };
@@ -354,7 +354,7 @@ static bool match_html_element(char *e, const size_t len)
         return false;
     }
     else if (len == 3) {
-        for (size_t i = 0; i < 5; i++) {
+        for (size_t i = 0; i < 4; i++) {
             if (strcmp(e, len3Elements[i]) == 0) return true;
         }
         return false;
