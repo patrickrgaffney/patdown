@@ -327,10 +327,7 @@ markdown_t *parse_fenced_code_block(string_t *s)
 
 static bool match_html_element(char *e, const size_t len)
 {
-    static char *len2Elements[16] = {
-        "dd", "dl", "dt", "h1", "h2", "h3", "h4", "h5", "h6", "hr", "li",
-        "ol", "td", "th", "tr", "ul"
-    };
+    static char *len2Elements[6] = {"dd", "dl", "dt", "td", "th", "tr"};
     static char *len3Elements[5] = {"col", "dir", "div", "nav", "pre"};
     static char *len4Elements[9] = {
         "base", "body", "form", "head", "html", "link", "main", "menu", "meta"
@@ -343,18 +340,15 @@ static bool match_html_element(char *e, const size_t len)
         "center", "dialog", "figure", "footer", "header", "iframe", "legend",
         "option", "script", "source"
     };
-    static char *bigElements[15] = {
-        "address", "article", "basefont", "blockquote", "caption", "colgroup", 
-        "details", "fieldset", "figcaption", "frameset", "menuitem", "noframes", 
+    static char *bigElements[14] = {
+        "address", "article", "basefont", "caption", "colgroup", "details",
+        "fieldset", "figcaption", "frameset", "menuitem", "noframes", 
         "optgroup", "section", "summary"
     };
     
     if (len == 0) return NULL;
-    if (len == 1) {
-        if (strcmp(e, "p") == 0) return true;
-    }
     else if (len == 2) {
-        for (size_t i = 0; i < 16; i++) {
+        for (size_t i = 0; i < 6; i++) {
             if (strcmp(e, len2Elements[i]) == 0) return true;
         }
         return false;
@@ -384,7 +378,7 @@ static bool match_html_element(char *e, const size_t len)
         return false;
     }
     else {
-        for (size_t i = 0; i < 15; i++) {
+        for (size_t i = 0; i < 14; i++) {
             if (strcmp(e, bigElements[i]) == 0) return true;
         }
         return false;
@@ -397,7 +391,7 @@ markdown_t *parse_html_block(string_t *s)
     size_t i = indentation, j = 0;
     char element[15];
     
-    if (i > 3 && (lastBlock != HTML_BLOCK || lastBlock != HTML_COMMENT))
+    if (i > 3 && lastBlock != HTML_BLOCK && !insideHTMLComment)
     {
         return NULL;
     }
