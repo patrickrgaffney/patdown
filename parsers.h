@@ -90,7 +90,24 @@ markdown_t *parse_blank_line(string_t *s);
  ******************************************************************/
 markdown_t *parse_fenced_code_block(string_t *s);
 
+
+/******************************************************************
+ * parse_html_block() -- parse for an HTML block (or comment)
+ *
+ * char *s -- original string read from file
+ *
+ * @return -- an markdown_t node or NULL
+ ******************************************************************/
 markdown_t *parse_html_block(string_t *s);
+
+
+/******************************************************************
+ * parse_html_comment() -- parse for an HTML comment
+ *
+ * char *s -- original string read from file
+ *
+ * @return -- an markdown_t node or NULL
+ ******************************************************************/
 markdown_t *parse_html_comment(string_t *s);
 
 #endif

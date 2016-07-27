@@ -325,7 +325,15 @@ markdown_t *parse_fenced_code_block(string_t *s)
     }
 }
 
-static bool match_html_element(char *e, const size_t len)
+
+/******************************************************************
+ * match_html_element() -- determine if tag matches an HTML element
+ *
+ * const char *e -- tag that was parsed from input
+ *
+ * @return -- true if a match was found, false otherwise
+ ******************************************************************/
+static bool match_html_element(const char *e, const size_t len)
 {
     static char *len2Elements[6] = {"dd", "dl", "dt", "td", "th", "tr"};
     static char *len3Elements[4] = {"col", "dir", "div", "nav"};
@@ -386,6 +394,14 @@ static bool match_html_element(char *e, const size_t len)
     return false;
 }
 
+
+/******************************************************************
+ * parse_html_block() -- parse for an HTML block (or comment)
+ *
+ * char *s -- original string read from file
+ *
+ * @return -- an markdown_t node or NULL
+ ******************************************************************/
 markdown_t *parse_html_block(string_t *s)
 {
     size_t i = indentation, j = 0;
@@ -418,6 +434,14 @@ markdown_t *parse_html_block(string_t *s)
     }
 }
 
+
+/******************************************************************
+ * parse_html_comment() -- parse for an HTML comment
+ *
+ * char *s -- original string read from file
+ *
+ * @return -- an markdown_t node or NULL
+ ******************************************************************/
 markdown_t *parse_html_comment(string_t *s)
 {
     size_t i = indentation;
