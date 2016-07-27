@@ -32,7 +32,7 @@ colors_t clrs = {
     .bold    = "\x1b[1m"
 };
 
-static char *string[26] = {
+static char *string[27] = {
     "UNKNOWN",
     "BLANK_LINE",
     "ATX_HEADER_1",
@@ -49,6 +49,8 @@ static char *string[26] = {
     "FENCED_CODE_BLOCK_START",
     "FENCED_CODE_BLOCK",
     "FENCED_CODE_BLOCK_END",
+    "HTML_BLOCK",
+    "HTML_COMMENT",
     "BLOCKQUOTE_START",
     "BLOCKQUOTE_END",
     "UNORDERED_LIST_START",
@@ -57,8 +59,7 @@ static char *string[26] = {
     "ORDERED_LIST_START",
     "ORDERED_LIST_ITEM",
     "ORDERED_LIST_END",
-    "LINK_REFERENCE_DEF",
-    "HTML_BLOCK"
+    "LINK_REFERENCE_DEF"
 };
 
 static size_t passed = 0;
@@ -435,6 +436,263 @@ void test_paragraphs(void)
     // indented code block
     run_test(INDENTED_CODE_BLOCK, "    aaa", "aaa") ? passed++ : failed++;
     run_test(PARAGRAPH, "bbb", "bbb") ? passed++ : failed++;
+    clear_parser();
+}
+
+
+void test_html_blocks(void)
+{
+    // normal use -- html block with lines w/o HTML elements
+    run_test(HTML_BLOCK, "<table>", "<table>") ? passed++ : failed++;
+    run_test(HTML_BLOCK, "  <tr>", "  <tr>") ? passed++ : failed++;
+    run_test(HTML_BLOCK, "    <td>", "    <td>") ? passed++ : failed++;
+    run_test(HTML_BLOCK, "      hi", "      hi") ? passed++ : failed++;
+    run_test(HTML_BLOCK, "    <td>", "    <td>") ? passed++ : failed++;
+    run_test(HTML_BLOCK, "  <tr>", "  <tr>") ? passed++ : failed++;
+    run_test(HTML_BLOCK, "<table>", "<table>") ? passed++ : failed++;
+    run_test(BLANK_LINE, "", NULL) ? passed++ : failed++;
+    run_test(PARAGRAPH, "okay", "okay") ? passed++ : failed++;
+    clear_parser();
+    
+    // test fake len=1 element
+    run_test(PARAGRAPH, "<l>para</l>", "<l>para</l>") ? passed++ : failed++;
+    clear_parser();
+    
+    // test <dd>
+    run_test(HTML_BLOCK, "<dd>def</dd>", "<dd>def</dd>") ? passed++ : failed++;
+    clear_parser();
+    
+    // test <dl>
+    run_test(HTML_BLOCK, "<dl>def</dl>", "<dl>def</dl>") ? passed++ : failed++;
+    clear_parser();
+    
+    // test <dt>
+    run_test(HTML_BLOCK, "<dt>def</dt>", "<dt>def</dt>") ? passed++ : failed++;
+    clear_parser();
+    
+    // test <td>
+    run_test(HTML_BLOCK, "<td>table</td>", "<td>table</td>") ? passed++ : failed++;
+    clear_parser();
+    
+    // test <th>
+    run_test(HTML_BLOCK, "<th>table</th>", "<th>table</th>") ? passed++ : failed++;
+    clear_parser();
+    
+    // test <tr>
+    run_test(HTML_BLOCK, "<tr>table</tr>", "<tr>table</tr>") ? passed++ : failed++;
+    clear_parser();
+    
+    // test fake len=2 element
+    run_test(PARAGRAPH, "<ll>para</ll>", "<ll>para</ll>") ? passed++ : failed++;
+    clear_parser();
+    
+    // test <col>
+    run_test(HTML_BLOCK, "<col>a</col>", "<col>a</col>") ? passed++ : failed++;
+    clear_parser();
+    
+    // test <dir>
+    run_test(HTML_BLOCK, "<dir>a</dir>", "<dir>a</dir>") ? passed++ : failed++;
+    clear_parser();
+    
+    // test <div>
+    run_test(HTML_BLOCK, "<div>a</div>", "<div>a</div>") ? passed++ : failed++;
+    clear_parser();
+    
+    // test <nav>
+    run_test(HTML_BLOCK, "<nav>a</nav>", "<nav>a</nav>") ? passed++ : failed++;
+    clear_parser();
+    
+    // test fake len=3 element
+    run_test(PARAGRAPH, "<nan>para</nan>", "<nan>para</nan>") ? passed++ : failed++;
+    clear_parser();
+    
+    // test <base>
+    run_test(HTML_BLOCK, "<base>", "<base>") ? passed++ : failed++;
+    clear_parser();
+    
+    // test <body>
+    run_test(HTML_BLOCK, "<body>", "<body>") ? passed++ : failed++;
+    clear_parser();
+    
+    // test <form>
+    run_test(HTML_BLOCK, "<form>", "<form>") ? passed++ : failed++;
+    clear_parser();
+    
+    // test <head>
+    run_test(HTML_BLOCK, "<head>", "<head>") ? passed++ : failed++;
+    clear_parser();
+    
+    // test <html>
+    run_test(HTML_BLOCK, "<html>", "<html>") ? passed++ : failed++;
+    clear_parser();
+    
+    // test <link>
+    run_test(HTML_BLOCK, "<link>", "<link>") ? passed++ : failed++;
+    clear_parser();
+    
+    // test <main>
+    run_test(HTML_BLOCK, "<main>", "<main>") ? passed++ : failed++;
+    clear_parser();
+    
+    // test <menu>
+    run_test(HTML_BLOCK, "<menu>", "<menu>") ? passed++ : failed++;
+    clear_parser();
+    
+    // test <meta>
+    run_test(HTML_BLOCK, "<meta>", "<meta>") ? passed++ : failed++;
+    clear_parser();
+    
+    // test fake len=4 element
+    run_test(PARAGRAPH, "<bold>", "<bold>") ? passed++ : failed++;
+    clear_parser();
+    
+    // test <aside>
+    run_test(HTML_BLOCK, "<aside>", "<aside>") ? passed++ : failed++;
+    clear_parser();
+    
+    // test <frame>
+    run_test(HTML_BLOCK, "<frame>", "<frame>") ? passed++ : failed++;
+    clear_parser();
+    
+    // test <param>
+    run_test(HTML_BLOCK, "<param>", "<param>") ? passed++ : failed++;
+    clear_parser();
+    
+    // test <style>
+    run_test(HTML_BLOCK, "<style>", "<style>") ? passed++ : failed++;
+    clear_parser();
+    
+    // test <table>
+    run_test(HTML_BLOCK, "<table>", "<table>") ? passed++ : failed++;
+    clear_parser();
+    
+    // test <tbody>
+    run_test(HTML_BLOCK, "<tbody>", "<tbody>") ? passed++ : failed++;
+    clear_parser();
+    
+    // test <tfoot>
+    run_test(HTML_BLOCK, "<tfoot>", "<tfoot>") ? passed++ : failed++;
+    clear_parser();
+    
+    // test <thead>
+    run_test(HTML_BLOCK, "<thead>", "<thead>") ? passed++ : failed++;
+    clear_parser();
+    
+    // test <title>
+    run_test(HTML_BLOCK, "<title>", "<title>") ? passed++ : failed++;
+    clear_parser();
+    
+    // test <track>
+    run_test(HTML_BLOCK, "<track>", "<track>") ? passed++ : failed++;
+    clear_parser();
+    
+    // test fake len=5 element
+    run_test(PARAGRAPH, "<fucky>", "<fucky>") ? passed++ : failed++;
+    clear_parser();
+    
+    // test <center>
+    run_test(HTML_BLOCK, "<center>", "<center>") ? passed++ : failed++;
+    clear_parser();
+    
+    // test <dialog>
+    run_test(HTML_BLOCK, "<dialog>", "<dialog>") ? passed++ : failed++;
+    clear_parser();
+    
+    // test <figure>
+    run_test(HTML_BLOCK, "<figure>", "<figure>") ? passed++ : failed++;
+    clear_parser();
+    
+    // test <footer>
+    run_test(HTML_BLOCK, "<footer>", "<footer>") ? passed++ : failed++;
+    clear_parser();
+    
+    // test <header>
+    run_test(HTML_BLOCK, "<header>", "<header>") ? passed++ : failed++;
+    clear_parser();
+    
+    // test <iframe>
+    run_test(HTML_BLOCK, "<iframe>", "<iframe>") ? passed++ : failed++;
+    clear_parser();
+    
+    // test <legend>
+    run_test(HTML_BLOCK, "<legend>", "<legend>") ? passed++ : failed++;
+    clear_parser();
+    
+    // test <option>
+    run_test(HTML_BLOCK, "<option>", "<option>") ? passed++ : failed++;
+    clear_parser();
+    
+    // test <script>
+    run_test(HTML_BLOCK, "<script>", "<script>") ? passed++ : failed++;
+    clear_parser();
+    
+    // test <source>
+    run_test(HTML_BLOCK, "<source>", "<source>") ? passed++ : failed++;
+    clear_parser();
+    
+    // test fake len=6 element
+    run_test(PARAGRAPH, "<fucker>", "<fucker>") ? passed++ : failed++;
+    clear_parser();
+    
+    // test <address>
+    run_test(HTML_BLOCK, "<address>", "<address>") ? passed++ : failed++;
+    clear_parser();
+    
+    // test <article>
+    run_test(HTML_BLOCK, "<article>", "<article>") ? passed++ : failed++;
+    clear_parser();
+    
+    // test <basefont>
+    run_test(HTML_BLOCK, "<basefont>", "<basefont>") ? passed++ : failed++;
+    clear_parser();
+    
+    // test <caption>
+    run_test(HTML_BLOCK, "<caption>", "<caption>") ? passed++ : failed++;
+    clear_parser();
+    
+    // test <colgroup>
+    run_test(HTML_BLOCK, "<colgroup>", "<colgroup>") ? passed++ : failed++;
+    clear_parser();
+    
+    // test <details>
+    run_test(HTML_BLOCK, "<details>", "<details>") ? passed++ : failed++;
+    clear_parser();
+    
+    // test <fieldset>
+    run_test(HTML_BLOCK, "<fieldset>", "<fieldset>") ? passed++ : failed++;
+    clear_parser();
+    
+    // test <figcaption>
+    run_test(HTML_BLOCK, "<figcaption>", "<figcaption>") ? passed++ : failed++;
+    clear_parser();
+    
+    // test <frameset>
+    run_test(HTML_BLOCK, "<frameset>", "<frameset>") ? passed++ : failed++;
+    clear_parser();
+    
+    // test <menuitem>
+    run_test(HTML_BLOCK, "<menuitem>", "<menuitem>") ? passed++ : failed++;
+    clear_parser();
+    
+    // test <noframes>
+    run_test(HTML_BLOCK, "<noframes>", "<noframes>") ? passed++ : failed++;
+    clear_parser();
+    
+    // test <optgroup>
+    run_test(HTML_BLOCK, "<optgroup>", "<optgroup>") ? passed++ : failed++;
+    clear_parser();
+    
+    // test <section>
+    run_test(HTML_BLOCK, "<section>", "<section>") ? passed++ : failed++;
+    clear_parser();
+    
+    // test <summary>
+    run_test(HTML_BLOCK, "<summary>", "<summary>") ? passed++ : failed++;
+    clear_parser();
+    
+    // test fake large element
+    run_test(PARAGRAPH, "<douchecanoe>", "<douchecanoe>") ? passed++ : failed++;
+    clear_parser();
 }
 
 
@@ -453,6 +711,8 @@ int main(int argc, char const **argv)
     test_fenced_code_blocks();
     printf("\n%sPARAGRAPHS:%s\n", clrs.bold, clrs.reset);
     test_paragraphs();
+    printf("\n%sHTML BLOCKS:%s\n", clrs.bold, clrs.reset);
+    test_html_blocks();
     
     printf("\n\n%sTOTAL TESTS: %zu%s\n", clrs.bold, passed + failed, clrs.reset);
     if (failed == 0) printf("%s%sPASSED ALL %zu TESTS!%s\n", clrs.bold, clrs.green, passed, clrs.reset);
