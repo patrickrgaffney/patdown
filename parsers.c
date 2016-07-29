@@ -9,6 +9,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include <ctype.h>
+#include <stdbool.h>
 #include "parsers.h"
 #include "markdown.h"
 #include "files.h"
@@ -36,10 +37,6 @@ static size_t count_indentation(char *s)
 
 /******************************************************************
  * static global variables -- used to hold state information
- *
- * mdblock_t lastBlock -- type of last parsed block
- * size_t indentation  -- count of leading spaces on a line
- * string_t *line      -- raw line read from input file
  ******************************************************************/
 static mdblock_t lastBlock = UNKNOWN;
 static size_t indentation  = 0;

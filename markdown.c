@@ -32,12 +32,7 @@ markdown_t *markdown(FILE *fp)
         if (feof(fp)) break;
         temp = block_parser(fp);
         
-        // Walk down temp->next until we find NULL, inserting each
-        // node into the queue as we go, so that tail->next = NULL
-        while (temp) {
-            insert_markdown_queue(&head, &tail, temp);
-            temp = temp->next;
-        }
+        if (temp) insert_markdown_queue(&head, &tail, temp);
     }
     return head;
 }
