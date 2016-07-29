@@ -83,6 +83,7 @@ typedef struct markdown_t
 {
     string_t *value;
     mdblock_t type;
+    void *data;
     struct markdown_t *next;
 } markdown_t;
 
