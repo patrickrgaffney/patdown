@@ -16,3 +16,6 @@ test
 
 # valgrind files
 *.dSYM
+
+# testing files
+void_pointers.c

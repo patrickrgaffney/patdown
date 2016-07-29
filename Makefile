@@ -24,7 +24,7 @@ errors.o: errors.c errors.h
 markdown.o: markdown.c markdown.h strings.h errors.h parsers.h files.h
 	$(CC) -c markdown.c
 	
-parsers.o: parsers.c parsers.h markdown.h
+parsers.o: parsers.c parsers.h markdown.h files.h strings.h
 	$(CC) -c parsers.c
 	
 strings.o: strings.c strings.h errors.h

@@ -23,24 +23,22 @@
  *
  * @return -- markdown_t stack or NULL (if inputFile was empty)
  ******************************************************************/
-markdown_t *markdown(FILE *inputFile)
+markdown_t *markdown(FILE *fp)
 {
     markdown_t *head = NULL, *tail = NULL, *temp = NULL;
-    string_t *rawBlock;
-    if (!inputFile) return NULL;
+    if (!fp) return NULL;
     
     while (true) {
-        rawBlock = read_line(inputFile);
-        if (rawBlock->len == 0 && feof(inputFile)) break;
-        temp = block_parser(rawBlock);
+        if (feof(fp)) break;
+        temp = block_parser(fp);
         
-        // Either update the queue or insert this new node.
-        if (update_queue(&tail, temp)) free_markdown(temp);
-        else insert_markdown_queue(&head, &tail, temp);
-        
-        free_stringt(rawBlock);
+        // Walk down temp->next until we find NULL, inserting each
+        // node into the queue as we go, so that tail->next = NULL
+        while (temp) {
+            insert_markdown_queue(&head, &tail, temp);
+            temp = temp->next;
+        }
     }
-    free_stringt(rawBlock);
     return head;
 }
 
@@ -61,6 +59,7 @@ markdown_t *init_markdown(string_t *s, const size_t start, const size_t stop, co
     line->value = create_substring(s, start, stop);
     line->type  = type;
     line->next  = NULL;
+    line->data  = NULL;
     return line;
 }
 
@@ -126,6 +125,9 @@ void print_markdown_queue(markdown_t *node)
 void free_markdown(markdown_t *node)
 {
     if (node) {
+        // TODO: free the node->data pointer by determining the 
+        // correct function to call via node->type
+        
         free_stringt(node->value);
         free_markdown(node->next);
         free(node);
@@ -141,41 +143,41 @@ void free_markdown(markdown_t *node)
  *
  * @return -- true if queue was updated, false if not
  ******************************************************************/
-bool update_queue(markdown_t **tail, markdown_t *temp)
-{
-    if (!*tail) return false;
-    
-    switch (temp->type) {
-        case SETEXT_HEADER_1:
-        case SETEXT_HEADER_2: {
-            (*tail)->type = temp->type;
-            return true;
-        }
-        case PARAGRAPH: {
-            if ((*tail)->type == PARAGRAPH) goto combine;
-            break;
-        }
-        case FENCED_CODE_BLOCK:
-        case INDENTED_CODE_BLOCK: {
-            if ((*tail)->type == INDENTED_CODE_BLOCK) goto combine_newline;
-            else if ((*tail)->type == FENCED_CODE_BLOCK) goto combine_newline;
-            break;
-        }
-        default: break;
-    }
-    return false;
-    
-    combine: {
-        const size_t size = (*tail)->value->len + temp->value->len + 1;
-        (*tail)->value = combine_strings("%s %s", (*tail)->value, temp->value, size);
-        return true;
-    }
-    
-    combine_newline: {
-        const size_t size = (*tail)->value->len + temp->value->len + 1;
-        (*tail)->value = combine_strings("%s\n%s", (*tail)->value, temp->value, size);
-        printf("newvalue = \'%s\'\n", (*tail)->value->string);
-        printf("size of newvalue = %zu\n", (*tail)->value->len);
-        return true;
-    }
-}
+// bool update_queue(markdown_t **tail, markdown_t *temp)
+// {
+//     if (!*tail) return false;
+//
+//     switch (temp->type) {
+//         case SETEXT_HEADER_1:
+//         case SETEXT_HEADER_2: {
+//             (*tail)->type = temp->type;
+//             return true;
+//         }
+//         case PARAGRAPH: {
+//             if ((*tail)->type == PARAGRAPH) goto combine;
+//             break;
+//         }
+//         case FENCED_CODE_BLOCK:
+//         case INDENTED_CODE_BLOCK: {
+//             if ((*tail)->type == INDENTED_CODE_BLOCK) goto combine_newline;
+//             else if ((*tail)->type == FENCED_CODE_BLOCK) goto combine_newline;
+//             break;
+//         }
+//         default: break;
+//     }
+//     return false;
+//
+//     combine: {
+//         const size_t size = (*tail)->value->len + temp->value->len + 1;
+//         (*tail)->value = combine_strings("%s %s", (*tail)->value, temp->value, size);
+//         return true;
+//     }
+//
+//     combine_newline: {
+//         const size_t size = (*tail)->value->len + temp->value->len + 1;
+//         (*tail)->value = combine_strings("%s\n%s", (*tail)->value, temp->value, size);
+//         printf("newvalue = \'%s\'\n", (*tail)->value->string);
+//         printf("size of newvalue = %zu\n", (*tail)->value->len);
+//         return true;
+//     }
+// }
