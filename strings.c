@@ -155,8 +155,5 @@ string_t *combine_strings(const char *fmt, string_t *s1, string_t *s2, const siz
     string_t *dest = init_stringt(size + NULL_CHAR);
     dest->len = size;
     snprintf(dest->string, size + NULL_CHAR, fmt, s1->string, s2->string);
-    
-    // free s1 -- it is being overwritten on return
-    free_stringt(s1);
     return dest;
 }
