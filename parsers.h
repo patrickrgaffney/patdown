@@ -58,7 +58,7 @@ markdown_t *parse_blank_line(void);
  *
  * @return -- an markdown_t node or NULL
  ******************************************************************/
-// markdown_t *parse_atx_header(string_t *s);
+markdown_t *parse_atx_header(void);
 //
 //
 // /******************************************************************

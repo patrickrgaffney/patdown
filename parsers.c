@@ -15,18 +15,11 @@
 #include "files.h"
 #include "strings.h"
 
-#define FREE_LINE true
-#define KEEP_LINE false
+/*******************************************************************/
+/* GENERIC HELPER FUNCTIONS ****************************************/
+/*******************************************************************/
 
-
-
-/******************************************************************
- * count_indentation() -- count leading indentation on a string
- * 
- * char *s -- string whose indentation to be counted
- *
- * @return -- number of leading WS chars in *s
- ******************************************************************/
+/***** count_indentation(s) -- count leading indentation on s ******/
 static size_t count_indentation(char *s)
 {
     size_t i = 0;
@@ -35,17 +28,27 @@ static size_t count_indentation(char *s)
 }
 
 
-/******************************************************************
- * static global variables -- used to hold state information
- ******************************************************************/
-static mdblock_t lastBlock = UNKNOWN;
-static size_t indentation  = 0;
-static string_t *line = NULL;
+
+/*******************************************************************/
+/* STATE INFORMATION & MANIPULATION ********************************/
+/*******************************************************************/
+
+/* static global variables -- used to hold state information *******/
+static mdblock_t lastBlock = UNKNOWN;   // type of the last block
+static size_t indentation  = 0;         // current lines indentation
+static string_t *line      = NULL;      // the actual line data
+static markdown_t *ready_node = NULL;   // a previously parsed node
 
 
+/* save or free the current line when leaving the parser ***********/
+#define FREE_LINE true
+#define KEEP_LINE false
+
+
+/***** update_state(bool, last) -- update the state variables ******/
 static void update_state(const bool lineAction, const mdblock_t last)
 {
-    if (!lineAction) {
+    if (lineAction) {
         free(line);
         line = NULL;
     }
@@ -53,132 +56,100 @@ static void update_state(const bool lineAction, const mdblock_t last)
 }
 
 
-/******************************************************************
- * ready_parser() -- get the parser ready for this line of input
- * 
- * char *line -- line read from input file
- *
- * @return -- a complete markdown_t node or NULL
- ******************************************************************/
-// static markdown_t *ready_parser(string_t *line)
-// {
-//     size_t i = indentation = count_indentation(line->string);
-//     markdown_t *node = NULL;
-//
-//     if (insideFencedCodeBlock) {
-//         node = parse_fenced_code_block(line);
-//     }
-//     else if (lastBlock == HTML_BLOCK) {
-//         node = parse_html_block(line);
-//     }
-//     else if (*(line->string) == '\0') {
-//         node = parse_blank_line(line);
-//     }
-//     else if (i > 3) {
-//         node = parse_indented_code_block(line);
-//     }
-//     return node;
-// }
+/*******************************************************************/
+/* BLOCK PARSING FUNCTIONS *****************************************/
+/*******************************************************************/
 
 
-/******************************************************************
- * block_parser() -- determine which parsing function to call
- * 
- * char *line -- line read from input file
- *
- * @return -- an markdown_t node or NULL
- ******************************************************************/
+/***** block_parser(fp) -- determine the parsing function to call **/
+/******* NOTE: this is the external API for the parser *************/
 markdown_t *block_parser(FILE *fp)
 {
     markdown_t *node = NULL;
-    line = read_line(fp);
-    if (feof(fp)) return NULL;
+    if (ready_node) {
+        node = ready_node;
+        ready_node = NULL;
+        return node;
+    }
+    else if (!line) line = read_line(fp);
+    
     size_t i = indentation = count_indentation(line->string);
+    // if (indentation > 4) parse_indented_code_block(fp);
     
     if (*(line->string) == '\0') node = parse_blank_line();
     else {
         switch (line->string[i]) {
-            // case '#': node = parse_atx_header(line); break;
+            case '#': node = parse_atx_header(); break;
             // case '-': node = parse_horizontal_rule(line); break;
             // case '*': node = parse_horizontal_rule(line); break;
             // case '_': node = parse_horizontal_rule(line); break;
-            // case '=': node = parse_setext_header(line); break;
             // case '~':
             // case '`': node = parse_fenced_code_block(line); break;
             // case '<': node = parse_html_block(line); break;
-            default: node = parse_paragraph(fp);
+            default: break;
         }
+        if (!node) node = parse_paragraph(fp);
     }
     return node;
 }
 
 
-/******************************************************************
- * parse_paragraph() -- parse for a paragraph
- * 
- * char *s -- original string read from file
- *
- * @return -- an markdown_t node or NULL
- ******************************************************************/
+
+/***** parse_paragraph(fp) -- parse lines for a complete paragraph */
+/******* NOTE: consumes lines until the paragraph is closed ********/
 markdown_t *parse_paragraph(FILE *fp)
 {
     markdown_t *node = NULL, *temp = NULL;
     size_t i = indentation;
     size_t maxIndent = (lastBlock == PARAGRAPH) ? 10000 : 3;
     
-    // Max indentation of a paragraph is unlimited if the last line
+    // max indentation of a paragraph is unlimited if the last line
     // was a paragraph, otherwise becomes a code block at 4 WS chars
     if (i > maxIndent) return NULL;
-    
-    // The first line of a paragraph must always begin with a alpha
-    // character, subsequent lines need not meet this requirement
-    if (!isalpha(line->string[i])) return NULL;
     
     // TODO: Check for line break around here.
     node = init_markdown(line, i, line->len - 1, PARAGRAPH);
     update_state(FREE_LINE, PARAGRAPH);
-    
-    // Check next line for a setext heading
     line = read_line(fp);
+    
+    // check next line to see if this paragraph is a setext heading
     if ((temp = parse_setext_header()) != NULL) {
         // Change the type of the previous PARAGRAPH
         node->type = temp->type;
         free_markdown(temp);
         update_state(FREE_LINE, node->type);
     }
-    // Check next line for a paragraph continuation
-    else if ((temp = parse_paragraph(fp)) != NULL) {
-        // Append the new PARAGRAPH to the previous PARAGRAPH
-        i = node->value->len + temp->value->len + 1;
-        node->value = combine_strings("%s %s", node->value, temp->value, i);
-        
-        // Change the type of the new, combined paragraph, this allows
-        // the SETEXT_HEADER_x type to *float* to the top (aka: node)
-        node->type  = temp->type;
-        free_markdown(temp);
-        update_state(FREE_LINE, PARAGRAPH);
+    
+    // check next line for a paragraph (lazy) continuation
+    else if ((temp = block_parser(fp)) != NULL) {
+        if (temp->type == PARAGRAPH) {
+            // Append the new PARAGRAPH to the previous PARAGRAPH
+            i = node->value->len + temp->value->len + 1;
+            node->value = combine_strings("%s %s", node->value, temp->value, i);
+            
+            // Change the type of the new, combined paragraph, this allows
+            // the SETEXT_HEADER_x type to *float* to the top node
+            node->type  = temp->type;
+            free_markdown(temp);
+            update_state(FREE_LINE, PARAGRAPH);
+        }
+        else ready_node = temp;
     }
     return node;
 }
 
 
-/******************************************************************
- * parse_setext_header() -- parse for a setext header
- * 
- * char *s -- original string read from file
- *
- * @return -- an markdown_t node or NULL
- ******************************************************************/
+/***** parse_setext_header() -- parse line for setext header *******/
+/******* NOTE: this function is only called by parse_paragraph() ***/
 markdown_t *parse_setext_header(void)
 {
     size_t i = indentation, numChars = 0;
-    int setextChar;
+    int setextChar, c;
     
-    // A setext header can only follow a paragraph
+    // a setext header can only follow a paragraph
     if (lastBlock != PARAGRAPH) return NULL;
     
-    setextChar = (line->string[i] == '-' || line->string[i] == '=') ? 
-                  line->string[i] : -1;
+    setextChar = ((c = line->string[i]) == '-' || c == '=') ? c : -1;
     if (setextChar == -1) return NULL;
     
     // *n* number of setextChar's
@@ -187,10 +158,11 @@ markdown_t *parse_setext_header(void)
     // *n* number of spaces
     while (line->string[i] == ' ') i++;
     
-    // If we found any non-setextChar character, or only found one,
+    // if we found any non-setextChar character, or only found one,
     // this cannot be a setext header
     if (line->string[i] != '\0' || numChars < 1) return NULL;
     
+    // parse_paragraph() will update the state variables
     if (setextChar == '=') {
         return init_markdown(NULL, 0, 0, SETEXT_HEADER_1);
     }
@@ -198,13 +170,7 @@ markdown_t *parse_setext_header(void)
 }
 
 
-/******************************************************************
- * parse_blank_line() -- parse for a blank line
- * 
- * char *s -- original string read from file
- *
- * @return -- an markdown_t node or NULL
- ******************************************************************/
+/* parse_blank_line() -- parse for an empty line *******************/
 markdown_t *parse_blank_line(void)
 {
     size_t i = indentation;
@@ -212,62 +178,66 @@ markdown_t *parse_blank_line(void)
     if (line->string[i] != '\0') return NULL;
 
     // preserve blank lines inside an INDENTED_CODE_BLOCK
+    // TODO: figure out a cleaner way to do this
     if (lastBlock == INDENTED_CODE_BLOCK && i >= 4) {
         return init_markdown(line, 4, line->len - 1, INDENTED_CODE_BLOCK);
     }
-    else return init_markdown(NULL, 0, 0, BLANK_LINE);
+    else {
+        update_state(FREE_LINE, BLANK_LINE);
+        return init_markdown(NULL, 0, 0, BLANK_LINE);
+    }
 }
 
 
-/******************************************************************
- * parse_atx_header(char *s) -- parse for an atx header
- * 
- * char *s -- original string read from file
- *
- * @return -- an markdown_t node or NULL
- ******************************************************************/
-// markdown_t *parse_atx_header(string_t *s)
-// {
-//     size_t i = indentation, hashes = 0, trailing = 0, j = s->len - 1;
-//     mdblock_t type;
-//
-//     if (i > 3) return NULL;
-//
-//     while (s->string[i] == '#') {
-//         hashes++;
-//         i++;
-//     }
-//     if (hashes < 1 || hashes > 6 || s->string[i] != ' ') {
-//         return init_markdown(s, i - hashes, j, PARAGRAPH);
-//     }
-//
-//     // 1-unlimited spaces between hashes and first word
-//     while (s->string[i] == ' ') i++;
-//
-//     // remove all spaces at end of string
-//     while (s->string[j] == ' ') j--;
-//
-//     // remove all trailing hashes if they are followed by 1-inf spaces
-//     while (s->string[j] == '#') {
-//         j--;
-//         trailing++;
-//     }
-//     if (s->string[j] != ' ') j += trailing;
-//     else {
-//         while (s->string[j] == ' ') j--;
-//     }
-//
-//     switch (hashes) {
-//         case 1: type = ATX_HEADER_1; break;
-//         case 2: type = ATX_HEADER_2; break;
-//         case 3: type = ATX_HEADER_3; break;
-//         case 4: type = ATX_HEADER_4; break;
-//         case 5: type = ATX_HEADER_5; break;
-//         case 6: type = ATX_HEADER_6; break;
-//         default: break;
-//     }
-//     return init_markdown(s, i, j, type);
-// }
+/* parse_atx_header() -- parse for an atx header *******************/
+markdown_t *parse_atx_header(void)
+{
+    size_t i = indentation;
+    size_t hashes = 0, trailing = 0;    // leading & trailing hashes
+    size_t end = line->len - 1;         // index of last character
+    mdblock_t type;                     // ATX_HEADING_{1-6}
+    markdown_t *temp = NULL;
+
+    if (i > 3) return NULL;
+
+    while (line->string[i] == '#') hashes++, i++;
+    
+    // required space after initial hashes and beginning of heading
+    if (hashes < 1 || hashes > 6 || line->string[i] != ' ') {
+        return NULL;
+    }
+
+    // 1-unlimited spaces between hashes and first word
+    while (line->string[i] == ' ') i++;
+
+    // remove all spaces at end of string
+    while (line->string[end] == ' ') end--;
+
+    // remove all trailing hashes if they are followed by 1-inf spaces
+    while (line->string[end] == '#') end--, trailing++;
+    
+    // required space after trailing hashes and end of heading
+    if (line->string[end] != ' ') end += trailing;
+    
+    // if required space, also remove all the trailing spaces between 
+    // the end of the heading and the start of the trailing hashes
+    else {
+        while (line->string[end] == ' ') end--;
+    }
+
+    switch (hashes) {
+        case 1: type = ATX_HEADER_1; break;
+        case 2: type = ATX_HEADER_2; break;
+        case 3: type = ATX_HEADER_3; break;
+        case 4: type = ATX_HEADER_4; break;
+        case 5: type = ATX_HEADER_5; break;
+        case 6: type = ATX_HEADER_6; break;
+        default: break;
+    }
+    temp = init_markdown(line, i, end, type);
+    update_state(FREE_LINE, type);
+    return temp;
+}
 
 
 /******************************************************************

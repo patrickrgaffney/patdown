@@ -6,9 +6,10 @@
  * 
  *********ultrapatbeams*/
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <stdbool.h>
+#include <stdio.h>      // for input files
+#include <stdlib.h>     // for allocation & freeing
+#include <stdbool.h>    // for true & false
+
 #include "markdown.h"
 #include "strings.h"
 #include "errors.h"
@@ -128,51 +129,3 @@ void free_markdown(markdown_t *node)
         free(node);
     }
 }
-
-
-/******************************************************************
- * update_queue() -- update the last node based on new information
- *
- * markdown_t **tail -- node at tail of queue
- * markdown_t  *temp -- (new) node that was most recently parsed
- *
- * @return -- true if queue was updated, false if not
- ******************************************************************/
-// bool update_queue(markdown_t **tail, markdown_t *temp)
-// {
-//     if (!*tail) return false;
-//
-//     switch (temp->type) {
-//         case SETEXT_HEADER_1:
-//         case SETEXT_HEADER_2: {
-//             (*tail)->type = temp->type;
-//             return true;
-//         }
-//         case PARAGRAPH: {
-//             if ((*tail)->type == PARAGRAPH) goto combine;
-//             break;
-//         }
-//         case FENCED_CODE_BLOCK:
-//         case INDENTED_CODE_BLOCK: {
-//             if ((*tail)->type == INDENTED_CODE_BLOCK) goto combine_newline;
-//             else if ((*tail)->type == FENCED_CODE_BLOCK) goto combine_newline;
-//             break;
-//         }
-//         default: break;
-//     }
-//     return false;
-//
-//     combine: {
-//         const size_t size = (*tail)->value->len + temp->value->len + 1;
-//         (*tail)->value = combine_strings("%s %s", (*tail)->value, temp->value, size);
-//         return true;
-//     }
-//
-//     combine_newline: {
-//         const size_t size = (*tail)->value->len + temp->value->len + 1;
-//         (*tail)->value = combine_strings("%s\n%s", (*tail)->value, temp->value, size);
-//         printf("newvalue = \'%s\'\n", (*tail)->value->string);
-//         printf("size of newvalue = %zu\n", (*tail)->value->len);
-//         return true;
-//     }
-// }
