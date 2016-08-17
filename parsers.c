@@ -114,6 +114,7 @@ static markdown_t *parse_paragraph(FILE *fp)
     markdown_t *node = NULL, *temp = NULL;
     size_t i = indentation;
     size_t maxIndent = (lastBlock == PARAGRAPH) ? 10000 : 3;
+    mdblock_t t;
     
     // max indentation of a paragraph is unlimited if the last line
     // was a paragraph, otherwise becomes a code block at 4 WS chars
@@ -134,7 +135,8 @@ static markdown_t *parse_paragraph(FILE *fp)
     
     // check next line for a paragraph (lazy) continuation
     else if ((temp = block_parser(fp)) != NULL) {
-        if (temp->type == PARAGRAPH) {
+        t = temp->type;
+        if (t == PARAGRAPH || t == SETEXT_HEADER_1 || t == SETEXT_HEADER_2) {
             // Append the new PARAGRAPH to the previous PARAGRAPH
             i = node->value->len + temp->value->len + 1;
             node->value = combine_strings("%s %s", node->value, temp->value, i);
@@ -156,12 +158,12 @@ static markdown_t *parse_paragraph(FILE *fp)
 static markdown_t *parse_setext_header(void)
 {
     size_t i = indentation, numChars = 0;
-    int setextChar, c;
+    int setextChar, c = line->string[i];
     
     // a setext header can only follow a paragraph
     if (lastBlock != PARAGRAPH) return NULL;
     
-    setextChar = ((c = line->string[i]) == '-' || c == '=') ? c : -1;
+    setextChar = (c == '-' || c == '=') ? c : -1;
     if (setextChar == -1) return NULL;
     
     // *n* number of setextChar's
@@ -257,8 +259,8 @@ static markdown_t *parse_horizontal_rule(void)
 {
     size_t i = indentation, numChars = 0;
     markdown_t *temp = NULL;
-    int hrChar, c;
-    hrChar = ((c = line->string[i]) == '*' || c == '_' || c == '-') ? c : -1;
+    int hrChar, c = line->string[i];
+    hrChar = (c == '*' || c == '_' || c == '-') ? c : -1;
     
     // dont worry about potential collision of a `-` <hr> with a 
     // `-` <h2> because this is checked in parse_paragraph()
@@ -279,13 +281,8 @@ static markdown_t *parse_horizontal_rule(void)
 }
 
 
-/******************************************************************
- * parse_indented_code_block() -- parse for an indented code block
- * 
- * char *s -- original string read from file
- *
- * @return -- an markdown_t node or NULL
- ******************************************************************/
+/* parse_indented_code_block() -- parse for an indented code block */
+/*** NOTE: consumes lines until the code block is closed ***********/
 // markdown_t *parse_indented_code_block(string_t *s)
 // {
 //     if (lastBlock == PARAGRAPH) return parse_paragraph(s);
