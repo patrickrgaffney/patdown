@@ -37,7 +37,7 @@ static size_t count_indentation(char *s)
 static mdblock_t lastBlock = UNKNOWN;   // type of the last block
 static size_t indentation  = 0;         // current lines indentation
 static string_t *line      = NULL;      // the actual line data
-static markdown_t *ready_node = NULL;   // a previously parsed node
+static markdown_t *ready_node = NULL;   // an *already* parsed node
 
 
 /* save or free the current line when leaving the parser ***********/
@@ -60,12 +60,16 @@ static void update_state(const bool lineAction, const mdblock_t last)
 /* BLOCK PARSING FUNCTIONS *****************************************/
 /*******************************************************************/
 
+/* NOTE: if the function is passed a file pointer (*fp), then it will
+ * consume raw lines of input until it is satified that the block has
+ * been exited.
+ *
+ * each of the parsing functions crawl the raw string using indexes
+ * to determine where the actual text (content) begins and ends --
+ * then creates a substring of the raw string using those 2 indexes.
+ *******************************************************************/
+
 /* each mdblock_t has its own parsing function *********************/
-/*******************************************************************/
-/*** NOTE: if the function is passed the file pointer, it makes ****/
-/*** consumes multiple lines of input -- aka, it consumes lines ****/
-/*** of input until its block is determined to be closed ***********/
-/*******************************************************************/
 static markdown_t *parse_paragraph(FILE *fp);
 static markdown_t *parse_setext_header(void);
 static markdown_t *parse_blank_line(void);
@@ -147,6 +151,8 @@ static markdown_t *parse_paragraph(FILE *fp)
             free_markdown(temp);
             update_state(FREE_LINE, PARAGRAPH);
         }
+        
+        // otherwise, just this will be the *next* node returned
         else ready_node = temp;
     }
     return node;
@@ -192,7 +198,7 @@ static markdown_t *parse_blank_line(void)
     if (line->string[i] != '\0') return NULL;
 
     // preserve blank lines inside an INDENTED_CODE_BLOCK
-    // TODO: figure out a cleaner way to do this
+    // TODO: handle this in parse_indented_code_block()
     if (lastBlock == INDENTED_CODE_BLOCK && i >= 4) {
         return init_markdown(line, 4, line->len - 1, INDENTED_CODE_BLOCK);
     }
