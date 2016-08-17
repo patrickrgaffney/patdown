@@ -19,7 +19,7 @@
 /* GENERIC HELPER FUNCTIONS ****************************************/
 /*******************************************************************/
 
-/***** count_indentation(s) -- count leading indentation on s ******/
+/* count_indentation(s) -- count leading indentation on s **********/
 static size_t count_indentation(char *s)
 {
     size_t i = 0;
@@ -45,7 +45,7 @@ static markdown_t *ready_node = NULL;   // a previously parsed node
 #define KEEP_LINE false
 
 
-/***** update_state(bool, last) -- update the state variables ******/
+/* update_state(bool, last) -- update the state variables **********/
 static void update_state(const bool lineAction, const mdblock_t last)
 {
     if (lineAction) {
@@ -60,9 +60,21 @@ static void update_state(const bool lineAction, const mdblock_t last)
 /* BLOCK PARSING FUNCTIONS *****************************************/
 /*******************************************************************/
 
+/* each mdblock_t has its own parsing function *********************/
+/*******************************************************************/
+/*** NOTE: if the function is passed the file pointer, it makes ****/
+/*** consumes multiple lines of input -- aka, it consumes lines ****/
+/*** of input until its block is determined to be closed ***********/
+/*******************************************************************/
+static markdown_t *parse_paragraph(FILE *fp);
+static markdown_t *parse_setext_header(void);
+static markdown_t *parse_blank_line(void);
+static markdown_t *parse_atx_header(void);
+static markdown_t *parse_horizontal_rule(void);
 
-/***** block_parser(fp) -- determine the parsing function to call **/
-/******* NOTE: this is the external API for the parser *************/
+
+/* block_parser(fp) -- determine the parsing function to call ******/
+/*** NOTE: this is the external API for the parser *****************/
 markdown_t *block_parser(FILE *fp)
 {
     markdown_t *node = NULL;
@@ -80,9 +92,9 @@ markdown_t *block_parser(FILE *fp)
     else {
         switch (line->string[i]) {
             case '#': node = parse_atx_header(); break;
-            // case '-': node = parse_horizontal_rule(line); break;
-            // case '*': node = parse_horizontal_rule(line); break;
-            // case '_': node = parse_horizontal_rule(line); break;
+            case '-': 
+            case '*': 
+            case '_': node = parse_horizontal_rule(); break;
             // case '~':
             // case '`': node = parse_fenced_code_block(line); break;
             // case '<': node = parse_html_block(line); break;
@@ -95,9 +107,9 @@ markdown_t *block_parser(FILE *fp)
 
 
 
-/***** parse_paragraph(fp) -- parse lines for a complete paragraph */
-/******* NOTE: consumes lines until the paragraph is closed ********/
-markdown_t *parse_paragraph(FILE *fp)
+/* parse_paragraph(fp) -- parse lines for a complete paragraph *****/
+/*** NOTE: consumes lines until the paragraph is closed ************/
+static markdown_t *parse_paragraph(FILE *fp)
 {
     markdown_t *node = NULL, *temp = NULL;
     size_t i = indentation;
@@ -139,9 +151,9 @@ markdown_t *parse_paragraph(FILE *fp)
 }
 
 
-/***** parse_setext_header() -- parse line for setext header *******/
-/******* NOTE: this function is only called by parse_paragraph() ***/
-markdown_t *parse_setext_header(void)
+/* parse_setext_header() -- parse line for setext header ***********/
+/*** NOTE: this function is only called by parse_paragraph() *******/
+static markdown_t *parse_setext_header(void)
 {
     size_t i = indentation, numChars = 0;
     int setextChar, c;
@@ -171,7 +183,7 @@ markdown_t *parse_setext_header(void)
 
 
 /* parse_blank_line() -- parse for an empty line *******************/
-markdown_t *parse_blank_line(void)
+static markdown_t *parse_blank_line(void)
 {
     size_t i = indentation;
 
@@ -190,7 +202,7 @@ markdown_t *parse_blank_line(void)
 
 
 /* parse_atx_header() -- parse for an atx header *******************/
-markdown_t *parse_atx_header(void)
+static markdown_t *parse_atx_header(void)
 {
     size_t i = indentation;
     size_t hashes = 0, trailing = 0;    // leading & trailing hashes
@@ -240,35 +252,31 @@ markdown_t *parse_atx_header(void)
 }
 
 
-/******************************************************************
- * parse_horizontal_rule() -- parse for a horizontal rule
- * 
- * char *s -- original string read from file
- *
- * @return -- an markdown_t node or NULL
- ******************************************************************/
-// markdown_t *parse_horizontal_rule(string_t *s)
-// {
-//     size_t i = indentation, numChars = 0;
-//     int hrChar = (s->string[i] == '*' || s->string[i] == '_' || s->string[i] == '-') ? s->string[i] : -1;
-//
-//     if (i > 3) return NULL;
-//
-//     if (hrChar == -1) return NULL;
-//     else if (hrChar == '-' && lastBlock == PARAGRAPH) {
-//         return parse_setext_header(s);
-//     }
-//
-//     // *n* number of spaces and *n* number of hrChar's
-//     while (s->string[i] == ' ' || s->string[i] == hrChar) {
-//         if (s->string[i++] == hrChar) numChars++;
-//     }
-//
-//     if (s->string[i] != '\0' || numChars < 3) {
-//         return parse_paragraph(s);
-//     }
-//     return init_markdown(NULL, 0, 0, HORIZONTAL_RULE);
-// }
+/* parse_horizontal_rule() -- parse for a horizontal rule **********/
+static markdown_t *parse_horizontal_rule(void)
+{
+    size_t i = indentation, numChars = 0;
+    markdown_t *temp = NULL;
+    int hrChar, c;
+    hrChar = ((c = line->string[i]) == '*' || c == '_' || c == '-') ? c : -1;
+    
+    // dont worry about potential collision of a `-` <hr> with a 
+    // `-` <h2> because this is checked in parse_paragraph()
+    if (i > 3 || hrChar == -1) return NULL;
+
+    // *n* number of spaces and *n* number of hrChar's
+    while (line->string[i] == ' ' || line->string[i] == hrChar) {
+        if (line->string[i++] == hrChar) numChars++;
+    }
+
+    // no other characters may occur inline
+    if (line->string[i] != '\0' || numChars < 3) {
+        return NULL;
+    }
+    temp = init_markdown(NULL, 0, 0, HORIZONTAL_RULE);
+    update_state(FREE_LINE, HORIZONTAL_RULE);
+    return temp;
+}
 
 
 /******************************************************************
