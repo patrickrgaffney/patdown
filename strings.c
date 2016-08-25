@@ -138,20 +138,12 @@ char *realloc_string(char *s, const size_t size)
 }
 
 
-/******************************************************************
- * combine_strings() -- combine two string_t nodes into one
- *
- * const char *fmt -- the format string for snprintf()
- * string_t *s1 -- the leading string
- * string_t *s2 -- the trailing string
- * const size_t size -- # of characters to be written to new string
- * 
- * @return -- a new string_t node containing *s1 and *s2 as 
- *            dictated by the format string
- ******************************************************************/
-string_t *combine_strings(const char *fmt, string_t *s1, string_t *s2, const size_t size)
+/* combine_strings(fmt, s1, s2) -- combine s1 and s2 into 1 string **/
+/*** NOTE: requires that s1 and s2 *not* be NULL ********************/
+string_t *combine_strings(const char *fmt, string_t *s1, string_t *s2)
 {
     if (!s1 || !s2) return NULL;
+    size_t size = s1->len + s2->len + 1;
     string_t *dest = init_stringt(size + NULL_CHAR);
     dest->len = size;
     snprintf(dest->string, size + NULL_CHAR, fmt, s1->string, s2->string);
