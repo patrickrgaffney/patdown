@@ -2,7 +2,7 @@
  * parsers.c -- markdown parsing methods
  * 
  * Created by PAT GAFFNEY on 06/15/2016.
- * Last modified on 07/21/2016.
+ * Last modified on 08/24/2016.
  * 
  *********ultrapatbeams*/
 
@@ -28,7 +28,6 @@ static size_t count_indentation(char *s)
 }
 
 
-
 /*******************************************************************/
 /* STATE INFORMATION & MANIPULATION ********************************/
 /*******************************************************************/
@@ -48,8 +47,9 @@ static markdown_t *ready_node = NULL;   // an *already* parsed node
 /* update_state(bool, last) -- update the state variables **********/
 static void update_state(const bool lineAction, const mdblock_t last)
 {
+    indentation = 0;
     if (lineAction) {
-        free(line);
+        free_stringt(line);
         line = NULL;
     }
     lastBlock = last;
@@ -75,6 +75,7 @@ static markdown_t *parse_setext_header(void);
 static markdown_t *parse_blank_line(void);
 static markdown_t *parse_atx_header(void);
 static markdown_t *parse_horizontal_rule(void);
+static markdown_t *parse_indented_code_block(FILE *fp);
 
 
 /* block_parser(fp) -- determine the parsing function to call ******/
@@ -87,12 +88,14 @@ markdown_t *block_parser(FILE *fp)
         ready_node = NULL;
         return node;
     }
-    else if (!line) line = read_line(fp);
+    else if (!line) {
+        if (!(line = read_line(fp))) return NULL;
+    }
     
     size_t i = indentation = count_indentation(line->string);
-    // if (indentation > 4) parse_indented_code_block(fp);
     
-    if (*(line->string) == '\0') node = parse_blank_line();
+    if (indentation > 3) node = parse_indented_code_block(fp);
+    else if (*(line->string) == '\0') node = parse_blank_line();
     else {
         switch (line->string[i]) {
             case '#': node = parse_atx_header(); break;
@@ -139,11 +142,11 @@ static markdown_t *parse_paragraph(FILE *fp)
     
     // check next line for a paragraph (lazy) continuation
     else if ((temp = block_parser(fp)) != NULL) {
+        
         t = temp->type;
         if (t == PARAGRAPH || t == SETEXT_HEADER_1 || t == SETEXT_HEADER_2) {
             // Append the new PARAGRAPH to the previous PARAGRAPH
-            i = node->value->len + temp->value->len + 1;
-            node->value = combine_strings("%s %s", node->value, temp->value, i);
+            node->value = combine_strings("%s %s", node->value, temp->value);
             
             // Change the type of the new, combined paragraph, this allows
             // the SETEXT_HEADER_x type to *float* to the top node
@@ -194,14 +197,10 @@ static markdown_t *parse_setext_header(void)
 static markdown_t *parse_blank_line(void)
 {
     size_t i = indentation;
+    
+    while (line->string[i] == ' ') i++;
 
     if (line->string[i] != '\0') return NULL;
-
-    // preserve blank lines inside an INDENTED_CODE_BLOCK
-    // TODO: handle this in parse_indented_code_block()
-    if (lastBlock == INDENTED_CODE_BLOCK && i >= 4) {
-        return init_markdown(line, 4, line->len - 1, INDENTED_CODE_BLOCK);
-    }
     else {
         update_state(FREE_LINE, BLANK_LINE);
         return init_markdown(NULL, 0, 0, BLANK_LINE);
@@ -278,27 +277,59 @@ static markdown_t *parse_horizontal_rule(void)
     }
 
     // no other characters may occur inline
-    if (line->string[i] != '\0' || numChars < 3) {
-        return NULL;
-    }
+    if (line->string[i] != '\0' || numChars < 3) return NULL;
+    
     temp = init_markdown(NULL, 0, 0, HORIZONTAL_RULE);
     update_state(FREE_LINE, HORIZONTAL_RULE);
     return temp;
 }
 
 
-/* parse_indented_code_block() -- parse for an indented code block */
+/* parse_indented_code_block(fp) -- parse for indented code block **/
 /*** NOTE: consumes lines until the code block is closed ***********/
-// markdown_t *parse_indented_code_block(string_t *s)
-// {
-//     if (lastBlock == PARAGRAPH) return parse_paragraph(s);
-//     size_t i = indentation;
-//
-//     if (s->string[i] == '\0') return parse_blank_line(s);
-//     else if (i < 4) return NULL;
-//
-//     return init_markdown(s, 4, s->len - 1, INDENTED_CODE_BLOCK);
-// }
+static markdown_t *parse_indented_code_block(FILE *fp)
+{
+    size_t i = indentation;
+    markdown_t *node = NULL, *temp = NULL;
+    string_t *tempstr = NULL;
+    char *fmt_string; // used for combine_strings()
+
+    if (lastBlock == PARAGRAPH) return NULL;
+    else if (i < 4) return NULL;
+
+    node = init_markdown(line, 4, line->len - 1, INDENTED_CODE_BLOCK);
+    update_state(FREE_LINE, INDENTED_CODE_BLOCK);
+    
+    // continue parsed until we exit the code block
+    while (true) {
+        if (!(line = read_line(fp))) break;
+        indentation = count_indentation(line->string);
+        
+        if (indentation > 3) {
+            // add additional newline if last raw line was empty
+            if (lastBlock == BLANK_LINE) fmt_string = "%s\n\n%s";
+            else fmt_string = "%s\n%s";
+
+            // this is a continutation of the code block
+            line = create_substring(line, 4, line->len - 1);
+            node->value = combine_strings(fmt_string, node->value, line);
+            update_state(FREE_LINE, INDENTED_CODE_BLOCK);
+        }
+        else {
+            // check for a blank line -- save it for later if found
+            if ((temp = parse_blank_line()) != NULL) {
+                update_state(FREE_LINE, BLANK_LINE);
+            }
+            
+            // save parsed node for next parser() call and break out
+            else {
+                ready_node = temp;
+                break;
+            }
+        }
+    }
+    return node;
+}
 
 
 /******************************************************************
