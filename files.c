@@ -51,6 +51,7 @@ void close_file(FILE *io)
  ******************************************************************/
 string_t *read_line(FILE *inputFile)
 {
+    if (feof(inputFile)) return NULL;
     int c = 0, i = 0, lim = 2500, order = 1;
     string_t *newstr = init_stringt(lim);
     

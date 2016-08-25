@@ -30,10 +30,9 @@ markdown_t *markdown(FILE *fp)
     if (!fp) return NULL;
     
     while (true) {
-        if (feof(fp)) break;
         temp = block_parser(fp);
-        
         if (temp) insert_markdown_queue(&head, &tail, temp);
+        else break;
     }
     return head;
 }
