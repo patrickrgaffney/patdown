@@ -12,6 +12,8 @@
 #include <stdio.h>
 #include <stdbool.h>
 #include "strings.h"
+#include "block_types.h"
+
 
 
 /******************************************************************
@@ -162,6 +164,7 @@ void free_markdown(markdown_t *node);
  * @return -- true if queue was updated, false if not
  ******************************************************************/
 bool update_queue(markdown_t **tail, markdown_t *temp);
-
+md_code_block_t *alloc_code_block_data(void);
 
 #endif
+

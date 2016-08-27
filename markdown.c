@@ -15,6 +15,8 @@
 #include "errors.h"
 #include "parsers.h"
 #include "files.h"
+#include "block_types.h"
+
 
 
 /******************************************************************
@@ -106,4 +108,12 @@ void free_markdown(markdown_t *node)
         free_markdown(node->next);
         free(node);
     }
+}
+
+md_code_block_t *alloc_code_block_data(void)
+{
+    md_code_block_t *node = NULL;
+    node = malloc(sizeof(md_code_block_t));
+    if (!node) throw_memory_error();
+    return node;
 }
