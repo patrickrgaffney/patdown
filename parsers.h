@@ -11,8 +11,8 @@
 
 #include "markdown.h"
 
-/***** block_parser(fp) -- determine the parsing function to call **/
-/******* NOTE: this is the external API for the parser *************/
+markdown_t *markdown(FILE *fp);
+
 markdown_t *block_parser(FILE *fp);
 
 #endif

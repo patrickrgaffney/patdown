@@ -18,27 +18,6 @@
 
 
 /******************************************************************
- * markdown() -- convert a markdown file to an output type
- *
- * FILE *inputFile -- input markdown file
- *
- * @return -- markdown_t stack or NULL (if inputFile was empty)
- ******************************************************************/
-markdown_t *markdown(FILE *fp)
-{
-    markdown_t *head = NULL, *tail = NULL, *temp = NULL;
-    if (!fp) return NULL;
-    
-    while (true) {
-        temp = block_parser(fp);
-        if (temp) insert_markdown_queue(&head, &tail, temp);
-        else break;
-    }
-    return head;
-}
-
-
-/******************************************************************
  * init_markdown() -- create a new markdown_t node
  * 
  * char *s              -- original string block read from file

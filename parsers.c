@@ -1,10 +1,10 @@
-/* 
- * parsers.c -- markdown parsing methods
+/* parsers.c -- markdown parsing methods
  * 
- * Created by PAT GAFFNEY on 06/15/2016.
- * Last modified on 08/24/2016.
+ * @author      Pat Gaffney <pat@hypepat.com>
+ * @created     2016-06-15
+ * @modified    2016-08-27
  * 
- *********ultrapatbeams*/
+ *******************************************************************/
 
 #include <string.h>
 #include <stdlib.h>
@@ -15,7 +15,36 @@
 #include "files.h"
 #include "strings.h"
 
+/*******************************************************************
+ * @section External Parsing API
+ *******************************************************************/
+
 /*****
+ * Parse an input file into markdown.
+ *
+ * @param   fp  An input file pointer opened for reading.
+ *
+ * @warning This function will return `NULL` if the file pointer has
+ *          not be opened.
+ *
+ * @return  A queue of parsed, markdown nodes.
+ *******************************************************************/
+markdown_t *markdown(FILE *fp)
+{
+    markdown_t *head = NULL, *tail = NULL, *temp = NULL;
+    if (!fp) return NULL;
+    
+    while (true) {
+        temp = block_parser(fp);
+        if (temp) {
+            insert_markdown_queue(&head, &tail, temp);
+        }
+        else break;
+    }
+    return head;
+}
+
+/*******************************************************************
  * @section Generic Helper Functions
  *******************************************************************/
 
@@ -34,13 +63,13 @@ static size_t count_indentation(const char *s)
 }
 
 
-/*****
+/*******************************************************************
  * @section State Information and Manipulation
  *
- * @gvar    lastBlock   -- Type of the last block parsed.
- * @gvar    indentation -- Indentation of the current line.
- * @gvar    line        -- The actual raw string pulled from file.
- * @gvar    ready_node  -- An *already parsed* node.
+ * @gvar    lastBlock   Type of the last block parsed.
+ * @gvar    indentation Indentation of the current line.
+ * @gvar    line        The actual raw string pulled from file.
+ * @gvar    ready_node  An *already parsed* node.
  *******************************************************************/
 static mdblock_t lastBlock = UNKNOWN;
 static size_t indentation  = 0;
@@ -70,7 +99,7 @@ static void update_state(const bool lineAction, const mdblock_t last)
 }
 
 
-/*****
+/*******************************************************************
  * @section Block Parsing Functions
  *
  * If the function is passed a file pointer `*fp`, then it will
@@ -78,8 +107,8 @@ static void update_state(const bool lineAction, const mdblock_t last)
  * has been exited.
  *
  * Each of the parsing functions crawl the raw string using indexes
- * to determine where the actual text, or *content* begins and ends
- * -- then create a substring of the raw string using those indexes.
+ * to determine where the actual text, or *content*, begins and ends,
+ * then create a substring of the raw string using those indexes.
  *
  * Each type of `mdblock_t` has its own parsing function.
  *
@@ -101,19 +130,19 @@ static markdown_t *parse_indented_code_block(FILE *fp);
  * This is currently the external API for the parser. All other 
  * parsing functions are static to this file only.
  *
- * @todo    Make this function only the `switch`-statement, move
+ * @todo    Make this function only the `switch` statement, move
  *          the `markdown()` function from `markdown.c` into this
  *          file and have that function control the parsing loop.
  *
- * @param   fp  -- An input file pointer opened for reading.
+ * @param   fp  An input file pointer opened for reading.
  *
  * @return  A parsed markdown node or NULL if EOF is reached.
  *******************************************************************/
 markdown_t *block_parser(FILE *fp)
 {
     markdown_t *node = NULL;
-    size_t i = 0;
     
+    // Use the ready_node if available, otherwise read line from file
     if (ready_node) {
         node = ready_node;
         ready_node = NULL;
@@ -123,12 +152,16 @@ markdown_t *block_parser(FILE *fp)
         if (!(line = read_line(fp))) return NULL;
     }
     
-    i = indentation = count_indentation(line->string);
+    indentation = count_indentation(line->string);
     
-    if (indentation > 3) node = parse_indented_code_block(fp);
-    else if (*(line->string) == '\0') node = parse_blank_line();
+    if (indentation > 3 && lastBlock != PARAGRAPH) {
+        node = parse_indented_code_block(fp);
+    }
+    else if (*(line->string) == '\0') {
+        node = parse_blank_line();
+    }
     else {
-        switch (line->string[i]) {
+        switch (line->string[indentation]) {
             case '#': 
                 node = parse_atx_header(); break;
             case '-': 
@@ -149,7 +182,7 @@ markdown_t *block_parser(FILE *fp)
 /*****
  * Attempt to parse a paragrah.
  *
- * @param   fp  -- An input file pointer opened for reading.
+ * @param   fp -- An input file pointer opened for reading.
  *
  * @warning If `line` is determined to be a paragraph, this function
  *          will consume all lines until the paragraph block is
@@ -345,7 +378,7 @@ static markdown_t *parse_horizontal_rule(void)
 /*****
  * Attempt to parse an indented code block.
  *
- * @param   fp  -- An input file pointer opened for reading.
+ * @param   fp -- An input file pointer opened for reading.
  *
  * @warning If `line` is determined to be a code block, this 
  *          function will consume all lines until the paragraph 
