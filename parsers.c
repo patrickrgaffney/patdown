@@ -1,4 +1,4 @@
-/* parsers.c -- markdown parsing methods
+/* parsers.c    markdown parsing methods
  * 
  * @author      Pat Gaffney <pat@hypepat.com>
  * @created     2016-06-15
@@ -14,6 +14,9 @@
 #include "markdown.h"
 #include "files.h"
 #include "strings.h"
+#include "block_types.h"
+
+
 
 /*******************************************************************
  * @section External Parsing API
@@ -122,17 +125,11 @@ static markdown_t *parse_blank_line(void);
 static markdown_t *parse_atx_header(void);
 static markdown_t *parse_horizontal_rule(void);
 static markdown_t *parse_indented_code_block(FILE *fp);
+static markdown_t *parse_fenced_code_block(FILE *fp);
 
 
 /*****
  * Determine which parsing function to call.
- *
- * This is currently the external API for the parser. All other 
- * parsing functions are static to this file only.
- *
- * @todo    Make this function only the `switch` statement, move
- *          the `markdown()` function from `markdown.c` into this
- *          file and have that function control the parsing loop.
  *
  * @param   fp  An input file pointer opened for reading.
  *
@@ -168,8 +165,9 @@ markdown_t *block_parser(FILE *fp)
             case '*': 
             case '_': 
                 node = parse_horizontal_rule(); break;
-            // case '~':
-            // case '`': node = parse_fenced_code_block(line); break;
+            case '~':
+            case '`': 
+                node = parse_fenced_code_block(fp); break;
             // case '<': node = parse_html_block(line); break;
             default: break;
         }
@@ -182,7 +180,7 @@ markdown_t *block_parser(FILE *fp)
 /*****
  * Attempt to parse a paragrah.
  *
- * @param   fp -- An input file pointer opened for reading.
+ * @param   fp  An input file pointer opened for reading.
  *
  * @warning If `line` is determined to be a paragraph, this function
  *          will consume all lines until the paragraph block is
@@ -378,11 +376,11 @@ static markdown_t *parse_horizontal_rule(void)
 /*****
  * Attempt to parse an indented code block.
  *
- * @param   fp -- An input file pointer opened for reading.
+ * @param   fp  An input file pointer opened for reading.
  *
  * @warning If `line` is determined to be a code block, this 
- *          function will consume all lines until the paragraph 
- *          block is determined to be closed.
+ *          function will consume all lines until the code block is 
+ *          determined to be closed.
  *
  * @return  NULL if not a code block, otherwise a `markdown_t` node.
  *******************************************************************/
@@ -431,47 +429,79 @@ static markdown_t *parse_indented_code_block(FILE *fp)
 }
 
 
-/******************************************************************
- * parse_fenced_code_block() -- parse for a fenced code block
- * 
- * char *s -- original string read from file
+/*****
+ * Attempt to parse a fenced code block.
  *
- * @return -- an markdown_t node or NULL
- ******************************************************************/
-// markdown_t *parse_fenced_code_block(string_t *s)
-// {
-//     static int lastFenceChar = 0; // Last char used for a fence
-//     static size_t lastFenceLen = 0; // Length of last fence
-//     size_t i = indentation, ticks = -i, start = 0;
-//     int fence = (s->string[i] == '~' || s->string[i] == '`') ? s->string[i] : -1;;
-//
-//     while (s->string[i] == fence) i++;
-//     if ((ticks += i) < 3 && !insideFencedCodeBlock) return false;
-//     while (s->string[i] == ' ') i++;
-//
-//     // When inside a block check for the end, else just append to block
-//     if (insideFencedCodeBlock) {
-//         if (s->string[i] != '\0' || lastFenceChar != fence || lastFenceLen != ticks) {
-//             return init_markdown(s, 0, s->len - 1, FENCED_CODE_BLOCK);
-//         }
-//         else insideFencedCodeBlock = false;
-//         return init_markdown(NULL, 0, 0, FENCED_CODE_BLOCK_END);
-//     }
-//     else {
-//         // accept an info string
-//         if (isalpha(s->string[i])) {
-//             start = i;
-//             while (isalpha(s->string[i])) i++;
-//         }
-//         lastFenceChar = fence;
-//         lastFenceLen  = ticks;
-//         insideFencedCodeBlock = true;
-//         if (start > 0) {
-//             return init_markdown(s, start, --i, FENCED_CODE_BLOCK_START);
-//         }
-//         else return init_markdown(NULL, 0, 0, FENCED_CODE_BLOCK_START);
-//     }
-// }
+ * @param   fp  An input file pointer opened for reading.
+ *
+ * @warning If `line` is determined to be a code block, this 
+ *          function will consume all lines until the code block is 
+ *          determined to be closed.
+ *
+ * @return  NULL if not a code block, otherwise a `markdown_t` node.
+ *******************************************************************/
+static markdown_t *parse_fenced_code_block(FILE *fp)
+{
+    markdown_t *node = NULL;        // node to be returned
+    md_code_block_t *info = NULL;   // used to hold info string
+    size_t openFenceLength = 0, closeFenceLength = 0;
+    size_t i = indentation;         // index used to create substring
+    size_t k = 0;                   // index used to create info string
+    int fenceChar = -1;             // character used for the fence
+    int c = line->string[i];        // the first opening fence character
+    
+    fenceChar = (c == '~' || c == '`') ? c : -1;
+
+    // count the number of fence characters
+    while (line->string[i] == fenceChar) {
+        i++;
+        openFenceLength++;
+    }
+    if (openFenceLength < 3) return NULL;
+    
+    // create an empty code block node -- the actual *code block* 
+    // will be added as we parse it line-by-line
+    node = init_markdown(NULL, 0, 0, FENCED_CODE_BLOCK);
+    
+    // unlimited number of spaces after the opening fence
+    while (line->string[i] == ' ') i++;
+
+    // check for an info string
+    if (isalpha(line->string[i])) {
+        info = alloc_code_block_data();
+        
+        while (isalpha(line->string[i]) && k < 20) {
+            info->lang[k++] = line->string[i++];
+        }
+        node->data = info;
+    }
+    
+    // parse every line as part of this code block until the closing fence
+    while (true) {
+        if (!(line = read_line(fp))) break;
+        i = indentation = count_indentation(line->string);
+        
+        // check for a code fence
+        while (line->string[i] == fenceChar) {
+            i++;
+            closeFenceLength++;
+        }
+        if (openFenceLength == closeFenceLength) break;
+        
+        // combine strings with newline if node->value has a string value
+        if (node->value->len != 0) {
+            node->value = combine_strings("%s\n%s", node->value, line);
+        }
+        
+        // otherwise just assign node->value to be a copy of `line`
+        else node->value = create_substring(line, 0, line->len - 1);
+        
+        update_state(FREE_LINE, FENCED_CODE_BLOCK);
+    }
+    update_state(FREE_LINE, FENCED_CODE_BLOCK);
+    printf("\n\ninfo = \'%s\'\n\n", ((md_code_block_t *)node->data)->lang);
+    return node;
+}
 
 
 /******************************************************************
