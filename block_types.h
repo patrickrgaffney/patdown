@@ -1,11 +1,13 @@
+#ifndef BLOCK_TYPES_H
+#define BLOCK_TYPES_H
+
 #include <stddef.h>
 #include <stdbool.h>
 #include "markdown.h"
 
 typedef struct md_code_block_t
 {
-    char fence; // fence character used
-    string_t *info; // info string from opening fence
+    char lang[20]; // info string from opening fence
 } md_code_block_t;
 
 typedef struct md_blockquote_t
@@ -26,3 +28,5 @@ typedef struct link_ref_t
     string_t *url;
     string_t *title;
 } link_ref_t;
+
+#endif
