@@ -80,7 +80,7 @@ static string_t *line      = NULL;
 static markdown_t *ready_node = NULL;
 
 
-/* save or free the current line when leaving the parser */
+/* save or free the current line when updating state variables */
 #define FREE_LINE true
 #define KEEP_LINE false
 
