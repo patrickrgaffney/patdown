@@ -37,11 +37,9 @@ typedef enum
     SETEXT_HEADER_1,            // 10
     SETEXT_HEADER_2,            // 11
     INDENTED_CODE_BLOCK,        // 12
-    FENCED_CODE_BLOCK_START,    // 13
-    FENCED_CODE_BLOCK,          // 14
-    FENCED_CODE_BLOCK_END,      // 15
-    HTML_BLOCK,                 // 16
-    HTML_COMMENT,               // 17
+    FENCED_CODE_BLOCK,          // 13
+    HTML_BLOCK,                 // 14
+    HTML_COMMENT,               // 15
     
     ///// UNIMPLEMENTED
     BLOCKQUOTE_START,
