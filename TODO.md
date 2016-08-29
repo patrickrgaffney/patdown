@@ -26,3 +26,11 @@ line1  § line2
 ### 3. implement blockquote block parser
 
 ### 4. implement list block parser
+
+### 5. remove the `size` parameter on `alloc_stringt()`
+
+It is not used.
+
+### 6. get rid of the `size` member of `string_t` structure
+
+It is not used -- and it is uneccessary (we can just use `str->len`).
