@@ -1,33 +1,86 @@
-/* 
- * strings.h -- string handling utilities
+/* strings.c -- string handling utilities
  * 
- * Created by PAT GAFFNEY on 06/15/2016.
- * Last modified on 08/24/2016.
+ * @author      Pat Gaffney <pat@hypepat.com>
+ * @created     2016-06-15
+ * @modified    2016-08-29
  * 
- *********ultrapatbeams*/
+ *****************************************************************************/
 
 #include <stdlib.h>
 #include <stdbool.h>
 #include <string.h>
 #include <stdio.h>
+
 #include "strings.h"
 #include "errors.h"
 
 #define NEWLINE 1
 #define NULL_CHAR 1
 
-
-/******************************************************************
- * create_substring() -- create a substring given parameters
- * 
- * char *s              -- original string
- * const size_t start   -- index where the substring should start
- * const size_t stop    -- index where the substring should end
+/******************************************************************************
+ * @section Basic String Handling Utilities
  *
- * @return -- newly allocated and initialized substring
- * @note   -- If *s is NULL, returns an allocated string_t node 
- *            with all members initiated to NULL or 0.
- ******************************************************************/
+ * These methods operate on basic `char *` strings.
+ *****************************************************************************/
+
+/*****
+ * Allocate space for a new `char *` object.
+ *
+ * @param   size    Size of the new string (in characters).
+ *
+ * @throws  throw_memory_error()
+ * @return  Newly allocated string.
+ *****************************************************************************/
+char *alloc_string(const size_t size)
+{
+    char *string = NULL;
+    string = malloc(sizeof(char) * size);
+    if (!string) throw_memory_error();
+    return string;
+}
+
+
+/*****
+ * Reallocate the size of a `char *` string.
+ *
+ * @param   s       Originally allocated string.
+ * @param   size    Size (in characters) of the new string.
+ *
+ * @throws  throw_memory_error()
+ * @return  A reallocated string.
+ *****************************************************************************/
+char *realloc_string(char *s, const size_t size)
+{
+    char *newstr = NULL;
+    newstr = realloc(s, sizeof(char) * size);
+    if (!newstr) throw_memory_error();
+    return newstr;
+}
+
+
+
+/******************************************************************************
+ * @section Methods for Operating on `string_t` Nodes
+ *
+ * These methods operate on `string_t` nodes -- as they were define in 
+ * `strings.h`. These nodes provide a wrapper for a basic `char *` string in
+ * order to hold some additional information about the string.
+ *****************************************************************************/
+
+/*****
+ * Create a substring of a `string_t` node.
+ *
+ * @param   s       Original string.
+ * @param   start   Index where the substring should start.
+ * @param   stop    Index where the substring should stop.
+ *
+ * @warning If `s` is `NULL`, the `string_t` node what is returned will have
+ *          all member initiated to `0` or `NULL`. So, this function never
+ *          returns `NULL` directly, worst case, it returns a container 
+ *          `string_t` node with all the members set to `NULL`.
+ *
+ * @return  Newly allocated and initialized substring.
+ *****************************************************************************/
 string_t *create_substring(string_t *s, size_t start, const size_t stop)
 {
     string_t *newstr = NULL;
@@ -45,32 +98,15 @@ string_t *create_substring(string_t *s, size_t start, const size_t stop)
 }
 
 
-/******************************************************************
- * alloc_string() -- allocate space for a new string
+/*****
+ * Allocate memory for a new `string_t` node.
  *
- * const size_t size -- size of the new string
+ * @todo    Remove the `size` parameter from this function -- it is not used.
  *
- * @throws -- throw_memory_error() if string cannot be allocated
- * @return -- an allocated string
- ******************************************************************/
-char *alloc_string(const size_t size)
-{
-    char *string = NULL;
-    string = malloc(sizeof(char) * size);
-    if (!string) throw_memory_error();
-    return string;
-}
-
-
-/******************************************************************
- * alloc_stringt() -- allocate space for a new string type 
- *
- * const size_t size -- size of the new string
- *
- * @throws -- throw_memory_error() if string cannot be allocated
- * @return -- an allocated string_t type
- ******************************************************************/
-string_t *alloc_stringt(const size_t size)
+ * @throws  throw_memory_error()
+ * @return  An allocated `string_t` node.
+ *****************************************************************************/
+static string_t *alloc_stringt(const size_t size)
 {
     string_t *str = NULL;
     str = malloc(sizeof(string_t));
@@ -79,14 +115,15 @@ string_t *alloc_stringt(const size_t size)
 }
 
 
-/******************************************************************
- * init_stringt() -- initiate a new string type, string_t
+/*****
+ * Initialize a new `string_t` node.
  *
- * const size_t size -- size of the new string (0 == NULL string)
+ * @param   size    Size of the new string.
  *
- * @throws -- throw_memory_error() if string cannot be allocated
- * @return -- an allocated and initialized string_t type
- ******************************************************************/
+ * @warning A `size` of `0` sets the `string` member to `NULL`.
+ * @throws  throw_memory_error()
+ * @return  An allocated and initialized `string_t` node.
+ *****************************************************************************/
 string_t *init_stringt(const size_t size)
 {
     string_t *str = alloc_stringt(size);
@@ -104,13 +141,11 @@ string_t *init_stringt(const size_t size)
 }
 
 
-/******************************************************************
- * free_stringt() -- free string_t node, if it exists
+/*****
+ * Free the memory occupied by a `string_t` node.
  *
- * string_t *s -- string node to be free'd
- *
- * @noreturn  -- control returned to the caller
- ******************************************************************/
+ * @param   s   The node to be free'd.
+ *****************************************************************************/
 void free_stringt(string_t *s)
 {
     if (s) {
@@ -120,26 +155,16 @@ void free_stringt(string_t *s)
 }
 
 
-/******************************************************************
- * realloc_string() -- reallocate size of a string
+/*****
+ * Combine two `string_t` nodes into a single node.
  *
- * char *s           -- originally allocated string
- * const size_t size -- new size of the string
+ * @param   fmt The format string for how these nodes will be combined.
+ * @param   s1  The first string to be inserted into the return string.
+ * @param   s2  The last string to be inserted into the return string.
  *
- * @throws -- throw_memory_error() if string cannot be reallocated
- * @return -- a reallocated string
- ******************************************************************/
-char *realloc_string(char *s, const size_t size)
-{
-    char *newstr = NULL;
-    newstr = realloc(s, sizeof(char) * size);
-    if (!newstr) throw_memory_error();
-    return newstr;
-}
-
-
-/* combine_strings(fmt, s1, s2) -- combine s1 and s2 into 1 string **/
-/*** NOTE: requires that s1 and s2 *not* be NULL ********************/
+ * @warning If either `s1` or `s2` is `NULL`, this function will return `NULL`.
+ * @return  A newly combined `string_t` node, or `NULL` if there was an error.
+ *****************************************************************************/
 string_t *combine_strings(const char *fmt, string_t *s1, string_t *s2)
 {
     if (!s1 || !s2) return NULL;

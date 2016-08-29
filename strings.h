@@ -1,10 +1,10 @@
-/* 
- * strings.h -- string handling utilities
+/* strings.c -- string handling utilities
  * 
- * Created by PAT GAFFNEY on 06/15/2016.
- * Last modified on 07/20/2016.
+ * @author      Pat Gaffney <pat@hypepat.com>
+ * @created     2016-06-15
+ * @modified    2016-08-29
  * 
- *********ultrapatbeams*/
+ *****************************************************************************/
 
 #ifndef STRINGS_H
 #define STRINGS_H
@@ -14,14 +14,15 @@
 #include "errors.h"
 
 
-/******************************************************************
- * string_t() -- a dynamic string type
+/*****
+ * A dynamic string (`char *`) wrapper-type.
  *
- * char *string -- raw string read from file
- * size_t size  -- number of chars allocated to be stored
- * size_t len   -- number of chars stored in *string
-*                  NOTE: this doesn't include the NULL char '\0'
- ******************************************************************/
+ * @member  string  The actual character array (string) stored.
+ * @member  len     The number of character stored in `string`.
+ *
+ * @todo    Remove the `str->size` member from this type. It is not used, and
+ *          we get the same functionality from `str->len`.
+ *****************************************************************************/
 typedef struct {
     char *string;
     size_t size;
@@ -29,83 +30,25 @@ typedef struct {
 } string_t;
 
 
-/******************************************************************
- * alloc_stringt() -- allocate space for a new string type 
+/******************************************************************************
+ * @section Basic String Handling Utilities
  *
- * const size_t size -- size of the new string
- *
- * @throws -- throw_memory_error() if string cannot be allocated
- * @return -- an allocated string_t type
- ******************************************************************/
-string_t *alloc_stringt(const size_t size);
-
-
-/******************************************************************
- * init_stringt() -- initiate a new string type, string_t
- *
- * const size_t size -- size of the new string
- *
- * @throws -- throw_memory_error() if string cannot be allocated
- * @return -- an allocated and initialized string_t type
- ******************************************************************/
-string_t *init_stringt(const size_t size);
-
-
-/******************************************************************
- * free_stringt() -- free string_t node, if it exists
- *
- * string_t *s -- string node to be free'd
- *
- * @noreturn  -- control returned to the caller
- ******************************************************************/
-void free_stringt(string_t *s);
-
-
-/******************************************************************
- * create_substring() -- create a substring given parameters
- * 
- * char *s              -- original string
- * const size_t start   -- index where the substring should start
- * const size_t stop    -- index where the substring should end
- *
- * @return -- newly allocated and initialized substring
- ******************************************************************/
-string_t *create_substring(string_t *s, size_t start, const size_t stop);
-
-
-/******************************************************************
- * alloc_string() -- allocate space for a new string
- *
- * const size_t size -- size of the new string
- *
- * @throws -- throw_memory_error() if string cannot be allocated
- * @return -- an allocated string
- ******************************************************************/
+ * These methods operate on basic `char *` strings.
+ *****************************************************************************/
 char *alloc_string(const size_t size);
-
-/******************************************************************
- * realloc_string() -- reallocate size of a string
- *
- * char *s           -- originally allocated string
- * const size_t size -- new size of the string
- *
- * @throws -- throw_memory_error() if string cannot be reallocated
- * @return -- a reallocated string
- ******************************************************************/
 char *realloc_string(char *s, const size_t size);
 
 
-/******************************************************************
- * combine_strings() -- combine two string_t nodes into one
+/******************************************************************************
+ * @section Methods for Operating on `string_t` Nodes
  *
- * const char *fmt -- the format string for snprintf()
- * string_t *s1 -- the leading string
- * string_t *s2 -- the trailing string
- * const size_t size -- # of characters to be written to new string
- * 
- * @return -- a new string_t node containing *s1 and *s2 as 
- *            dictated by the format string
- ******************************************************************/
+ * These methods operate on `string_t` nodes -- as they were define in 
+ * `strings.h`. These nodes provide a wrapper for a basic `char *` string in
+ * order to hold some additional information about the string.
+ *****************************************************************************/
+string_t *init_stringt(const size_t size);
+void free_stringt(string_t *s);
+string_t *create_substring(string_t *s, size_t start, const size_t stop);
 string_t *combine_strings(const char *fmt, string_t *s1, string_t *s2);
 
 #endif
