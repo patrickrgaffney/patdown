@@ -12,6 +12,8 @@
 #include <stdio.h>
 #include <stdbool.h>
 #include "strings.h"
+#include "block_types.h"
+
 
 
 /******************************************************************
@@ -35,11 +37,9 @@ typedef enum
     SETEXT_HEADER_1,            // 10
     SETEXT_HEADER_2,            // 11
     INDENTED_CODE_BLOCK,        // 12
-    FENCED_CODE_BLOCK_START,    // 13
-    FENCED_CODE_BLOCK,          // 14
-    FENCED_CODE_BLOCK_END,      // 15
-    HTML_BLOCK,                 // 16
-    HTML_COMMENT,               // 17
+    FENCED_CODE_BLOCK,          // 13
+    HTML_BLOCK,                 // 14
+    HTML_COMMENT,               // 15
     
     ///// UNIMPLEMENTED
     BLOCKQUOTE_START,
@@ -83,6 +83,7 @@ typedef struct markdown_t
 {
     string_t *value;
     mdblock_t type;
+    void *data;
     struct markdown_t *next;
 } markdown_t;
 
@@ -161,6 +162,7 @@ void free_markdown(markdown_t *node);
  * @return -- true if queue was updated, false if not
  ******************************************************************/
 bool update_queue(markdown_t **tail, markdown_t *temp);
-
+md_code_block_t *alloc_code_block_data(void);
 
 #endif
+
