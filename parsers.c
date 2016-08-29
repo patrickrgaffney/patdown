@@ -56,13 +56,57 @@ markdown_t *markdown(FILE *fp)
  *
  * @param   s   The string on which to operate.
  *
- * @return  The amount of indentation as an integer
+ * @return  The amount of indentation as an integer.
  *******************************************************************/
 static size_t count_indentation(const char *s)
 {
     size_t i = 0;
     while (s[i] == ' ') i++;
     return i;
+}
+
+
+/*****
+ * Determine if an element-name is a valid HTML5 block element.
+ *
+ * @param   e   The element name to be checked.
+ * @param   len The length (in characters) of the `e`.
+ *
+ * @return  `true` if a match is found, `false` otherwise.
+ ******************************************************************/
+static bool match_html_block_element(const char *e, const size_t len)
+{
+    static char *elements[7][14] = {
+        { "p" },
+        { "dd", "dl", "dt", "td", "th", "tr" },
+        { "col", "dir", "div", "nav" },
+        {
+            "base", "body", "form", "head", "html", "link", "main", "menu", 
+            "meta"
+        },
+        {
+            "aside", "frame", "param", "style", "table", "tbody", "tfoot",
+            "thead", "title", "track"
+        },
+        {
+            "center", "dialog", "figure", "footer", "header", "iframe", 
+            "legend", "option", "script", "source"
+        },
+        {
+            "address", "article", "basefont", "caption", "colgroup", "details",
+            "fieldset", "figcaption", "frameset", "menuitem", "noframes",
+            "optgroup", "section", "summary"
+        }
+    };
+    
+    if (len == 0) return NULL;
+    
+    for (size_t i = 0; i < 14; i++) {
+        if (elements[len][i] && strcmp(e, elements[len][i]) == 0) {
+            return true;
+        }
+    }
+    return false;
 }
 
 
@@ -126,6 +170,7 @@ static markdown_t *parse_atx_header(void);
 static markdown_t *parse_horizontal_rule(void);
 static markdown_t *parse_indented_code_block(FILE *fp);
 static markdown_t *parse_fenced_code_block(FILE *fp);
+static markdown_t *parse_html_block(FILE *fp);
 
 
 /*****
@@ -160,15 +205,20 @@ markdown_t *block_parser(FILE *fp)
     else {
         switch (line->string[indentation]) {
             case '#': 
-                node = parse_atx_header(); break;
+                node = parse_atx_header(); 
+                break;
             case '-': 
             case '*': 
             case '_': 
-                node = parse_horizontal_rule(); break;
+                node = parse_horizontal_rule(); 
+                break;
             case '~':
             case '`': 
-                node = parse_fenced_code_block(fp); break;
-            // case '<': node = parse_html_block(line); break;
+                node = parse_fenced_code_block(fp); 
+                break;
+            case '<': 
+                node = parse_html_block(fp); 
+                break;
             default: break;
         }
         if (!node) node = parse_paragraph(fp);
@@ -504,148 +554,66 @@ static markdown_t *parse_fenced_code_block(FILE *fp)
 }
 
 
-/******************************************************************
- * match_html_element() -- determine if tag matches an HTML element
+/*****
+ * Attempt to parse an HTML block.
  *
- * const char *e -- tag that was parsed from input
+ * An `HTML_BLOCK` has the following rules:
  *
- * @return -- true if a match was found, false otherwise
- ******************************************************************/
-// static bool match_html_element(const char *e, const size_t len)
-// {
-//     static char *len2Elements[6] = {"dd", "dl", "dt", "td", "th", "tr"};
-//     static char *len3Elements[4] = {"col", "dir", "div", "nav"};
-//     static char *len4Elements[9] = {
-//         "base", "body", "form", "head", "html", "link", "main", "menu", "meta"
-//     };
-//     static char *len5Elements[10] = {
-//         "aside", "frame", "param", "style", "table", "tbody", "tfoot",
-//         "thead", "title", "track"
-//     };
-//     static char *len6Elements[10] = {
-//         "center", "dialog", "figure", "footer", "header", "iframe", "legend",
-//         "option", "script", "source"
-//     };
-//     static char *bigElements[14] = {
-//         "address", "article", "basefont", "caption", "colgroup", "details",
-//         "fieldset", "figcaption", "frameset", "menuitem", "noframes",
-//         "optgroup", "section", "summary"
-//     };
-//
-//     if (len == 0) return NULL;
-//     else if (len == 2) {
-//         for (size_t i = 0; i < 6; i++) {
-//             if (strcmp(e, len2Elements[i]) == 0) return true;
-//         }
-//         return false;
-//     }
-//     else if (len == 3) {
-//         for (size_t i = 0; i < 4; i++) {
-//             if (strcmp(e, len3Elements[i]) == 0) return true;
-//         }
-//         return false;
-//     }
-//     else if (len == 4) {
-//         for (size_t i = 0; i < 9; i++) {
-//             if (strcmp(e, len4Elements[i]) == 0) return true;
-//         }
-//         return false;
-//     }
-//     else if (len == 5) {
-//         for (size_t i = 0; i < 10; i++) {
-//             if (strcmp(e, len5Elements[i]) == 0) return true;
-//         }
-//         return false;
-//     }
-//     else if (len == 6) {
-//         for (size_t i = 0; i < 10; i++) {
-//             if (strcmp(e, len6Elements[i]) == 0) return true;
-//         }
-//         return false;
-//     }
-//     else {
-//         for (size_t i = 0; i < 14; i++) {
-//             if (strcmp(e, bigElements[i]) == 0) return true;
-//         }
-//         return false;
-//     }
-//     return false;
-// }
-
-
-/******************************************************************
- * parse_html_block() -- parse for an HTML block (or comment)
+ *  - It must follow a `BLANK_LINE` block.
+ *  - There can be *no indentation* on the line with the opening tag.
+ *  - The opening tag must begin with a left-angle bracket `<`.
+ *  - Immediately followed by a *valid* block-level element name.
+ *  - Everything after the opening tag name will be parsed as part of this
+ *    `HTML_BLOCK` until a `BLANK_LINE` is encountered.
  *
- * char *s -- original string read from file
+ * @param   fp  An input file pointer opened for reading.
  *
- * @return -- an markdown_t node or NULL
- ******************************************************************/
-// markdown_t *parse_html_block(string_t *s)
-// {
-//     size_t i = indentation, j = 0;
-//     char element[15];
-//
-//     if (i > 3 && lastBlock != HTML_BLOCK && !insideHTMLComment)
-//     {
-//         return NULL;
-//     }
-//     else if (s->string[i] == '\0') return parse_blank_line(s);
-//     else {
-//         if (lastBlock == HTML_BLOCK) {
-//             return init_markdown(s, 0, s->len - 1, HTML_BLOCK);
-//         }
-//         else if (s->string[i++] != '<') return NULL;
-//
-//         // get the name of the element
-//         while (isalpha(s->string[i]) || isdigit(s->string[i])) {
-//             element[j++] = s->string[i++];
-//         }
-//         element[j] = '\0';
-//
-//         if (match_html_element(element, j)) {
-//             return init_markdown(s, 0, s->len - 1, HTML_BLOCK);
-//         }
-//         else if (s->string[i] == '!') {
-//             return parse_html_comment(s);
-//         }
-//         else return NULL;
-//     }
-// }
-
-
-/******************************************************************
- * parse_html_comment() -- parse for an HTML comment
+ * @warning If `line` is determined to be an HTML block, this function will 
+ *          consume all lines until the HTML block is determined to be closed.
  *
- * char *s -- original string read from file
- *
- * @return -- an markdown_t node or NULL
- ******************************************************************/
-// markdown_t *parse_html_comment(string_t *s)
-// {
-//     size_t i = indentation;
-//
-//     if (insideHTMLComment) {
-//         // if inside a comment, check for its ending tag
-//         while (s->string[i] != '-') i++;
-//
-//         if (s->string[i] == '-' && s->string[i + 1] == '-' && s->string[i + 2] == '>') {
-//             insideHTMLComment = false;
-//             return init_markdown(NULL, 0, 0, HTML_COMMENT);
-//         }
-//         else return NULL;
-//     }
-//     else {
-//         // not inside a comment, check for its starting tag
-//         if (s->string[i++] == '<') {
-//             if (s->string[i++] == '!') {
-//                 if (s->string[i] == '-' && s->string[i + 1] == '-') {
-//                     insideHTMLComment = true;
-//                     return init_markdown(NULL, 0, 0, HTML_COMMENT);
-//                 }
-//                 else return NULL;
-//             }
-//             else return NULL;
-//         }
-//         else return NULL;
-//     }
-// }
+ * @return  NULL if not an HTML block, otherwise a `markdown_t` node.
+ *****************************************************************************/
+static markdown_t *parse_html_block(FILE *fp)
+{
+    size_t i = indentation;
+    markdown_t *node = NULL; // node to be returned
+    markdown_t *temp = NULL; // temp node to hold addtional parsed nodes
+    size_t j = 0;            // index used for element[]
+    char element[15];       // string to hold the opening elements name
+    
+    // HTML block start tag must not be indented
+    // HTML block cannot interrupt any other blocks
+    if (i > 0 || lastBlock != BLANK_LINE) return NULL;
+    
+    // check for opening angle-bracket
+    if (line->string[i++] != '<') return NULL;
+    
+    // if we think its a comment, just pass everything to parse_html_comment()
+    // if (line->string[i] == '!') return parse_html_comment(fp);
+    
+    // validate the opening tag name
+    while (isalpha(line->string[i])) {
+        element[j++] = line->string[i++];
+    }
+    if (!match_html_block_element(element, --j)) return NULL;
+    
+    node = init_markdown(line, 0, line->len - 1, HTML_BLOCK);
+    update_state(FREE_LINE, HTML_BLOCK);
+    
+    // parse everything as an HTML_BLOCK until a newline is encountered
+    while (true) {
+        if (!(line = read_line(fp))) break;
+        i = indentation = count_indentation(line->string);
+        
+        // check for exit-condition: a BLANK_LINE was encountered
+        if ((temp = parse_blank_line()) != NULL) {
+            ready_node = temp;
+            update_state(FREE_LINE, BLANK_LINE);
+            break;
+        }
+        
+        // otherwise, just append this line to the HTML_BLOCK node
+        node->value = combine_strings("%s\n%s", node->value, line);
+    }
+    return node;
+}
