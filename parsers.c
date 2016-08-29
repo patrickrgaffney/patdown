@@ -171,6 +171,7 @@ static markdown_t *parse_horizontal_rule(void);
 static markdown_t *parse_indented_code_block(FILE *fp);
 static markdown_t *parse_fenced_code_block(FILE *fp);
 static markdown_t *parse_html_block(FILE *fp);
+static markdown_t *parse_html_comment(FILE *fp);
 
 
 /*****
@@ -559,7 +560,6 @@ static markdown_t *parse_fenced_code_block(FILE *fp)
  *
  * An `HTML_BLOCK` has the following rules:
  *
- *  - It must follow a `BLANK_LINE` block.
  *  - There can be *no indentation* on the line with the opening tag.
  *  - The opening tag must begin with a left-angle bracket `<`.
  *  - Immediately followed by a *valid* block-level element name.
@@ -571,7 +571,7 @@ static markdown_t *parse_fenced_code_block(FILE *fp)
  * @warning If `line` is determined to be an HTML block, this function will 
  *          consume all lines until the HTML block is determined to be closed.
  *
- * @return  NULL if not an HTML block, otherwise a `markdown_t` node.
+ * @return  `NULL` if not an HTML block, otherwise a `markdown_t` node.
  *****************************************************************************/
 static markdown_t *parse_html_block(FILE *fp)
 {
@@ -580,16 +580,15 @@ static markdown_t *parse_html_block(FILE *fp)
     markdown_t *temp = NULL; // temp node to hold addtional parsed nodes
     size_t j = 0;            // index used for element[]
     char element[15];       // string to hold the opening elements name
-    
+
     // HTML block start tag must not be indented
-    // HTML block cannot interrupt any other blocks
-    if (i > 0 || lastBlock != BLANK_LINE) return NULL;
+    if (i > 0) return NULL;
     
     // check for opening angle-bracket
     if (line->string[i++] != '<') return NULL;
     
     // if we think its a comment, just pass everything to parse_html_comment()
-    // if (line->string[i] == '!') return parse_html_comment(fp);
+    if (line->string[i] == '!') return parse_html_comment(fp);
     
     // validate the opening tag name
     while (isalpha(line->string[i])) {
@@ -616,4 +615,58 @@ static markdown_t *parse_html_block(FILE *fp)
         node->value = combine_strings("%s\n%s", node->value, line);
     }
     return node;
+}
+
+
+/*****
+ * Attempt to parse an HTML comment.
+ *
+ * An `HTML_COMMENT` has the following rules:
+ *
+ *  - There can be *no indentation* on the line with the opening sequence.
+ *  - The opening sequence is: `<!--`
+ *  - After the opening tag, all lines are parsed as an `HTML_COMMENT` until
+ *    the closing seqeunce is encountered.
+ *  - The closing sequence is: `-->`
+ *
+ * All content parsed while inside a `HTML_COMMENT` will *not* be saved -- as
+ * we won't need it again -- they are basically ignored. The function will 
+ * still return a valid `markdown_t` node, just one without any content.
+ *
+ * This function is *only* called by `parse_html_block()`.
+ *
+ * @param   fp  An input file pointer opened for reading.
+ *
+ * @warning If `line` is determined to be an HTML block, this function will 
+ *          consume all lines until the HTML block is determined to be closed.
+ *
+ * @return  `NULL` if not an HTML comment, otherwise a `markdown_t` node.
+ *****************************************************************************/
+static markdown_t *parse_html_comment(FILE *fp)
+{
+    size_t i = indentation;
+
+    // check for required opening sequence: "<!--"
+    if (line->string[i++] != '<') return NULL;
+    if (line->string[i++] != '!') return NULL;
+    if (line->string[i++] != '-') return NULL;
+    if (line->string[i++] != '-') return NULL;
+    
+    // consume all lines until we find the ending sequence: "-->"
+    while (true) {
+        // check the current line for the ending sequence
+        while (line->string[i] != '-') i++;
+        
+        if (line->string[i++] == '-' && line->string[i++] == '-' &&
+            line->string[i] == '>') break;
+        
+        // get the next line to check for ending sequence
+        else {
+            update_state(FREE_LINE, HTML_COMMENT);
+            if (!(line = read_line(fp))) break;
+            i = indentation = count_indentation(line->string);
+        }
+    }
+    update_state(FREE_LINE, HTML_COMMENT);
+    return init_markdown(NULL, 0, 0, HTML_COMMENT);
 }
