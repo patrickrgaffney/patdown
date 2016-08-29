@@ -1,15 +1,17 @@
-/* 
+/***** 
  * main.c -- parse arguments and begin program execution
  * 
- * Created by PAT GAFFNEY on 06/15/2016.
- * Last modified on 07/10/2016.
+ * @author      Pat Gaffney <pat@hypepat.com>
+ * @created     2016-06-15
+ * @modified    2016-08-28
  * 
- *********ultrapatbeams*/
+ ******************************************************************************/
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <ctype.h>
 #include <string.h>
+
 #include "arguments.h"
 #include "markdown.h"
 #include "parsers.h"
@@ -17,14 +19,22 @@
 #include "errors.h"
 
 
-/******************************************************************
- * alloc_argt() -- allocate space for an array of arg_t elements
+/******************************************************************************
+ * @section Command-line Argument Parsing
+ * 
+ * First, all command line arguments are given an `arg_t`, or *argument type*.
+ * These different types (`INPUT_FILE_NAME`, `OUTPUT_TYPE_HTML`, etc) change
+ * the various program options from their defaults.
+ *****************************************************************************/
+
+/*****
+ * Allocate memory for an array of `arg_t` elements.
  *
- * const int size -- the number of elements needed for the array
+ * @param   size    The number of elements (arguments) in the array.
  *
- * @throws -- throw_memory_error() if space cannot be allocated
- * @return -- a newly allocated arg_t array
- ******************************************************************/
+ * @throws  throw_memory_error()
+ * @return  A newly allocated `arg_t` array.
+ *****************************************************************************/
 static arg_t *alloc_argt(const int size)
 {
     arg_t *type = NULL;
@@ -34,28 +44,25 @@ static arg_t *alloc_argt(const int size)
 }
 
 
-/******************************************************************
- * free_argt() -- free the memory allocated for the arg_t array
+/*****
+ * Free the memory allocated for the `arg_t` array.
  *
- * arg_t *types -- the array to be freed
- *
- * @noreturn -- control returns to the caller
- ******************************************************************/
+ * @param   types   The array to be free'd.
+ *****************************************************************************/
 static void free_argt(arg_t *types)
 {
     free(types);
 }
 
 
-/******************************************************************
- * check_output_type() -- determine if user-provided output type is
- *                        one of the valid, defined types
+/*****
+ * Determine if the user's output type is valid.
  *
- * const char *arg -- the user provided output type
- *
- * @throws -- throw_invalid_output_t_error() if type is invalid
- * @return -- the determined arg_t output constant
- ******************************************************************/
+ * @param   arg     The user provided output type.
+ * 
+ * @throws  throw_invalid_output_t_error()
+ * @return  The determined `arg_t` output constant.
+ *****************************************************************************/
 static arg_t check_output_type(const char *arg)
 {
     const size_t size = strlen(arg);
@@ -72,14 +79,14 @@ static arg_t check_output_type(const char *arg)
 }
 
 
-/******************************************************************
- * parse_flag_option() -- parse a command-line flag option
+/*****
+ * Parse a command-line flag option.
  *
- * const char *arg -- the user provided flag option
- *
- * @throws -- throw_invalid_option_error() if flag is invalid
- * @return -- the determined arg_t flag constant
- ******************************************************************/
+ * @param   arg     The user provided flag option.
+ * 
+ * @throws  throw_invalid_option_error()
+ * @return  The determined `arg_t` flag constant.
+ *****************************************************************************/
 static arg_t parse_flag_option(const char *arg)
 {
     if (*(++arg) == '\0') {
@@ -97,14 +104,17 @@ static arg_t parse_flag_option(const char *arg)
 }
 
 
-/******************************************************************
- * parse_string_option() -- parse a command-line string option
+/*****
+ * Parse a command-line string option.
  *
- * const char *arg  -- the user provided string option
- * const arg_t last -- the last parsed command-line argument
+ * Any string options whose type (`arg_t`) cannot be determine default to being
+ * `INPUT_FILE_NAME` type, and are therefore attempted to be opened as a file.
  *
- * @return -- the determined arg_t constant
- ******************************************************************/
+ * @param   arg     The user provided string option.
+ * @param   last    The type of the last parsed markdown block.
+ *
+ * @return  The determined `arg_t` constant.
+ *****************************************************************************/
 static arg_t parse_string_option(const char *arg, const arg_t last)
 {
     switch (last) {
@@ -118,14 +128,14 @@ static arg_t parse_string_option(const char *arg, const arg_t last)
 }
 
 
-/******************************************************************
- * parse_arguments() -- begin parsing command-line arguments
+/*****
+ * Being parsing the command-line arguments.
  *
- * const int argc    -- the number of command-line arguments
- * const char **argv -- a string array of the arguments
+ * @param   argc    The number of command-line arguments.
+ * @param   argv    A string array of the arguments.
  *
- * @return -- an array containing each arguments type (arg_t)
- ******************************************************************/
+ * @return  An array containing each argument's type, or `arg_t`.
+ *****************************************************************************/
 static arg_t *parse_arguments(const int argc, const char **argv)
 {
     arg_t *types = alloc_argt(argc);
@@ -143,14 +153,18 @@ static arg_t *parse_arguments(const int argc, const char **argv)
 }
 
 
-/******************************************************************
- * main() -- parse arguments and begin program execution
+/******************************************************************************
+ * @section Progam Execution
+ *****************************************************************************/
+
+/*****
+ * Begin program execution.
  *
- * const int argc    -- the number of command-line arguments
- * const char **argv -- a string array of the arguments
+ * @param   argc    The number of command-line arguments.
+ * @param   argv    A string array of the arguments.
  *
- * @return -- EXIT_SUCCESS
- ******************************************************************/
+ * @return  `EXIT_SUCCESS`.
+ *****************************************************************************/
 int main(int argc, char const **argv)
 {
     options_t opts = {

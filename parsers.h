@@ -1,4 +1,5 @@
-/* parsers.h -- markdown parsing methods
+/*****
+ * parsers.h -- markdown parsing methods
  * 
  * @author      Pat Gaffney <pat@hypepat.com>
  * @created     2016-06-15
