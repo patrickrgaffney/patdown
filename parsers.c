@@ -1,4 +1,4 @@
-/* parsers.c    markdown parsing methods
+/* parsers.c -- markdown parsing methods
  * 
  * @author      Pat Gaffney <pat@hypepat.com>
  * @created     2016-06-15
@@ -22,8 +22,13 @@
  * @section External Parsing API
  *****************************************************************************/
 
+/* wrapper for the parser */
+static markdown_t *block_parser(FILE *fp);
+
 /*****
  * Parse an input file into markdown.
+ *
+ * This is the external API for the parser.
  *
  * @param   fp  An input file pointer opened for reading.
  *
