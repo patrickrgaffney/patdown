@@ -2,9 +2,9 @@
  * 
  * @author      Pat Gaffney <pat@hypepat.com>
  * @created     2016-06-15
- * @modified    2016-08-27
+ * @modified    2016-08-28
  * 
- *******************************************************************/
+ *****************************************************************************/
 
 #include <string.h>
 #include <stdlib.h>
@@ -18,20 +18,20 @@
 
 
 
-/*******************************************************************
+/*****************************************************************************
  * @section External Parsing API
- *******************************************************************/
+ *****************************************************************************/
 
 /*****
  * Parse an input file into markdown.
  *
  * @param   fp  An input file pointer opened for reading.
  *
- * @warning This function will return `NULL` if the file pointer has
- *          not be opened.
+ * @warning This function will return `NULL` if the file pointer has not been
+ *          opened. This should be interpreted as an error.
  *
  * @return  A queue of parsed, markdown nodes.
- *******************************************************************/
+ *****************************************************************************/
 markdown_t *markdown(FILE *fp)
 {
     markdown_t *head = NULL, *tail = NULL, *temp = NULL;
@@ -47,9 +47,9 @@ markdown_t *markdown(FILE *fp)
     return head;
 }
 
-/*******************************************************************
+/******************************************************************************
  * @section Generic Helper Functions
- *******************************************************************/
+ *****************************************************************************/
 
 /*****
  * Count the leading spaces on a string.
@@ -57,7 +57,7 @@ markdown_t *markdown(FILE *fp)
  * @param   s   The string on which to operate.
  *
  * @return  The amount of indentation as an integer.
- *******************************************************************/
+ *****************************************************************************/
 static size_t count_indentation(const char *s)
 {
     size_t i = 0;
@@ -73,7 +73,7 @@ static size_t count_indentation(const char *s)
  * @param   len The length (in characters) of the `e`.
  *
  * @return  `true` if a match is found, `false` otherwise.
- ******************************************************************/
+ *****************************************************************************/
 static bool match_html_block_element(const char *e, const size_t len)
 {
     static char *elements[7][14] = {
@@ -110,14 +110,14 @@ static bool match_html_block_element(const char *e, const size_t len)
 }
 
 
-/*******************************************************************
+/******************************************************************************
  * @section State Information and Manipulation
  *
  * @gvar    lastBlock   Type of the last block parsed.
  * @gvar    indentation Indentation of the current line.
  * @gvar    line        The actual raw string pulled from file.
  * @gvar    ready_node  An *already parsed* node.
- *******************************************************************/
+ *****************************************************************************/
 static mdblock_t lastBlock = UNKNOWN;
 static size_t indentation  = 0;
 static string_t *line      = NULL;
@@ -134,7 +134,7 @@ static markdown_t *ready_node = NULL;
  *
  * @param   lineAction  should we free the global `line`?
  * @param   last        type of the last parsed markdown block
- *******************************************************************/
+ *****************************************************************************/
 static void update_state(const bool lineAction, const mdblock_t last)
 {
     indentation = 0;
@@ -146,23 +146,22 @@ static void update_state(const bool lineAction, const mdblock_t last)
 }
 
 
-/*******************************************************************
+/******************************************************************************
  * @section Block Parsing Functions
  *
- * If the function is passed a file pointer `*fp`, then it will
- * consume raw lines of input until it is satisfied that the block
- * has been exited.
+ * If the function is passed a file pointer `*fp`, then it will consume raw 
+ * lines of input until it is satisfied that the block has been exited.
  *
- * Each of the parsing functions crawl the raw string using indexes
- * to determine where the actual text, or *content*, begins and ends,
- * then create a substring of the raw string using those indexes.
+ * Each of the parsing functions crawl the raw string using indexes to 
+ * determine where the actual text, or *content*, begins and ends, then create 
+ * a substring of the raw string using those indexes.
  *
  * Each type of `mdblock_t` has its own parsing function.
  *
- * @todo    Add the various constraints of each block type to the
- *          function that parses that type -- ala: an indented code
- *          block must begin with at minimum 4 space, etc.
- *******************************************************************/
+ * @todo    Add the various constraints of each block type to the function that 
+ *          parses that type -- ala: an indented code block must begin with at 
+ *          minimum 4 space, etc.
+ *****************************************************************************/
 static markdown_t *parse_paragraph(FILE *fp);
 static markdown_t *parse_setext_header(void);
 static markdown_t *parse_blank_line(void);
@@ -180,7 +179,7 @@ static markdown_t *parse_html_comment(FILE *fp);
  * @param   fp  An input file pointer opened for reading.
  *
  * @return  A parsed markdown node or NULL if EOF is reached.
- *******************************************************************/
+ *****************************************************************************/
 markdown_t *block_parser(FILE *fp)
 {
     markdown_t *node = NULL;
@@ -233,13 +232,13 @@ markdown_t *block_parser(FILE *fp)
  *
  * @param   fp  An input file pointer opened for reading.
  *
- * @warning If `line` is determined to be a paragraph, this function
- *          will consume all lines until the paragraph block is
- *          determined to be closed. This functionality can be turned
- *          off by passing `NULL` as the input file pointer.
+ * @warning If `line` is determined to be a paragraph, this function will 
+ *          consume all lines until the paragraph block is determined to be 
+ *          closed. This functionality can be turned off by passing `NULL` as 
+ *          the input file pointer.
  *
  * @return  NULL if not a paragraph, otherwise a `markdown_t` node.
- *******************************************************************/
+ *****************************************************************************/
 static markdown_t *parse_paragraph(FILE *fp)
 {
     markdown_t *node = NULL, *temp = NULL;
@@ -285,12 +284,12 @@ static markdown_t *parse_paragraph(FILE *fp)
 /*****
  * Attempt to parse a setext header.
  *
- * This function is *only* called by `parse_paragraph()`. In fact,
- * it is called everytime we close a `PARAGRAPH` in order to
- * determine that it was not a setext header.
+ * This function is *only* called by `parse_paragraph()`. In fact, it is 
+ * called everytime we close a `PARAGRAPH` in order to determine that it was 
+ * not a setext header.
  *
  * @return  NULL if not a header, otherwise a `markdown_t` node.
- *******************************************************************/
+ *****************************************************************************/
 static markdown_t *parse_setext_header(void)
 {
     size_t i = indentation, numChars = 0;
@@ -324,7 +323,7 @@ static markdown_t *parse_setext_header(void)
  * Attempt to parse a blank line.
  *
  * @return  NULL if `line` isn't blank, or a `markdown_t` node.
- *******************************************************************/
+ *****************************************************************************/
 static markdown_t *parse_blank_line(void)
 {
     size_t i = indentation;
@@ -343,7 +342,7 @@ static markdown_t *parse_blank_line(void)
  * Attempt to parse an ATX header.
  *
  * @return  NULL if not a header, otherwise a `markdown_t` node.
- *******************************************************************/
+ *****************************************************************************/
 static markdown_t *parse_atx_header(void)
 {
     size_t i = indentation;
@@ -398,7 +397,7 @@ static markdown_t *parse_atx_header(void)
  * Attempt to parse a horizontal rule.
  *
  * @return  NULL if not a `<hr>`, otherwise a `markdown_t` node.
- *******************************************************************/
+ *****************************************************************************/
 static markdown_t *parse_horizontal_rule(void)
 {
     size_t i = indentation, numChars = 0;
@@ -429,12 +428,11 @@ static markdown_t *parse_horizontal_rule(void)
  *
  * @param   fp  An input file pointer opened for reading.
  *
- * @warning If `line` is determined to be a code block, this 
- *          function will consume all lines until the code block is 
- *          determined to be closed.
+ * @warning If `line` is determined to be a code block, this function will 
+ *          consume all lines until the code block is determined to be closed.
  *
  * @return  NULL if not a code block, otherwise a `markdown_t` node.
- *******************************************************************/
+ *****************************************************************************/
 static markdown_t *parse_indented_code_block(FILE *fp)
 {
     size_t i = indentation;
@@ -485,12 +483,11 @@ static markdown_t *parse_indented_code_block(FILE *fp)
  *
  * @param   fp  An input file pointer opened for reading.
  *
- * @warning If `line` is determined to be a code block, this 
- *          function will consume all lines until the code block is 
- *          determined to be closed.
+ * @warning If `line` is determined to be a code block, this function will 
+ *          consume all lines until the code block is determined to be closed.
  *
  * @return  NULL if not a code block, otherwise a `markdown_t` node.
- *******************************************************************/
+ *****************************************************************************/
 static markdown_t *parse_fenced_code_block(FILE *fp)
 {
     markdown_t *node = NULL;        // node to be returned
