@@ -5,7 +5,7 @@
  * @created     2016-06-15
  * @modified    2016-08-28
  * 
- *****************************************************************************/
+ ************************************************************************/
 
 #include <string.h>
 #include <stdlib.h>
@@ -19,25 +19,19 @@
 
 
 
-/*****************************************************************************
+/************************************************************************
  * @section External Parsing API
- *****************************************************************************/
+ ************************************************************************/
 
-/* wrapper for the parser */
 static markdown_t *block_parser(FILE *fp);
 
-/*****
- * Parse an input file into markdown.
- *
+/**
+ * markdown(fp) -- parse an input file into markdown.
+ **
  * This is the external API for the parser.
- *
- * @param   fp  An input file pointer opened for reading.
- *
- * @warning This function will return `NULL` if the file pointer has not been
- *          opened. This should be interpreted as an error.
- *
- * @return  A queue of parsed, markdown nodes.
- *****************************************************************************/
+ **
+ * @return  A queue of nodes or NULL if file cannot be opened.
+ ************************************************************************/
 markdown_t *markdown(FILE *fp)
 {
     markdown_t *head = NULL, *tail = NULL, *temp = NULL;
@@ -53,17 +47,15 @@ markdown_t *markdown(FILE *fp)
     return head;
 }
 
-/******************************************************************************
+/************************************************************************
  * @section Generic Helper Functions
- *****************************************************************************/
+ ************************************************************************/
 
-/*****
- * Count the leading spaces on a string.
- *
- * @param   s   The string on which to operate.
- *
- * @return  The amount of indentation as an integer.
- *****************************************************************************/
+/**
+ * count_indentation(s) -- count the leading indenetation on s
+ **
+ * @return -- amount of indentation as an integer.
+ ************************************************************************/
 static size_t count_indentation(const char *s)
 {
     size_t i = 0;
@@ -72,14 +64,11 @@ static size_t count_indentation(const char *s)
 }
 
 
-/*****
- * Determine if an element-name is a valid HTML5 block element.
- *
- * @param   e   The element name to be checked.
- * @param   len The length (in characters) of the `e`.
- *
- * @return  `true` if a match is found, `false` otherwise.
- *****************************************************************************/
+/**
+ * match_html_block_element(e, len) -- determine if e is html5 element name
+ **
+ * @return -- true if a match is found false otherwise
+ ************************************************************************/
 static bool match_html_block_element(const char *e, const size_t len)
 {
     static char *elements[7][14] = {
@@ -116,30 +105,22 @@ static bool match_html_block_element(const char *e, const size_t len)
 }
 
 
-/******************************************************************************
+/************************************************************************
  * @section State Information and Manipulation
- *
- * @gvar    lastBlock   Type of the last block parsed.
- * @gvar    indentation Indentation of the current line.
- * @gvar    line        The actual raw string pulled from file.
- * @gvar    ready_node  An *already parsed* node.
- *****************************************************************************/
+ ************************************************************************/
 static mdblock_t lastBlock = UNKNOWN;
 static size_t indentation  = 0;
 static string_t *line      = NULL;
 static markdown_t *ready_node = NULL;
 
 
-/* save or free the current line when updating state variables */
+/* Save or free the current line when updating state variables. */
 #define FREE_LINE true
 #define KEEP_LINE false
 
 
-/*****
- * Update the state variables.
- *
- * @param   lineAction  should we free the global `line`?
- * @param   last        type of the last parsed markdown block
+/**
+ * update_state(lineAction, last) -- update the state variables
  *****************************************************************************/
 static void update_state(const bool lineAction, const mdblock_t last)
 {
@@ -152,22 +133,22 @@ static void update_state(const bool lineAction, const mdblock_t last)
 }
 
 
-/******************************************************************************
+/************************************************************************
  * @section Block Parsing Functions
  *
- * If the function is passed a file pointer `*fp`, then it will consume raw 
- * lines of input until it is satisfied that the block has been exited.
+ *  If the function is passed a file pointer fp, then it will consume raw 
+ *  lines of input until it is satisfied that the block has been exited.
  *
- * Each of the parsing functions crawl the raw string using indexes to 
- * determine where the actual text, or *content*, begins and ends, then create 
- * a substring of the raw string using those indexes.
+ *  Each of the parsing functions crawl the raw string using indexes to 
+ *  determine where the actual text, or *content*, begins and ends, then 
+ *  create a substring of the raw string using those indexes.
  *
- * Each type of `mdblock_t` has its own parsing function.
+ *  Each type of `mdblock_t` has its own parsing function.
  *
- * @todo    Add the various constraints of each block type to the function that 
+ * TODO:    Add the various constraints of each block type to the function that 
  *          parses that type -- ala: an indented code block must begin with at 
  *          minimum 4 space, etc.
- *****************************************************************************/
+ ************************************************************************/
 static markdown_t *parse_paragraph(FILE *fp);
 static markdown_t *parse_setext_header(void);
 static markdown_t *parse_blank_line(void);
@@ -177,20 +158,19 @@ static markdown_t *parse_indented_code_block(FILE *fp);
 static markdown_t *parse_fenced_code_block(FILE *fp);
 static markdown_t *parse_html_block(FILE *fp);
 static markdown_t *parse_html_comment(FILE *fp);
+static markdown_t *parse_link_reference(FILE *fp);
 
 
-/*****
- * Determine which parsing function to call.
- *
- * @param   fp  An input file pointer opened for reading.
- *
- * @return  A parsed markdown node or NULL if EOF is reached.
- *****************************************************************************/
+/**
+ * block_parser(fp) -- determine which parsing function to call
+ **
+ * @return -- a parsed markdown node or NULL if EOF is reached
+ ************************************************************************/
 markdown_t *block_parser(FILE *fp)
 {
     markdown_t *node = NULL;
     
-    // Use the ready_node if available, otherwise read line from file
+    /* Use the ready_node if available, otherwise read line from file */
     if (ready_node) {
         node = ready_node;
         ready_node = NULL;
@@ -225,6 +205,9 @@ markdown_t *block_parser(FILE *fp)
             case '<': 
                 node = parse_html_block(fp); 
                 break;
+            case '[': 
+                node = parse_link_reference(fp); 
+                break;
             default: break;
         }
         if (!node) node = parse_paragraph(fp);
@@ -233,40 +216,35 @@ markdown_t *block_parser(FILE *fp)
 }
 
 
-/*****
- * Attempt to parse a paragrah.
- *
- * @param   fp  An input file pointer opened for reading.
- *
- * @warning If `line` is determined to be a paragraph, this function will 
- *          consume all lines until the paragraph block is determined to be 
- *          closed. This functionality can be turned off by passing `NULL` as 
- *          the input file pointer.
- *
- * @return  NULL if not a paragraph, otherwise a `markdown_t` node.
- *****************************************************************************/
+/**
+ * parse_paragraph(fp) -- attempt to parse a paragrah <p> block
+ **
+ *  Consumes all lines until the paragraph is exited.
+ **
+ * @return -- NULL if not a paragraph, otherwise a markdown_t node
+ ************************************************************************/
 static markdown_t *parse_paragraph(FILE *fp)
 {
-    markdown_t *node = NULL, *temp = NULL;
     size_t i = indentation;
-    size_t maxIndent = (lastBlock == PARAGRAPH) ? 100 : 3;
+    markdown_t *node = NULL;    /* Node to be returned if PARAGRAPH.    */
+    markdown_t *temp = NULL;    /* Node to hold temporary parsing data. */
     
-    // max indentation of a paragraph is unlimited if the last line
-    // was a paragraph, otherwise becomes a code block at 4 WS chars
-    if (i > maxIndent) return NULL;
+    /* Max indentation of a paragraph is unlimited if the last line
+     * was a paragraph, otherwise becomes a code block at 4 WS chars. */
+    if (i > ((lastBlock == PARAGRAPH) ? 100 : 3)) return NULL;
     
-    // TODO: Check for line break around here.
+    /* TODO: Check for line break around here. */
     node = init_markdown(line, i, line->len - 1, PARAGRAPH);
     update_state(FREE_LINE, PARAGRAPH);
     
-    // check for lazy continuation and setext headers, but only if we
-    // were passed a valid input file -- otherwise just return the node
+    /* Check for lazy continuation and setext headers, but only if we
+     * were passed a valid input file -- otherwise return the node. */
     while (fp) {
         if (!(line = read_line(fp))) break;
         indentation = count_indentation(line->string);
         
         if ((temp = parse_setext_header()) != NULL) {
-            // Change the type of the previous PARAGRAPH
+            /* Change the type of the previous PARAGRAPH. */
             node->type = temp->type;
             free_markdown(temp);
             update_state(FREE_LINE, node->type);
@@ -277,7 +255,7 @@ static markdown_t *parse_paragraph(FILE *fp)
                 break;
             }
 
-            // Append the new PARAGRAPH to the previous PARAGRAPH
+            /* Append the new PARAGRAPH to the previous PARAGRAPH. */
             node->value = combine_strings("%s %s", node->value, temp->value);
             free_markdown(temp);
             update_state(FREE_LINE, PARAGRAPH);
@@ -287,37 +265,39 @@ static markdown_t *parse_paragraph(FILE *fp)
 }
 
 
-/*****
- * Attempt to parse a setext header.
- *
- * This function is *only* called by `parse_paragraph()`. In fact, it is 
- * called everytime we close a `PARAGRAPH` in order to determine that it was 
- * not a setext header.
- *
- * @return  NULL if not a header, otherwise a `markdown_t` node.
- *****************************************************************************/
+/**
+ * parse_setext_header() -- attempt to parse a setext header element
+ **
+ *  This function is *only* called by parse_paragraph(). In fact, it is 
+ *  called everytime we close a PARAGRAPH in order to determine that it 
+ *  was not a setext header.
+ **
+ * @return -- NULL if not a header, otherwise a markdown_t node.
+ ************************************************************************/
 static markdown_t *parse_setext_header(void)
 {
-    size_t i = indentation, numChars = 0;
-    int setextChar, c = line->string[i];
+    size_t i = indentation; 
+    size_t numChars = 0;        /* Number of setext characters (=|-).   */    
+    int setextChar;             /* Character used for header.           */
+    int c = line->string[i];    /* First non-WS character in line.      */
     
-    // a setext header can only follow a paragraph
+    /* A setext header can only follow a PARAGRAPH. */
     if (lastBlock != PARAGRAPH) return NULL;
     
     setextChar = (c == '-' || c == '=') ? c : -1;
     if (setextChar == -1) return NULL;
     
-    // *n* number of setextChar's
+    /* Parse *n* number of setextChar's. */
     while (line->string[i] == setextChar) numChars++, i++;
     
-    // *n* number of spaces
+    /* Parse *n* number of spaces. */
     while (line->string[i] == ' ') i++;
     
-    // if we found any non-setextChar character, or only found one,
-    // this cannot be a setext header
+    /* If we found any non-setextChar character, or only 
+     * found one, this cannot be a setext header. */
     if (line->string[i] != '\0' || numChars < 1) return NULL;
     
-    // parse_paragraph() will update the state variables
+    /* parse_paragraph() will update the state variables. */
     if (setextChar == '=') {
         return init_markdown(NULL, 0, 0, SETEXT_HEADER_1);
     }
@@ -325,17 +305,18 @@ static markdown_t *parse_setext_header(void)
 }
 
 
-/*****
- * Attempt to parse a blank line.
- *
- * @return  NULL if `line` isn't blank, or a `markdown_t` node.
- *****************************************************************************/
+/**
+ * parse_blank_line() -- attempt to parse a blank line element
+ **
+ * @return -- NULL if line isn't blank, or a markdown_t node
+ ************************************************************************/
 static markdown_t *parse_blank_line(void)
 {
     size_t i = indentation;
     
     while (line->string[i] == ' ') i++;
 
+    /* Cannot have any non-WS chars on a blank line. */
     if (line->string[i] != '\0') return NULL;
     else {
         update_state(FREE_LINE, BLANK_LINE);
@@ -344,42 +325,44 @@ static markdown_t *parse_blank_line(void)
 }
 
 
-/*****
- * Attempt to parse an ATX header.
- *
- * @return  NULL if not a header, otherwise a `markdown_t` node.
- *****************************************************************************/
+/**
+ * parse_atx_header() -- attempt to parse an ATX header element
+ **
+ * @return -- NULL if not a header, otherwise a markdown_t node
+ ************************************************************************/
 static markdown_t *parse_atx_header(void)
 {
     size_t i = indentation;
-    size_t hashes = 0, trailing = 0;    // leading & trailing hashes
-    size_t end = line->len - 1;         // index of last character
-    mdblock_t type;                     // ATX_HEADING_{1-6}
-    markdown_t *temp = NULL;
+    size_t hashes = 0;              /* Number of leading hashes.        */
+    size_t trailing = 0;            /* Number of trailing hashes.       */
+    size_t end = line->len - 1;     /* Index of last character in line. */
+    mdblock_t type;                 /* ATX_HEADING_{1-6}                */
+    markdown_t *node = NULL;        /* Node to be returned.             */
 
     if (i > 3) return NULL;
 
+    /* Count the number of leading hashes. */
     while (line->string[i] == '#') hashes++, i++;
     
-    // required space after initial hashes and beginning of heading
-    if (hashes < 1 || hashes > 6 || line->string[i] != ' ') {
-        return NULL;
-    }
+    /* Required space after initial hashes and beginning of heading. */
+    if (hashes < 1 || hashes > 6 || line->string[i] != ' ') return NULL;
 
-    // 1-unlimited spaces between hashes and first word
+    /* 1-unlimited spaces between hashes and first word. */
     while (line->string[i] == ' ') i++;
 
-    // remove all spaces at end of string
+    /* Remove all spaces at back-end of string. */
     while (line->string[end] == ' ') end--;
 
-    // remove all trailing hashes if they are followed by 1-inf spaces
+    /* Remove all trailing hashes *if* they are 
+     * followed by 1-unlimited spaces. */
     while (line->string[end] == '#') end--, trailing++;
     
-    // required space after trailing hashes and end of heading
+    /* Required space after trailing hashes and end of heading. */
     if (line->string[end] != ' ') end += trailing;
     
-    // if required space, also remove all the trailing spaces between 
-    // the end of the heading and the start of the trailing hashes
+    /* If required space was there, also remove all the 
+     * trailing spaces between the end of the heading and  
+     * the start of the trailing hashes. */
     else {
         while (line->string[end] == ' ') end--;
     }
@@ -393,87 +376,88 @@ static markdown_t *parse_atx_header(void)
         case 6: type = ATX_HEADER_6; break;
         default: break;
     }
-    temp = init_markdown(line, i, end, type);
+    node = init_markdown(line, i, end, type);
     update_state(FREE_LINE, type);
-    return temp;
+    return node;
 }
 
 
 /*****
- * Attempt to parse a horizontal rule.
- *
- * @return  NULL if not a `<hr>`, otherwise a `markdown_t` node.
- *****************************************************************************/
+ * parse_horizontal_rule() -- attempt to parse a horizontal rule element
+ **
+ * @return -- NULL if not an <hr>, otherwise a markdown_t node
+ ************************************************************************/
 static markdown_t *parse_horizontal_rule(void)
 {
-    size_t i = indentation, numChars = 0;
-    markdown_t *temp = NULL;
-    int hrChar, c = line->string[i];
-    hrChar = (c == '*' || c == '_' || c == '-') ? c : -1;
+    size_t i = indentation;
+    size_t numChars = 0;        /* Number of <hr> characters in line.   */
+    markdown_t *node = NULL;    /* Node to be returned.                 */
+    int hrChar;                 /* The character used for the <hr>.     */
+    int c = line->string[i];    /* The first non-WS character in line.  */
     
-    // dont worry about potential collision of a `-` <hr> with a 
-    // `-` <h2> because this is checked in parse_paragraph()
+    /* Don't worry about potential collision of a '-' <hr> with a 
+     * '-' <h2> because this is checked in parse_paragraph(). */
+    hrChar = (c == '*' || c == '_' || c == '-') ? c : -1;
     if (i > 3 || hrChar == -1) return NULL;
 
-    // *n* number of spaces and *n* number of hrChar's
+    /* Parse *n* number of spaces and *n* number of hrChar's. */
     while (line->string[i] == ' ' || line->string[i] == hrChar) {
         if (line->string[i++] == hrChar) numChars++;
     }
 
-    // no other characters may occur inline
+    /* No other characters may occur inline. */
     if (line->string[i] != '\0' || numChars < 3) return NULL;
     
-    temp = init_markdown(NULL, 0, 0, HORIZONTAL_RULE);
+    node = init_markdown(NULL, 0, 0, HORIZONTAL_RULE);
     update_state(FREE_LINE, HORIZONTAL_RULE);
-    return temp;
+    return node;
 }
 
 
-/*****
- * Attempt to parse an indented code block.
- *
- * @param   fp  An input file pointer opened for reading.
- *
- * @warning If `line` is determined to be a code block, this function will 
- *          consume all lines until the code block is determined to be closed.
- *
- * @return  NULL if not a code block, otherwise a `markdown_t` node.
- *****************************************************************************/
+/**
+ * parse_indented_code_block(fp) -- attempt to parse indented code block
+ **
+ *  Consumes all lines until the indented code block is exited.
+ **
+ * @return -- NULL if not a code block, otherwise a markdown_t node
+ ************************************************************************/
 static markdown_t *parse_indented_code_block(FILE *fp)
 {
     size_t i = indentation;
-    markdown_t *node = NULL, *temp = NULL;
-    string_t *tempstr = NULL;
-    char *fmt_string; // used for combine_strings()
+    markdown_t *node = NULL;    /* Node to be returned.                 */
+    markdown_t *temp = NULL;    /* Node to hold temporary parsing data. */
+    char *fmt_string;           /* Format string for combine_strings(). */
 
-    if (lastBlock == PARAGRAPH) return NULL;
-    else if (i < 4) return NULL;
+    if (lastBlock == PARAGRAPH || i < 4) return NULL;
 
     node = init_markdown(line, 4, line->len - 1, INDENTED_CODE_BLOCK);
     update_state(FREE_LINE, INDENTED_CODE_BLOCK);
     
-    // continue parsed until we exit the code block
+    /* Continue parsing until we exit the code block -- aka reach a
+     * blank line followed by the start of a different block. A blank
+     * line followed by a line with 4 spaces of indentation will
+     * continue (become part of) this block. */
     while (true) {
         if (!(line = read_line(fp))) break;
         indentation = count_indentation(line->string);
         
         if (indentation > 3) {
-            // add additional newline if last raw line was empty
+            /* Add additional newline if last raw line was empty. */
             if (lastBlock == BLANK_LINE) fmt_string = "%s\n\n%s";
             else fmt_string = "%s\n%s";
 
-            // this is a continutation of the code block
+            /* This is a continutation of the code block. */
             line = create_substring(line, 4, line->len - 1);
             node->value = combine_strings(fmt_string, node->value, line);
             update_state(FREE_LINE, INDENTED_CODE_BLOCK);
         }
         else {
-            // check for a blank line -- save it for later if found
+            /* Check for a blank line -- save it for later if found. */
             if ((temp = parse_blank_line()) != NULL) {
                 update_state(FREE_LINE, BLANK_LINE);
             }
             
-            // save parsed node for next parser() call and break out
+            /* Save parsed node for next parser() call and break out. */
             else {
                 ready_node = temp;
                 break;
@@ -484,116 +468,115 @@ static markdown_t *parse_indented_code_block(FILE *fp)
 }
 
 
-/*****
- * Attempt to parse a fenced code block.
- *
- * @param   fp  An input file pointer opened for reading.
- *
- * @warning If `line` is determined to be a code block, this function will 
- *          consume all lines until the code block is determined to be closed.
- *
- * @return  NULL if not a code block, otherwise a `markdown_t` node.
- *****************************************************************************/
+/* Maximum length of an info string on a fenced code block. */
+#define INFO_STRING_MAX 20
+
+/**
+ * parse_fenced_code_block(fp) -- attempt to parse a fenced code block
+ **
+ *  Consumes all lines until the indented code block is exited.
+ **
+ * @return -- NULL if not a code block, otherwise a markdown_t node
+ ************************************************************************/
 static markdown_t *parse_fenced_code_block(FILE *fp)
 {
-    markdown_t *node = NULL;        // node to be returned
-    md_code_block_t *info = NULL;   // used to hold info string
-    size_t openFenceLength = 0, closeFenceLength = 0;
-    size_t i = indentation;         // index used to create substring
-    size_t k = 0;                   // index used to create info string
-    int fenceChar = -1;             // character used for the fence
-    int c = line->string[i];        // the first opening fence character
-    
-    fenceChar = (c == '~' || c == '`') ? c : -1;
+    markdown_t *node = NULL;        /* Node to be returned.             */
+    md_code_block_t *info = NULL;   /* Used to hold info string.        */
+    size_t openFenceLength = 0;     /* Length of opening fence.         */
+    size_t closeFenceLength = 0;    /* Length of closing fence.         */
+    size_t i = indentation;         /* Index used to create substring.  */
+    size_t k = 0;                   /* Index used to create infostring. */
+    int fenceChar = -1;             /* Character used for the fence.    */
+    int c = line->string[i];        /* First opening fence character.   */
 
-    // count the number of fence characters
+    /* Count the number of fence characters. */
+    fenceChar = (c == '~' || c == '`') ? c : -1;
     while (line->string[i] == fenceChar) {
         i++;
         openFenceLength++;
     }
     if (openFenceLength < 3) return NULL;
     
-    // create an empty code block node -- the actual *code block* 
-    // will be added as we parse it line-by-line
+    /* Create an empty code block node -- the actual *code block* 
+     * content (lines) will be added as we parse it line-by-line. */
     node = init_markdown(NULL, 0, 0, FENCED_CODE_BLOCK);
     
-    // unlimited number of spaces after the opening fence
+    /* Parse an unlimited number of spaces after the opening fence. */
     while (line->string[i] == ' ') i++;
 
-    // check for an info string
+    /* Check for an info string. */
     if (isalpha(line->string[i])) {
         info = alloc_code_block_data();
         
-        while (isalpha(line->string[i]) && k < 20) {
+        /* Collect INFO_STRING_MAX characters for the info-string. */
+        while (isalpha(line->string[i]) && k < INFO_STRING_MAX) {
             info->lang[k++] = line->string[i++];
         }
         node->data = info;
     }
     
-    // parse every line as part of this code block until the closing fence
+    /* Parse every line as part of this code block 
+     * until we find the closing fence. */
     while (true) {
         if (!(line = read_line(fp))) break;
         i = indentation = count_indentation(line->string);
         
-        // check for a code fence
+        /* Check this line for a code fence. */
         while (line->string[i] == fenceChar) {
             i++;
             closeFenceLength++;
         }
         if (openFenceLength == closeFenceLength) break;
         
-        // combine strings with newline if node->value has a string value
+        /* Combine strings with newline if node->value has a string value. */
         if (node->value->len != 0) {
             node->value = combine_strings("%s\n%s", node->value, line);
         }
         
-        // otherwise just assign node->value to be a copy of `line`
+        /* Otherwise just assign node->value to be a copy of `line`. */
         else node->value = create_substring(line, 0, line->len - 1);
         
         update_state(FREE_LINE, FENCED_CODE_BLOCK);
     }
     update_state(FREE_LINE, FENCED_CODE_BLOCK);
-    printf("\n\ninfo = \'%s\'\n\n", ((md_code_block_t *)node->data)->lang);
     return node;
 }
 
 
-/*****
- * Attempt to parse an HTML block.
+/**
+ * parse_html_block(fp) -- attempt to parse an HTML block
+ **
+ *  An HTML_BLOCK has the following rules, as derived from John Gruber's
+ *  original Markdown spec (not the CommonMark spec):
  *
- * An `HTML_BLOCK` has the following rules:
+ *      - There can be *no indentation* on the line with the opening tag.
+ *      - The opening tag must begin with a left-angle bracket '<'.
+ *      - Immediately followed by a *valid* block-level element name.
+ *      - Everything after the opening tag name will be parsed as part of 
+ *        this HTML_BLOCK until a BLANK_LINE is encountered.
  *
- *  - There can be *no indentation* on the line with the opening tag.
- *  - The opening tag must begin with a left-angle bracket `<`.
- *  - Immediately followed by a *valid* block-level element name.
- *  - Everything after the opening tag name will be parsed as part of this
- *    `HTML_BLOCK` until a `BLANK_LINE` is encountered.
- *
- * @param   fp  An input file pointer opened for reading.
- *
- * @warning If `line` is determined to be an HTML block, this function will 
- *          consume all lines until the HTML block is determined to be closed.
- *
- * @return  `NULL` if not an HTML block, otherwise a `markdown_t` node.
- *****************************************************************************/
+ *  Consumes all lines until the indented code block is exited.
+ **
+ * @return -- NULL if not an HTML block, otherwise a markdown_t node
+ ************************************************************************/
 static markdown_t *parse_html_block(FILE *fp)
 {
     size_t i = indentation;
-    markdown_t *node = NULL; // node to be returned
-    markdown_t *temp = NULL; // temp node to hold addtional parsed nodes
-    size_t j = 0;            // index used for element[]
-    char element[15];       // string to hold the opening elements name
+    markdown_t *node = NULL;    /* Node to be returned.                 */
+    markdown_t *temp = NULL;    /* Node to hold temporary parsing data. */
+    size_t j = 0;               /* Index used for element[].            */
+    char element[15];           /* Opening elements name.               */
 
-    // HTML block start tag must not be indented
+    /* HTML block start tag must not be indented. */
     if (i > 0) return NULL;
     
-    // check for opening angle-bracket
+    /* Check for opening angle-bracket. */
     if (line->string[i++] != '<') return NULL;
     
-    // if we think its a comment, just pass everything to parse_html_comment()
+    /* If it appears to be a comment, attempt to parse one. */
     if (line->string[i] == '!') return parse_html_comment(fp);
     
-    // validate the opening tag name
+    /* Validate the opening tag name. */
     while (isalpha(line->string[i])) {
         element[j++] = line->string[i++];
     }
@@ -602,68 +585,68 @@ static markdown_t *parse_html_block(FILE *fp)
     node = init_markdown(line, 0, line->len - 1, HTML_BLOCK);
     update_state(FREE_LINE, HTML_BLOCK);
     
-    // parse everything as an HTML_BLOCK until a newline is encountered
+    /* Append lines to this HTML_BLOCK until a newline is encountered. */
     while (true) {
         if (!(line = read_line(fp))) break;
         i = indentation = count_indentation(line->string);
         
-        // check for exit-condition: a BLANK_LINE was encountered
+        /* Check for exit-condition: a BLANK_LINE was encountered. */
         if ((temp = parse_blank_line()) != NULL) {
             ready_node = temp;
             update_state(FREE_LINE, BLANK_LINE);
             break;
         }
         
-        // otherwise, just append this line to the HTML_BLOCK node
+        /* Otherwise, append this line to the HTML_BLOCK node. */
         node->value = combine_strings("%s\n%s", node->value, line);
     }
     return node;
 }
 
 
-/*****
- * Attempt to parse an HTML comment.
+/**
+ * parse_html_comment(fp) -- attempt to parse an HTML comment
+ **
+ *  An HTML_COMMENT has the following rules:
  *
- * An `HTML_COMMENT` has the following rules:
+ *      - There can be *no indentation* on the line with the 
+ *        opening sequence.
+ *      - The opening sequence is: "<!--".
+ *      - After the opening tag, all lines are parsed as an 
+ *        HTML_COMMENT until the closing seqeunce is encountered.
+ *      - The closing sequence is: "-->".
  *
- *  - There can be *no indentation* on the line with the opening sequence.
- *  - The opening sequence is: `<!--`
- *  - After the opening tag, all lines are parsed as an `HTML_COMMENT` until
- *    the closing seqeunce is encountered.
- *  - The closing sequence is: `-->`
+ *  All content parsed while inside a HTML_COMMENT will *not* be 
+ *  saved -- as we won't need it again -- they are basically ignored. 
+ *  The function will still return a valid markdown_t node, just one 
+ *  without any content.
  *
- * All content parsed while inside a `HTML_COMMENT` will *not* be saved -- as
- * we won't need it again -- they are basically ignored. The function will 
- * still return a valid `markdown_t` node, just one without any content.
+ *  This function is *only* called by parse_html_block().
  *
- * This function is *only* called by `parse_html_block()`.
- *
- * @param   fp  An input file pointer opened for reading.
- *
- * @warning If `line` is determined to be an HTML block, this function will 
- *          consume all lines until the HTML block is determined to be closed.
- *
- * @return  `NULL` if not an HTML comment, otherwise a `markdown_t` node.
- *****************************************************************************/
+ *  Consumes all lines until the indented code block is exited.
+ **
+ * @return -- NULL if not an HTML comment, otherwise a markdown_t node
+ ************************************************************************/
 static markdown_t *parse_html_comment(FILE *fp)
 {
     size_t i = indentation;
 
-    // check for required opening sequence: "<!--"
+    /* Check for *required* opening sequence: "<!--". */
     if (line->string[i++] != '<') return NULL;
     if (line->string[i++] != '!') return NULL;
     if (line->string[i++] != '-') return NULL;
     if (line->string[i++] != '-') return NULL;
     
-    // consume all lines until we find the ending sequence: "-->"
+    /* Consume all lines until we find the ending sequence: "-->". */
     while (true) {
-        // check the current line for the ending sequence
+        /* Check the current line for the ending sequence. */
         while (line->string[i] != '-') i++;
         
-        if (line->string[i++] == '-' && line->string[i++] == '-' &&
-            line->string[i] == '>') break;
+        if (line->string[i++] == '-' && 
+            line->string[i++] == '-' &&
+            line->string[i]   == '>') break;
         
-        // get the next line to check for ending sequence
+        /* Get the next line to check for ending sequence. */
         else {
             update_state(FREE_LINE, HTML_COMMENT);
             if (!(line = read_line(fp))) break;
@@ -672,4 +655,87 @@ static markdown_t *parse_html_comment(FILE *fp)
     }
     update_state(FREE_LINE, HTML_COMMENT);
     return init_markdown(NULL, 0, 0, HTML_COMMENT);
+}
+
+/**
+ * parse_link_reference(fp) -- attempt to parse a link reference definition
+ **
+ *  A link reference definition is parsed exactly as described in the 
+ *  CommonMark spec **save for one exception** -- the title may not 
+ *  contain any newlines. You can place the link, destination, and title
+ *  on three separate lines, but each of the three individual pieces
+ *  must be on their *own* respective line.
+ **
+ * @return -- NULL if not a link ref def, otherwise a markdown_t node
+ ************************************************************************/
+static markdown_t *parse_link_reference(FILE *fp)
+{
+    size_t i = indentation;
+    size_t j = 0;               /* Index for the link_ref_t members.    */
+    markdown_t *node = NULL;    /* Node to be returned.                 */
+    link_ref_t *link = NULL;
+    
+    /* Link definition cannot be indented more than 3 spaces. */
+    if (i > 3) return NULL;
+    
+    /* Link label must begin with an open bracket. */
+    if (line->string[i++] != '[') return NULL;
+    
+    link = alloc_link_reference_data();
+    
+    /* Pull the link label out of the definition. */
+    while (isalnum(line->string[i]) || line->string[i] == '_') {
+        link->link[j++] = line->string[i++];
+    }
+    
+    /* Link label must end with a closing bracket. */
+    if (line->string[i++] != ']') return NULL;
+    
+    /* Followed by a colon -- no colon means this is a *reference*, not
+     * a definition -- so we parse it as a paragraph. */
+    if (line->string[i++] != ':') return parse_paragraph(fp);
+    
+    /* Parse an unlimited number of whitespace characters. */
+    while (line->string[i] == ' ') i++;
+    
+    /* Check for an optional line-ending -- possibly get another line. */
+    if (!line->string[i]) {
+        update_state(FREE_LINE, LINK_REFERENCE_DEF);
+        if (!(line = read_line(fp))) return NULL;
+        i = indentation = count_indentation(line->string);
+    }
+    
+    /* Pull the link destination out of the definition. */
+    j = 0;
+    while (isgraph(line->string[i])) {
+        link->dest[j++] = line->string[i++];
+    }
+    
+    /* Parse an unlimited number of whitespace characters. */
+    while (line->string[i] == ' ') i++;
+    
+    /* Check for an optional line-ending -- possible get another line. */
+    if (!line->string[i]) {
+        update_state(FREE_LINE, LINK_REFERENCE_DEF);
+        if (!(line = read_line(fp))) goto return_node;
+        i = indentation = count_indentation(line->string);
+    }
+    
+    /* Link title must begin with quotation mark. */
+    if (line->string[i++] != '\"') goto return_node;
+
+    /* Pull the link title out of the definition. */
+    j = 0;
+    while (line->string[i] && line->string[i] != '\"') {
+        link->title[j++] = line->string[i++];
+    }
+
+    goto return_node;
+    
+    return_node: {
+        update_state(FREE_LINE, LINK_REFERENCE_DEF);
+        node = init_markdown(NULL, 0, 0, LINK_REFERENCE_DEF);
+        node->data = link;
+        return node;
+    }
 }

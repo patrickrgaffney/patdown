@@ -12,17 +12,8 @@
 
 #include "markdown.h"
 
-/*****
- * Parse an input file into markdown.
- *
- * This is the external API for the parser.
- *
- * @param   fp  An input file pointer opened for reading.
- *
- * @warning This function will return `NULL` if the file pointer has not been
- *          opened. This should be interpreted as an error.
- *
- * @return  A queue of parsed, markdown nodes.
+/*****************************************************************************
+ * @section External Parsing API
  *****************************************************************************/
 markdown_t *markdown(FILE *fp);
 
