@@ -1,31 +1,39 @@
-/* 
- * markdown.h -- markdown structures and methods.
+/*****
+ * markdown.h -- markdown queue methods and data structures
  * 
- * Created by PAT GAFFNEY on 06/15/2016.
- * Last modified on 07/21/2016.
+ * @author      Pat Gaffney <pat@hypepat.com>
+ * @created     2016-06-15
+ * @modified    2016-08-29
  * 
- *********ultrapatbeams*/
+ *****************************************************************************/
 
 #ifndef MARKDOWN_H
 #define MARKDOWN_H
 
 #include <stdio.h>
 #include <stdbool.h>
+
 #include "strings.h"
 #include "block_types.h"
 
 
+/******************************************************************************
+ * @section Markdown Data Structures
+ *****************************************************************************/
 
-/******************************************************************
- * mdblock_t -- enumerated values for a markdown_t block
- ******************************************************************/
+/*****
+ * Enumerated values for a `markdown_t` block.
+ *
+ * Each of these values corresponds to a specific type of Markdown block. 
+ * These are used to determine how to print and/or parse the block.
+ *****************************************************************************/
 typedef enum
 {
-    ///// META                  // VALUE
+    /* Meta blocks */
     UNKNOWN,                    // 0
     BLANK_LINE,                 // 1
     
-    ///// IMPLEMENTED
+    /* Implemented blocks */
     ATX_HEADER_1,               // 2
     ATX_HEADER_2,               // 3
     ATX_HEADER_3,               // 4
@@ -41,7 +49,7 @@ typedef enum
     HTML_BLOCK,                 // 14
     HTML_COMMENT,               // 15
     
-    ///// UNIMPLEMENTED
+    /* Unimplemented blocks */
     BLOCKQUOTE_START,
     BLOCKQUOTE_END,
     UNORDERED_LIST_START,
@@ -54,9 +62,13 @@ typedef enum
 } mdblock_t;
 
 
-/******************************************************************
- * mdinline_t -- enumerated values for a markdown_t inline span
- ******************************************************************/
+/*****
+ * Enumerated values for a `markdown_t` inline span.
+ *
+ * These values are the inline version of `mdblock_t` types.
+ *
+ * @see mdblock_t
+ *****************************************************************************/
 typedef enum
 {
     ESCAPED_CHAR,
@@ -72,13 +84,14 @@ typedef enum
 } mdinline_t;
 
 
-/******************************************************************
- * markdown_t -- a node containing a parsed markdown block
+/*****
+ * Node containing a parsed Markdown block.
  *
- * char *s         -- string value of parsed markdown block
- * mdblock_t type  -- block type of this parsed markdown block
- * markdown_t next -- pointer to the next markdown_t node in stack
- ******************************************************************/
+ * @member  s       String (`string_t`) value of parsed markdown block.
+ * @member  type    Block type of this parsed markdown block.
+ * @member  data    Generic pointer to (optional) additional block data.
+ * @member  next    Pointer to next node in the queue.
+ *****************************************************************************/
 typedef struct markdown_t
 {
     string_t *value;
@@ -88,81 +101,22 @@ typedef struct markdown_t
 } markdown_t;
 
 
-/******************************************************************
- * markdown() -- convert a markdown file to an output type
- *
- * FILE *inputFile -- markdown file, opened for reading
- *
- * @return -- the head of a markdown_t stack
- ******************************************************************/
-markdown_t *markdown(FILE *inputFile);
-
-
-/******************************************************************
- * init_markdown() -- create a new markdown_t node
- * 
- * char *s              -- original string block read from file
- * const size_t start   -- index where the string should start
- * const size_t stop    -- index where the string should end
- * const mdblock_t type -- mdblock_t of new markdown_t node
- *
- * @return -- an initialized markdown_t node
- ******************************************************************/
+/******************************************************************************
+ * @section Markdown Queue
+ *****************************************************************************/
 markdown_t *init_markdown(string_t *s, const size_t start, 
                           const size_t stop, const mdblock_t type);
-
-
-/******************************************************************
- * alloc_markdown() -- allocate space for a new markdown_t node
- *
- * @throws -- throw_memory_error() if node cannot be allocated
- * @return -- an allocated markdown_t node
- ******************************************************************/
-markdown_t *alloc_markdown(void);
-
-
-/******************************************************************
- * insert_markdown_queue() -- place a new node at the queue's tail
- *
- * markdown_t **head -- current head of the queue
- * markdown_t **tail -- current tail of the queue
- * markdown_t  *temp -- node to be inserted
- *
- * @noreturn  -- control returned to the caller
- ******************************************************************/
-void insert_markdown_queue(markdown_t **head, markdown_t **tail, markdown_t *temp);
-
-
-/******************************************************************
- * print_markdown_queue() -- print the queue to stdout
- *
- * markdown_t *node -- node to be printed
- *
- * @noreturn  -- control returned to the caller
- ******************************************************************/
+void insert_markdown_queue(markdown_t **head, markdown_t **tail, 
+                           markdown_t *temp);
 void print_markdown_queue(markdown_t *node);
-
-
-/******************************************************************
- * alloc_markdown() -- free markdown_t node, if it exists
- *
- * markdown_t *node -- node to be freed
- *
- * @recursive -- calls node->next for every node
- ******************************************************************/
 void free_markdown(markdown_t *node);
 
 
-/******************************************************************
- * update_queue() -- update the last node based on new information
- *
- * markdown_t **tail -- node at tail of queue
- * markdown_t  *temp -- (new) node that was most recently parsed
- *
- * @return -- true if queue was updated, false if not
- ******************************************************************/
-bool update_queue(markdown_t **tail, markdown_t *temp);
+/******************************************************************************
+ * @section Specific Markdown Data Information
+ *****************************************************************************/
 md_code_block_t *alloc_code_block_data(void);
+link_ref_t *alloc_link_reference_data(void);
 
 #endif
 

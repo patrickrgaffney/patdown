@@ -1,14 +1,15 @@
-/* 
- * markdown.c -- markdown structures and methods.
+/*****
+ * markdown.c -- markdown queue methods
  * 
- * Created by PAT GAFFNEY on 06/15/2016.
- * Last modified on 07/20/2016.
+ * @author      Pat Gaffney <pat@hypepat.com>
+ * @created     2016-06-15
+ * @modified    2016-08-29
  * 
- *********ultrapatbeams*/
+ *****************************************************************************/
 
-#include <stdio.h>      // for input files
-#include <stdlib.h>     // for allocation & freeing
-#include <stdbool.h>    // for true & false
+#include <stdio.h>
+#include <stdlib.h>
+#include <stdbool.h>
 
 #include "markdown.h"
 #include "strings.h"
@@ -18,18 +19,40 @@
 #include "block_types.h"
 
 
+/******************************************************************************
+ * @section Markdown Queue Methods
+ *****************************************************************************/
 
-/******************************************************************
- * init_markdown() -- create a new markdown_t node
- * 
- * char *s              -- original string block read from file
- * const size_t start   -- index where the string should start
- * const size_t stop    -- index where the string should end
- * const mdblock_t type -- mdblock_t of new markdown_t node
+/*****
+ * Allocate space for a new `markdown_t` node.
  *
- * @return -- an initialized markdown_t node
- ******************************************************************/
-markdown_t *init_markdown(string_t *s, const size_t start, const size_t stop, const mdblock_t type)
+ * @throws  throw_memory_error()
+ * @return  An allocated `markdown_t` node.
+ *****************************************************************************/
+static markdown_t *alloc_markdown(void)
+{
+    markdown_t *node = NULL;
+    node = malloc(sizeof(markdown_t));
+    if (!node) throw_memory_error();
+    return node;
+}
+
+
+/*****
+ * Create a new `markdown_t` node.
+ *
+ * This function uses the indexes obtained from parsing the raw input line to
+ * create the substring of the markdown block that will be used for output.
+ *
+ * @param   s       Original `string_t` node read from input file.
+ * @param   start   Index where the substring should start.
+ * @param   stop    Index where the substring should stop.
+ * @param   type    Type (`mdblock_t`) on the new `markdown_t` node.
+ *
+ * @return  An initialized `markdown_t` node.
+ *****************************************************************************/
+markdown_t *init_markdown(string_t *s, const size_t start, 
+                          const size_t stop, const mdblock_t type)
 {
     markdown_t *line = alloc_markdown();
     line->value = create_substring(s, start, stop);
@@ -40,30 +63,13 @@ markdown_t *init_markdown(string_t *s, const size_t start, const size_t stop, co
 }
 
 
-/******************************************************************
- * alloc_markdown() -- allocate space for a new markdown_t node
+/*****
+ * Insert a new `markdown_t` node at the tail of the queue.
  *
- * @throws -- throw_memory_error() if node cannot be allocated
- * @return -- an allocated markdown_t node
- ******************************************************************/
-markdown_t *alloc_markdown(void)
-{
-    markdown_t *node = NULL;
-    node = malloc(sizeof(markdown_t));
-    if (!node) throw_memory_error();
-    return node;
-}
-
-
-/******************************************************************
- * insert_markdown_queue() -- place a new node at the queue's tail
- *
- * markdown_t **head -- current head of the queue
- * markdown_t **tail -- current tail of the queue
- * markdown_t  *temp -- node to be inserted
- *
- * @noreturn  -- control returned to the caller
- ******************************************************************/
+ * @param   head    Current head of the markdown queue.
+ * @param   tail    Current tail of the markdown queue.
+ * @param   temp    Node to be inserted to the queue.
+ *****************************************************************************/
 void insert_markdown_queue(markdown_t **head, markdown_t **tail, markdown_t *temp)
 {
     if (temp) {
@@ -74,13 +80,15 @@ void insert_markdown_queue(markdown_t **head, markdown_t **tail, markdown_t *tem
 }
 
 
-/******************************************************************
- * print_markdown_queue() -- print the queue to stdout
+/*****
+ * Print the markdown queue to standard output.
  *
- * markdown_t *node -- node to be printed
+ * This function is used for debugging purposes only. It initally receives the
+ * *head* of the queue as the parameter, then makes recursive calls to print
+ * every node in the queue.
  *
- * @noreturn -- control returned to the caller
- ******************************************************************/
+ * @param   node    The current node to be printed.
+ *****************************************************************************/
 void print_markdown_queue(markdown_t *node)
 {
     if (node) {
@@ -90,14 +98,14 @@ void print_markdown_queue(markdown_t *node)
 }
 
 
-/******************************************************************
- * alloc_markdown() -- free markdown_t node, if it exists
+/*****
+ * Free the memory allocated for a `markdown_t` node.
  *
- * markdown_t *node -- node to be freed
+ * @warning This function will free *all* the memory associated with the node
+ *          in questions -- that includes it's `string_t` node.
  *
- * @recursive -- calls node->next for every node
- * @noreturn  -- control returned to the caller
- ******************************************************************/
+ * @param   node    The node to be free'd.
+ *****************************************************************************/
 void free_markdown(markdown_t *node)
 {
     if (node) {
@@ -110,10 +118,29 @@ void free_markdown(markdown_t *node)
     }
 }
 
+
+/******************************************************************************
+ * @section Specific Markdown Data Information
+ *****************************************************************************/
+
+/*****
+ * Allocate space for a new `md_code_block_t` node.
+ *
+ * @throws  throw_memory_error()
+ * @return  An allocated `md_code_block_t` node.
+ *****************************************************************************/
 md_code_block_t *alloc_code_block_data(void)
 {
     md_code_block_t *node = NULL;
     node = malloc(sizeof(md_code_block_t));
     if (!node) throw_memory_error();
     return node;
+}
+
+link_ref_t *alloc_link_reference_data(void)
+{
+    link_ref_t *link = NULL;
+    link = malloc(sizeof(link_ref_t));
+    if (!link) throw_memory_error();
+    return link;
 }
