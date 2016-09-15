@@ -1,69 +1,42 @@
 /***** 
- * main.c -- parse arguments and begin program execution
+ * main.c -- parse arguments and open files
  * 
  * @author      Pat Gaffney <pat@hypepat.com>
  * @created     2016-06-15
- * @modified    2016-08-28
+ * @modified    2016-09-15
  * 
- ******************************************************************************/
+ ************************************************************************/
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <ctype.h>
 #include <string.h>
+#include <getopt.h>
 
 #include "arguments.h"
+#include "errors.h"
+#include "files.h"
 #include "markdown.h"
 #include "parsers.h"
-#include "files.h"
-#include "errors.h"
 
 
-/******************************************************************************
+/************************************************************************
  * @section Command-line Argument Parsing
- * 
- * First, all command line arguments are given an `arg_t`, or *argument type*.
- * These different types (`INPUT_FILE_NAME`, `OUTPUT_TYPE_HTML`, etc) change
- * the various program options from their defaults.
- *****************************************************************************/
+ ************************************************************************/
 
-/*****
- * Allocate memory for an array of `arg_t` elements.
+/**
+ * check_output_type(arg) -- determine if arg is a valid output_t
+ **
+ *  TODO: Create a function in strings.c that will convert a string to
+ *        lowercase -- then move the string handling there.
  *
- * @param   size    The number of elements (arguments) in the array.
- *
- * @throws  throw_memory_error()
- * @return  A newly allocated `arg_t` array.
- *****************************************************************************/
-static arg_t *alloc_argt(const int size)
-{
-    arg_t *type = NULL;
-    type = malloc(sizeof(arg_t) * size);
-    if (!type) throw_memory_error();
-    return type;
-}
-
-
-/*****
- * Free the memory allocated for the `arg_t` array.
- *
- * @param   types   The array to be free'd.
- *****************************************************************************/
-static void free_argt(arg_t *types)
-{
-    free(types);
-}
-
-
-/*****
- * Determine if the user's output type is valid.
- *
- * @param   arg     The user provided output type.
- * 
- * @throws  throw_invalid_output_t_error()
- * @return  The determined `arg_t` output constant.
- *****************************************************************************/
-static arg_t check_output_type(const char *arg)
+ *  TODO: Move the @throws call to the caller, and return -1 if **no** 
+ *        match was found.
+ **
+ * @throws -- throw_invalid_output_t_error()
+ * @return -- the determined arg_t output constant
+ ************************************************************************/
+static output_t check_output_type(const char *arg)
 {
     const size_t size = strlen(arg);
     char *lowerArg = malloc(sizeof(char) * (size + 1));
@@ -75,134 +48,89 @@ static arg_t check_output_type(const char *arg)
         throw_invalid_output_t_error(arg - size);
     }
     free(lowerArg);
-    return OUTPUT_TYPE_HTML;
+    return HTML_OUT;
 }
 
 
-/*****
- * Parse a command-line flag option.
- *
- * @param   arg     The user provided flag option.
- * 
- * @throws  throw_invalid_option_error()
- * @return  The determined `arg_t` flag constant.
- *****************************************************************************/
-static arg_t parse_flag_option(const char *arg)
+/************************************************************************
+ * @section Main Function
+ ************************************************************************/
+
+/**
+ * main(argc, argv) -- parse arguments, open files, and call parser
+ **
+ * @throws -- throw_multiple_input_files_error()
+ * @return -- EXIT_SUCCESS on completion
+ ************************************************************************/
+int main(int argc, char **argv)
 {
-    if (*(++arg) == '\0') {
-        throw_invalid_option_error(arg);
-    }
-    else if (*arg == 'o') {
-        return OUTPUT_FILE_FLAG;
-    }
-    else if (*arg == 't') {
-        return OUTPUT_TYPE_FLAG;
-    }
-    else throw_invalid_option_error(arg);
-    
-    return INPUT_FILE_NAME;
-}
-
-
-/*****
- * Parse a command-line string option.
- *
- * Any string options whose type (`arg_t`) cannot be determine default to being
- * `INPUT_FILE_NAME` type, and are therefore attempted to be opened as a file.
- *
- * @param   arg     The user provided string option.
- * @param   last    The type of the last parsed markdown block.
- *
- * @return  The determined `arg_t` constant.
- *****************************************************************************/
-static arg_t parse_string_option(const char *arg, const arg_t last)
-{
-    switch (last) {
-        case OUTPUT_FILE_FLAG:
-            return OUTPUT_FILE_NAME;
-        case OUTPUT_TYPE_FLAG:
-            return check_output_type(arg);
-        default: 
-            return INPUT_FILE_NAME;
-    }
-}
-
-
-/*****
- * Being parsing the command-line arguments.
- *
- * @param   argc    The number of command-line arguments.
- * @param   argv    A string array of the arguments.
- *
- * @return  An array containing each argument's type, or `arg_t`.
- *****************************************************************************/
-static arg_t *parse_arguments(const int argc, const char **argv)
-{
-    arg_t *types = alloc_argt(argc);
-    types[0] = PROGRAM_NAME;
-    arg_t lastType = PROGRAM_NAME;
-    
-    for (size_t i = 1; i < argc; i++) {
-        if (*argv[i] == '-') {
-            types[i] = parse_flag_option(argv[i]);
-        }
-        else types[i] = parse_string_option(argv[i], lastType);
-        lastType = types[i];
-    }
-    return types;
-}
-
-
-/******************************************************************************
- * @section Progam Execution
- *****************************************************************************/
-
-/*****
- * Begin program execution.
- *
- * @param   argc    The number of command-line arguments.
- * @param   argv    A string array of the arguments.
- *
- * @return  `EXIT_SUCCESS`.
- *****************************************************************************/
-int main(int argc, char const **argv)
-{
-    options_t opts = {
-        .inFileName  = NULL,
-        .outFileName = NULL,
-        .outputType  = HTML_OUT,
-        .inputFile   = stdin,
-        .outputFile  = stdout
+    options_t opts = {              /* Command-line options container.  */
+        .inFileName     = NULL,     /* String name of input file.       */
+        .outFileName    = NULL,     /* String name of output file.      */
+        .outputType     = HTML_OUT, /* Enumerated output type.          */
+        .inputFile      = stdin,    /* Input file pointer.              */
+        .outputFile     = stdout    /* Output file pointer.             */
     };
-    markdown_t *queue = NULL;
-    arg_t *type = parse_arguments(argc, argv);
+    markdown_t *queue   = NULL;     /* MD list returned by parser.      */
+    int helpFlag        = 0;        /* Flag for help dialog.            */
+    int versionFlag     = 0;        /* Flag for version dialog.         */
     
-    for (size_t i = 1; i < argc; i++) {
-        // printf("argt = %d, argv = \'%s\'\n", type[i], argv[i]);
-        switch (type[i]) {
-            case INPUT_FILE_NAME: 
-                opts.inFileName = argv[i];
+    while (true) {
+        int optindex = 0;
+        const struct option long_opts[] = {
+          {"help",      no_argument,    &helpFlag,      1},
+          {"version",   no_argument,    &versionFlag,   1},
+          {0,           0,              0,              0},
+        };
+        
+        /* Get character code or EOF for current argument. */
+        int c = getopt_long(argc, argv, "o:t:", long_opts, &optindex);
+        if (c == -1) break;
+        
+        switch (c) {
+            case 'o':
+                opts.outFileName = optarg;
                 break;
-            case OUTPUT_FILE_NAME:
-                opts.outFileName = argv[i];
-                break;            
-            case OUTPUT_TYPE_HTML:
-                opts.outputType = HTML_OUT;
+            case 't':
+                opts.outputType = check_output_type(optarg);
                 break;
             default: break;
         }
     }
     
+    /* Assign the remaining arguments to be the input file names. 
+     * Currently, we only accept a single input file. Sending 
+     * multiple files to patdown will throw a fatal error. */
+    if (optind < argc)
+    {
+        if (!opts.inFileName) opts.inFileName = argv[optind++];
+        else throw_multiple_input_files_error();
+    }
+    
+    printf("inFileName = %s\n", opts.inFileName);
+    printf("outFileName = %s\n", opts.outFileName);
+    printf("outputType = %u\n", opts.outputType);
+    
+    /* If both helpFlag and versionFlag were turned on during command-
+     * line parsing, only print the help output dialog. */
+    if (helpFlag) {
+        printf("HELP!\n");
+    }
+    else if (versionFlag) {
+        printf("VERSION!\n");
+    }
+    
+
     if (opts.inFileName) {
         opts.inputFile = open_file(opts.inFileName);
     }
-    
-    // if output file -- open that file for writing
-    
+
+    /* If opts.outFileName... open for reading. */
+
     queue = markdown(opts.inputFile);
     print_markdown_queue(queue);
     close_file(opts.inputFile);
-    free_argt(type);
     free_markdown(queue);
+    
     return EXIT_SUCCESS;
 }
