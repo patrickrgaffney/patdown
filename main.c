@@ -13,7 +13,6 @@
 #include <string.h>
 #include <getopt.h>
 
-#include "arguments.h"
 #include "errors.h"
 #include "files.h"
 #include "markdown.h"
@@ -23,6 +22,28 @@
 /************************************************************************
  * @section Command-line Argument Parsing
  ************************************************************************/
+
+/**
+ * output_t -- type representing valid output type constants
+ ************************************************************************/
+typedef enum 
+{
+    HTML_OUT    /* Default -- HTML5 element syntax. */
+} output_t;
+
+
+/**
+ * options_t -- container for various program options
+ ************************************************************************/
+typedef struct progopts 
+{
+    const char *inFileName;     /* Name of input file, default: NULL.   */
+    const char *outFileName;    /* Name of output file, default: NULL.  */
+    output_t outputType;        /* Output file type, default: HTML_OUT. */
+    FILE *inputFile;            /* Input file pointer, default: stdin.  */
+    FILE *outputFile;           /* Output file pointer, default: stdout.*/
+};
+
 
 /**
  * check_output_type(arg) -- determine if arg is a valid output_t
@@ -64,16 +85,16 @@ static output_t check_output_type(const char *arg)
  ************************************************************************/
 int main(int argc, char **argv)
 {
-    options_t opts = {              /* Command-line options container.  */
-        .inFileName     = NULL,     /* String name of input file.       */
-        .outFileName    = NULL,     /* String name of output file.      */
-        .outputType     = HTML_OUT, /* Enumerated output type.          */
-        .inputFile      = stdin,    /* Input file pointer.              */
-        .outputFile     = stdout    /* Output file pointer.             */
+    struct progopts opts = {
+        .inFileName     = NULL,         /* String name of input file.   */
+        .outFileName    = NULL,         /* String name of output file.  */
+        .outputType     = HTML_OUT,     /* Enumerated output type.      */
+        .inputFile      = stdin,        /* Input file pointer.          */
+        .outputFile     = stdout        /* Output file pointer.         */
     };
-    markdown_t *queue   = NULL;     /* MD list returned by parser.      */
-    int helpFlag        = 0;        /* Flag for help dialog.            */
-    int versionFlag     = 0;        /* Flag for version dialog.         */
+    markdown_t *queue   = NULL;         /* MD list returned by parser.  */
+    int helpFlag        = 0;            /* Flag for help dialog.        */
+    int versionFlag     = 0;            /* Flag for version dialog.     */
     
     while (true) {
         int optindex = 0;
