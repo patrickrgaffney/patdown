@@ -158,7 +158,7 @@ static markdown_t *parse_indented_code_block(FILE *fp);
 static markdown_t *parse_fenced_code_block(FILE *fp);
 static markdown_t *parse_html_block(FILE *fp);
 static markdown_t *parse_html_comment(FILE *fp);
-static markdown_t *parse_link_reference(FILE *fp);
+static markdown_t *parse_link_ref_defs(FILE *fp);
 
 
 /**
@@ -206,7 +206,7 @@ markdown_t *block_parser(FILE *fp)
                 node = parse_html_block(fp); 
                 break;
             case '[': 
-                node = parse_link_reference(fp); 
+                node = parse_link_ref_defs(fp); 
                 break;
             default: break;
         }
@@ -668,7 +668,7 @@ static markdown_t *parse_html_comment(FILE *fp)
  **
  * @return -- NULL if not a link ref def, otherwise a markdown_t node
  ************************************************************************/
-static markdown_t *parse_link_reference(FILE *fp)
+static markdown_t *parse_link_ref_defs(FILE *fp)
 {
     size_t i = indentation;
     size_t j = 0;               /* Index for the link_ref_t members.    */
