@@ -24,9 +24,9 @@ typedef struct md_list_t
 
 typedef struct link_ref_t
 {
-    string_t *label;
-    string_t *url;
-    string_t *title;
+    char link[1000];
+    char dest[1000];
+    char title[1000];
 } link_ref_t;
 
 #endif
