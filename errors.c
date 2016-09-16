@@ -1,4 +1,4 @@
-/**
+/***** 
  * errors.c -- methods for throwing errors
  * 
  * @author      Pat Gaffney <pat@hypepat.com>
@@ -46,31 +46,3 @@ void throw_multiple_input_files_error(void)
     fprintf(stderr, "FATAL: Multiple input files were provided.\n");
     exit(EXIT_FAILURE);
 }
-
-
-// /*
-//  * throw_invalid_option_error() -- provided option flag is invalid
-//  *
-//  * const char *argument -- the invalid option flag
-//  *
-//  * @fatal -- exits program with error dialog
-//  *****************************************************************/
-// void throw_invalid_option_error(const char *arg)
-// {
-//     fprintf(stderr, "ERROR: \'%s\' is an invalid option.\n", argument);
-//     exit(EXIT_FAILURE);
-// }
-//
-//
-// /******************************************************************
-//  * throw_invalid_output_t_error() -- output type is invalid
-//  *
-//  * const char *argument -- the invalid output type
-//  *
-//  * @fatal -- exits program with error dialog
-//  ******************************************************************/
-// void throw_invalid_output_t_error(const char *argument)
-// {
-//     fprintf(stderr, "ERROR: \'%s\' is an invalid output type.\n", argument);
-//     exit(EXIT_FAILURE);
-// }
