@@ -101,9 +101,6 @@ typedef struct markdown_t
  * @section Markdown Queue
  ************************************************************************/
 
-/* Allocate space for a new markdown_t node. */
-static markdown_t *alloc_markdown(void);
-
 /* Allocate / initialize a new markdown_t node. */
 markdown_t *init_markdown(string_t *s, const size_t start, 
                           const size_t stop, const mdblock_t type);
