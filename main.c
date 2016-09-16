@@ -128,10 +128,6 @@ int main(int argc, char **argv)
         else throw_multiple_input_files_error();
     }
     
-    printf("inFileName = %s\n", opts.inFileName);
-    printf("outFileName = %s\n", opts.outFileName);
-    printf("outputType = %u\n", opts.outputType);
-    
     /* If both helpFlag and versionFlag were turned on during command-
      * line parsing, only print the help output dialog. */
     if (helpFlag) {
