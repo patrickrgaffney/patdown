@@ -14,7 +14,6 @@
 #include "block_types.h"
 #include "errors.h"
 #include "markdown.h"
-#include "parsers.h"
 #include "strings.h"
 
 
