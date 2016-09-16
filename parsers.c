@@ -3,26 +3,25 @@
  * 
  * @author      Pat Gaffney <pat@hypepat.com>
  * @created     2016-06-15
- * @modified    2016-08-28
+ * @modified    2016-09-15
  * 
  ************************************************************************/
 
+#include <ctype.h>
 #include <string.h>
 #include <stdlib.h>
-#include <ctype.h>
 #include <stdbool.h>
-#include "parsers.h"
-#include "markdown.h"
-#include "files.h"
-#include "strings.h"
-#include "block_types.h"
 
+#include "block_types.h"
+#include "files.h"
+#include "markdown.h"
+#include "parsers.h"
+#include "strings.h"
 
 
 /************************************************************************
  * @section External Parsing API
  ************************************************************************/
-
 static markdown_t *block_parser(FILE *fp);
 
 /**
@@ -34,18 +33,22 @@ static markdown_t *block_parser(FILE *fp);
  ************************************************************************/
 markdown_t *markdown(FILE *fp)
 {
-    markdown_t *head = NULL, *tail = NULL, *temp = NULL;
+    markdown_t *head = NULL;    /* Head of the markdown queue.          */
+    markdown_t *tail = NULL;    /* Tail of the markdown queue.          */
+    markdown_t *temp = NULL;    /* Node to be inserted into the queue.  */
+    
     if (!fp) return NULL;
     
     while (true) {
         temp = block_parser(fp);
-        if (temp) {
-            insert_markdown_queue(&head, &tail, temp);
-        }
+        
+        if (temp) insert_markdown_queue(&head, &tail, temp);
         else break;
     }
     return head;
 }
+
+
 
 /************************************************************************
  * @section Generic Helper Functions
@@ -75,26 +78,18 @@ static bool match_html_block_element(const char *e, const size_t len)
         { "p" },
         { "dd", "dl", "dt", "td", "th", "tr" },
         { "col", "dir", "div", "nav" },
-        {
-            "base", "body", "form", "head", "html", "link", "main", "menu", 
-            "meta"
-        },
-        {
-            "aside", "frame", "param", "style", "table", "tbody", "tfoot",
-            "thead", "title", "track"
-        },
-        {
-            "center", "dialog", "figure", "footer", "header", "iframe", 
-            "legend", "option", "script", "source"
-        },
-        {
-            "address", "article", "basefont", "caption", "colgroup", "details",
-            "fieldset", "figcaption", "frameset", "menuitem", "noframes",
-            "optgroup", "section", "summary"
-        }
+        { "base", "body", "form", "head", "html", "link", "main", "menu", 
+          "meta" },
+        { "aside", "frame", "param", "style", "table", "tbody", "tfoot",
+          "thead", "title", "track" },
+        { "center", "dialog", "figure", "footer", "header", "iframe", 
+          "legend", "option", "script", "source" },
+        { "address", "article", "basefont", "caption", "colgroup", "details",
+          "fieldset", "figcaption", "frameset", "menuitem", "noframes",
+          "optgroup", "section", "summary" }
     };
     
-    if (len == 0) return NULL;
+    if (len == 0) return false;
     
     for (size_t i = 0; i < 14; i++) {
         if (elements[len][i] && strcmp(e, elements[len][i]) == 0) {
@@ -105,13 +100,14 @@ static bool match_html_block_element(const char *e, const size_t len)
 }
 
 
+
 /************************************************************************
  * @section State Information and Manipulation
  ************************************************************************/
-static mdblock_t lastBlock = UNKNOWN;
-static size_t indentation  = 0;
-static string_t *line      = NULL;
-static markdown_t *ready_node = NULL;
+static mdblock_t lastBlock = UNKNOWN;   /* Last parsed mdblock_t.       */
+static size_t indentation  = 0;         /* Indentation of current line. */
+static string_t *line      = NULL;      /* Line currently being parsed. */
+static markdown_t *ready_node = NULL;   /* Next node to be inserted.    */
 
 
 /* Save or free the current line when updating state variables. */
@@ -135,7 +131,7 @@ static void update_state(const bool lineAction, const mdblock_t last)
 
 /************************************************************************
  * @section Block Parsing Functions
- *
+ **
  *  If the function is passed a file pointer fp, then it will consume raw 
  *  lines of input until it is satisfied that the block has been exited.
  *
@@ -144,10 +140,6 @@ static void update_state(const bool lineAction, const mdblock_t last)
  *  create a substring of the raw string using those indexes.
  *
  *  Each type of `mdblock_t` has its own parsing function.
- *
- * TODO:    Add the various constraints of each block type to the function that 
- *          parses that type -- ala: an indented code block must begin with at 
- *          minimum 4 space, etc.
  ************************************************************************/
 static markdown_t *parse_paragraph(FILE *fp);
 static markdown_t *parse_setext_header(void);
@@ -168,7 +160,7 @@ static markdown_t *parse_link_ref_defs(FILE *fp);
  ************************************************************************/
 markdown_t *block_parser(FILE *fp)
 {
-    markdown_t *node = NULL;
+    markdown_t *node = NULL;    /* Node to be inserted into queue.      */
     
     /* Use the ready_node if available, otherwise read line from file */
     if (ready_node) {
@@ -176,6 +168,7 @@ markdown_t *block_parser(FILE *fp)
         ready_node = NULL;
         return node;
     }
+    /* If a line has already been read, use it -- otherwise read one. */
     else if (!line) {
         if (!(line = read_line(fp))) return NULL;
     }
@@ -673,7 +666,7 @@ static markdown_t *parse_link_ref_defs(FILE *fp)
     size_t i = indentation;
     size_t j = 0;               /* Index for the link_ref_t members.    */
     markdown_t *node = NULL;    /* Node to be returned.                 */
-    link_ref_t *link = NULL;
+    link_ref_t *link = NULL;    /* Link information to attach to node.  */
     
     /* Link definition cannot be indented more than 3 spaces. */
     if (i > 3) return NULL;
@@ -729,7 +722,6 @@ static markdown_t *parse_link_ref_defs(FILE *fp)
     while (line->string[i] && line->string[i] != '\"') {
         link->title[j++] = line->string[i++];
     }
-
     goto return_node;
     
     return_node: {
