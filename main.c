@@ -35,7 +35,7 @@ typedef enum
 /**
  * options_t -- container for various program options
  ************************************************************************/
-typedef struct progopts 
+struct progopts 
 {
     const char *inFileName;     /* Name of input file, default: NULL.   */
     const char *outFileName;    /* Name of output file, default: NULL.  */
