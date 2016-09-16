@@ -1,25 +1,25 @@
-/* 
+/***** 
  * files.c -- opening, reading, and writing to files
  * 
- * Created by PAT GAFFNEY on 06/17/2016.
- * Last modified on 07/12/2016.
+ * @author      Pat Gaffney <pat@hypepat.com>
+ * @created     2016-06-17
+ * @modified    2016-09-15
  * 
- *********ultrapatbeams*/
+ ************************************************************************/
 
 #include <stdio.h>
-#include "files.h"
+
 #include "errors.h"
+#include "files.h"
 #include "strings.h"
 
 
-/******************************************************************
- * open_file() -- open a file stream
- *
- * const char *fileName -- name of file to be opened
- *
- * @throws -- throw_file_opening_error() if file cannot be opened
+/**
+ * open_file(fileName) -- open a file stream for reading
+ **
+ * @throws -- throw_file_opening_error()
  * @return -- pointer to an open file stream
- ******************************************************************/
+ ************************************************************************/
 FILE *open_file(const char *fileName)
 {
     FILE *filePtr = NULL;
@@ -29,40 +29,42 @@ FILE *open_file(const char *fileName)
 }
 
 
-/******************************************************************
+/**
  * close_file() -- close a file stream
- *
- * FILE *stream -- file stream to be closed
- *
- * @noreturn -- control returned to the caller
- ******************************************************************/
+ ************************************************************************/
 void close_file(FILE *io)
 {
     if (io) fclose(io);
 }
 
 
-/******************************************************************
- * read_line() -- read from inputFile until a newline is reached
- *
- * FILE *inputFile -- file from which characters are read
- *
- * @return -- readstring_t structure containing string from file
- ******************************************************************/
+/**
+ * read_line(inputFile) -- read a line of text from inputFile
+ **
+ * @return -- string_t node containing string from file
+ ************************************************************************/
 string_t *read_line(FILE *inputFile)
 {
     if (feof(inputFile)) return NULL;
-    int c = 0, i = 0, lim = 2500, order = 1;
+    
+    int c = 0;          /* Character read from inputFile.               */
+    int i = 0;          /* Index to iterate over the new string.        */
+    int lim = 2500;     /* Max number of characters to allocate for.    */
+    int order = 1;      /* Multiplier for lim if we realloc() string.   */
+    
     string_t *newstr = init_stringt(lim);
     
     while ((c = getc(inputFile)) != EOF && c != '\n') {
+        
+        /* Reallocate string if we have read lim characters from 
+         * inputFile and havent reached a newline yet. */
         if (--lim == 0) {
             lim = newstr->size * ++order;
             newstr->size = lim;
             newstr->string = realloc_string(newstr->string, newstr->size);
         }
         
-        // Convert all tabs to 4 spaces -- makes for easier parsing.
+        /* Convert all tabs to 4 spaces -- makes for easier parsing. */
         if (c == '\t') {
             for (size_t j = 0; j < 4; j++) newstr->string[i++] = ' ';
             lim -= 4;
