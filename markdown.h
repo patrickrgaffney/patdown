@@ -3,30 +3,30 @@
  * 
  * @author      Pat Gaffney <pat@hypepat.com>
  * @created     2016-06-15
- * @modified    2016-08-29
+ * @modified    2016-09-15
  * 
- *****************************************************************************/
+ ************************************************************************/
 
 #ifndef MARKDOWN_H
 #define MARKDOWN_H
 
-#include <stdio.h>
 #include <stdbool.h>
+#include <stdio.h>
 
-#include "strings.h"
 #include "block_types.h"
+#include "strings.h"
 
 
-/******************************************************************************
+/************************************************************************
  * @section Markdown Data Structures
- *****************************************************************************/
+ ************************************************************************/
 
 /*****
- * Enumerated values for a `markdown_t` block.
- *
- * Each of these values corresponds to a specific type of Markdown block. 
- * These are used to determine how to print and/or parse the block.
- *****************************************************************************/
+ * mdblock_t -- enumerated values for a markdown_t block
+ **
+ * 	Each of these values corresponds to a specific type of Markdown 
+ *	block, they're used to determine how to print and/or parse the block.
+ ************************************************************************/
 typedef enum
 {
     /* Meta blocks */
@@ -62,13 +62,11 @@ typedef enum
 } mdblock_t;
 
 
-/*****
- * Enumerated values for a `markdown_t` inline span.
- *
- * These values are the inline version of `mdblock_t` types.
- *
- * @see mdblock_t
- *****************************************************************************/
+/**
+ * mdinline_t -- enumerated values for a markdown_t inline span
+ **
+ * These values are the inline version of mdblock_t types.
+ ************************************************************************/
 typedef enum
 {
     ESCAPED_CHAR,
@@ -84,39 +82,51 @@ typedef enum
 } mdinline_t;
 
 
-/*****
- * Node containing a parsed Markdown block.
- *
- * @member  s       String (`string_t`) value of parsed markdown block.
- * @member  type    Block type of this parsed markdown block.
- * @member  data    Generic pointer to (optional) additional block data.
- * @member  next    Pointer to next node in the queue.
- *****************************************************************************/
+/**
+ * markdown_t -- container node for a parsed Markdown block
+ **
+ *	These nodes are constructed to form a queue -- representing the 
+ *	parsed version of each raw input line (block).
+ ************************************************************************/
 typedef struct markdown_t
 {
-    string_t *value;
-    mdblock_t type;
-    void *data;
-    struct markdown_t *next;
+    string_t *value;			/* String value of parsed block.		*/
+    mdblock_t type;				/* Type (element) of parsed block.		*/
+    void *data;					/* (Optional) additional block data.	*/
+    struct markdown_t *next;	/* Pointer to next node in the queue.	*/
 } markdown_t;
 
 
-/******************************************************************************
+/************************************************************************
  * @section Markdown Queue
- *****************************************************************************/
+ ************************************************************************/
+
+/* Allocate space for a new markdown_t node. */
+static markdown_t *alloc_markdown(void);
+
+/* Allocate / initialize a new markdown_t node. */
 markdown_t *init_markdown(string_t *s, const size_t start, 
                           const size_t stop, const mdblock_t type);
+
+/* Insert temp node at the tail of the markdown queue. */
 void insert_markdown_queue(markdown_t **head, markdown_t **tail, 
                            markdown_t *temp);
+
+/* Debug-print a markdown_t node. */
 void print_markdown_queue(markdown_t *node);
+
+/* Free the memory allocated for a markdown_t node. */
 void free_markdown(markdown_t *node);
 
 
 /******************************************************************************
  * @section Specific Markdown Data Information
  *****************************************************************************/
+
+/* Allocate space for new md_code_block_t node. */
 md_code_block_t *alloc_code_block_data(void);
+
+/* Allocate space for new link_ref_t node. */
 link_ref_t *alloc_link_reference_data(void);
 
 #endif
-
