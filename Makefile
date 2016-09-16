@@ -15,13 +15,13 @@ tests: $(TEST_OBJS) $(GEN_OBJS)
 debug: $(BUILD_OBJS) $(GEN_OBJS)
 	$(CC) -g -O0 -o $(TARGET) $(BUILD_OBJS) $(GEN_OBJS)
 
-main.o: main.c markdown.h parsers.h files.h arguments.h strings.h
+main.o: main.c markdown.h parsers.h files.h strings.h
 	$(CC) -c main.c
 	
 errors.o: errors.c errors.h
 	$(CC) -c errors.c
 
-markdown.o: markdown.c markdown.h strings.h errors.h parsers.h files.h
+markdown.o: markdown.c markdown.h strings.h errors.h parsers.h files.h block_types.h
 	$(CC) -c markdown.c
 	
 parsers.o: parsers.c parsers.h markdown.h files.h strings.h
