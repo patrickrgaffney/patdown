@@ -66,7 +66,9 @@ static output_t check_output_type(const char *arg)
     lowerArg  = lowerArg - size;
     
     if (strcmp(lowerArg, "html") != 0) {
-        throw_invalid_output_t_error(arg - size);
+        // TODO: add this error function
+        // throw_invalid_output_t_error(arg - size);
+        printf("ERROR: unknown output_t, default to HTML.\n");
     }
     free(lowerArg);
     return HTML_OUT;
