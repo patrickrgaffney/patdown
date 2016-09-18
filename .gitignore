@@ -8,6 +8,7 @@ test
 
 # OS X files
 .DS_Store
+.CFUserTextEncoding
 
 # Example Input/Output files.
 *.md
