@@ -7,6 +7,7 @@
  * 
  ************************************************************************/
 
+#include <ctype.h>
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -24,8 +25,7 @@
  * These methods operate on basic `char *` strings.
  ************************************************************************/
 
-/* TODO: Rename this function alloc_char_array(size). */
-/** Allocate space for a character array of size characters. *****/
+/** Allocate space for a character array of size characters. ************/
 char *alloc_char_array(const size_t size)
 {
     char *string = NULL;
@@ -34,8 +34,6 @@ char *alloc_char_array(const size_t size)
     return string;
 }
 
-
-/* TODO: Rename this function realloc_char_array(size). */
 /** Reallocate the size of s to hold size characters. *******************/
 char *realloc_char_array(char *s, const size_t size)
 {
@@ -45,6 +43,18 @@ char *realloc_char_array(char *s, const size_t size)
     return newstr;
 }
 
+/* Return the lowercase version of upper. *******************************/
+char *get_lowercase_char_array(const char *upper)
+{
+    if (!upper) return NULL;
+    size_t size = strlen(upper);
+    char *lower = alloc_char_array(size + NULL_CHAR);
+    
+    while (*upper) *lower++ = tolower(*upper++);
+    *lower = '\0';
+
+    return lower - size;
+}
 
 /************************************************************************
  * @section String Nodes

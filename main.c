@@ -17,6 +17,7 @@
 #include "files.h"
 #include "markdown.h"
 #include "parsers.h"
+#include "strings.h"
 
 
 /************************************************************************
@@ -43,9 +44,6 @@ struct progopts
 
 /**
  * check_output_type(arg) -- determine if arg is a valid output_t
- **
- *  TODO: Create a function in strings.c that will convert a string to
- *        lowercase -- then move the string handling there.
  *
  *  TODO: Move the @throws call to the caller, and return -1 if **no** 
  *        match was found.
@@ -55,17 +53,18 @@ struct progopts
  ************************************************************************/
 static output_t check_output_type(const char *arg)
 {
-    const size_t size = strlen(arg);
-    char *lowerArg = malloc(sizeof(char) * (size + 1));
-    while (*arg != '\0') *lowerArg++ = tolower(*arg++);
-    *lowerArg = '\0';
-    lowerArg  = lowerArg - size;
-    
-    if (strcmp(lowerArg, "html") != 0) {
+    output_t type  = HTML_OUT;
+    char *lowerArg = get_lowercase_char_array(arg);
+
+    if (strcmp(lowerArg, "html") == 0) {
         // TODO: add this error function
         // throw_invalid_output_t_error(arg - size);
+        type = HTML_OUT;
+    }
+    else {
         printf("ERROR: unknown output_t, default to HTML.\n");
     }
+    
     free(lowerArg);
     return HTML_OUT;
 }
@@ -85,7 +84,7 @@ int main(int argc, char **argv)
         .inputFile      = stdin,        /* Input file pointer. */
         .outputFile     = stdout        /* Output file pointer. */
     };
-    Markdown *queue   = NULL;           /* MD list returned by parser. */
+    Markdown *queue     = NULL;         /* MD list returned by parser. */
     int helpFlag        = 0;            /* Flag for help dialog. */
     int versionFlag     = 0;            /* Flag for version dialog. */
     

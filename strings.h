@@ -28,6 +28,9 @@ char *alloc_char_array(const size_t size);
 /* Reallocate the size of s. */
 char *realloc_char_array(char *s, const size_t size);
 
+/* Return the lowercase version of upper. */
+char *get_lowercase_char_array(const char *upper);
+
 
 /************************************************************************
  * @section String Nodes
