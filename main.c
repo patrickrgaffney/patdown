@@ -3,7 +3,7 @@
  * 
  * @author      Pat Gaffney <pat@hypepat.com>
  * @created     2016-06-15
- * @modified    2016-09-15
+ * @modified    2016-09-30
  * 
  ************************************************************************/
 
@@ -23,24 +23,20 @@
  * @section Command-line Argument Parsing
  ************************************************************************/
 
-/**
- * output_t -- type representing valid output type constants
- ************************************************************************/
+/** output_t -- valid output type constants **/
 typedef enum 
 {
     HTML_OUT    /* Default -- HTML5 element syntax. */
 } output_t;
 
 
-/**
- * options_t -- container for various program options
- ************************************************************************/
+/** options_t -- container for various program options **/
 struct progopts 
 {
-    const char *inFileName;     /* Name of input file, default: NULL.   */
-    const char *outFileName;    /* Name of output file, default: NULL.  */
+    const char *inFileName;     /* Name of input file, default: NULL. */
+    const char *outFileName;    /* Name of output file, default: NULL. */
     output_t outputType;        /* Output file type, default: HTML_OUT. */
-    FILE *inputFile;            /* Input file pointer, default: stdin.  */
+    FILE *inputFile;            /* Input file pointer, default: stdin. */
     FILE *outputFile;           /* Output file pointer, default: stdout.*/
 };
 
@@ -79,24 +75,19 @@ static output_t check_output_type(const char *arg)
  * @section Main Function
  ************************************************************************/
 
-/**
- * main(argc, argv) -- parse arguments, open files, and call parser
- **
- * @throws -- throw_multiple_input_files_error()
- * @return -- EXIT_SUCCESS on completion
- ************************************************************************/
+/** main(argc, argv) -- parse arguments, open files, and call parser ****/
 int main(int argc, char **argv)
 {
     struct progopts opts = {
-        .inFileName     = NULL,         /* String name of input file.   */
-        .outFileName    = NULL,         /* String name of output file.  */
-        .outputType     = HTML_OUT,     /* Enumerated output type.      */
-        .inputFile      = stdin,        /* Input file pointer.          */
-        .outputFile     = stdout        /* Output file pointer.         */
+        .inFileName     = NULL,         /* String name of input file. */
+        .outFileName    = NULL,         /* String name of output file. */
+        .outputType     = HTML_OUT,     /* Enumerated output type. */
+        .inputFile      = stdin,        /* Input file pointer. */
+        .outputFile     = stdout        /* Output file pointer. */
     };
-    markdown_t *queue   = NULL;         /* MD list returned by parser.  */
-    int helpFlag        = 0;            /* Flag for help dialog.        */
-    int versionFlag     = 0;            /* Flag for version dialog.     */
+    markdown_t *queue   = NULL;         /* MD list returned by parser. */
+    int helpFlag        = 0;            /* Flag for help dialog. */
+    int versionFlag     = 0;            /* Flag for version dialog. */
     
     while (true) {
         int optindex = 0;
