@@ -3,7 +3,7 @@
  * 
  * @author      Pat Gaffney <pat@hypepat.com>
  * @created     2016-06-15
- * @modified    2016-09-30
+ * @modified    2016-10-01
  * 
  ************************************************************************/
 
@@ -20,7 +20,7 @@
  * @section Markdown Queue Methods
  ************************************************************************/
 
-/** alloc_markdown() -- allocate space for a new Markdown node **********/
+/** Allocate space for a new Markdown node. *****************************/
 static Markdown *alloc_markdown(void)
 {
     Markdown *node = NULL;
@@ -30,14 +30,11 @@ static Markdown *alloc_markdown(void)
 }
 
 
-/** init_markdown(s, start, stop, type) -- init new markdown_t node *****/
+/** Initialize a new Markdown node. *************************************/
 Markdown *init_markdown(String *s, const size_t start, 
                         const size_t stop, const mdblock_t type)
 {
     Markdown *node = alloc_markdown();
-    
-    /* Use the indexes obtained from parsing the raw input line to
-     * create a substring to be used for inline parsing and output. */
     node->value = create_substring(s, start, stop);
     node->type  = type;
     node->next  = NULL;
@@ -46,7 +43,7 @@ Markdown *init_markdown(String *s, const size_t start,
 }
 
 
-/** insert_markdown_queue(head, tail, temp) -- insert temp at queue's tail */
+/** Insert temp at Markdown queue's tail. *******************************/
 void insert_markdown_queue(Markdown **head, Markdown **tail, Markdown *temp)
 {
     if (temp) {
@@ -57,7 +54,7 @@ void insert_markdown_queue(Markdown **head, Markdown **tail, Markdown *temp)
 }
 
 
-/** print_markdown_queue(node) -- debug-print a markdown_t node *********/
+/** Debug-print a Markdown node. ****************************************/
 void print_markdown_queue(Markdown *node)
 {
     if (node) {
@@ -67,14 +64,11 @@ void print_markdown_queue(Markdown *node)
 }
 
 
-/** free_markdown(node) -- free all memory allocated for a Markdown node */
+/** Free all memory allocated for a Markdown node. **********************/
 void free_markdown(Markdown *node)
 {
     if (node) {
-        
-        /* TODO: free the node->data pointer by determining the 
-         *       correct function to call via node->type. */
-        
+        if (node->data) free(node->data)
         free_string(node->value);
         free_markdown(node->next);
         free(node);
@@ -86,7 +80,7 @@ void free_markdown(Markdown *node)
  * @section Specific Markdown Data Information
  ************************************************************************/
 
-/** alloc_code_block_data() - allocate memory for new md_code_block_t node */
+/** Allocate memory for new CodeBlock node. *****************************/
 CodeBlock *alloc_code_block_data(void)
 {
     CodeBlock *node = NULL;

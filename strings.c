@@ -3,7 +3,7 @@
  * 
  * @author      Pat Gaffney <pat@hypepat.com>
  * @created     2016-06-15
- * @modified    2016-09-30
+ * @modified    2016-10-01
  * 
  ************************************************************************/
 
@@ -87,7 +87,7 @@ String *init_string(const size_t size)
         str->size   = size;
         str->string = alloc_char_array(size);
     }
-    str->len    = 0;
+    str->len = 0;
     return str;
 }
 
@@ -108,12 +108,8 @@ String *create_substring(String *s, size_t start, const size_t stop)
     String *newstr = NULL;              /* String node to be returned. */
     size_t size = (stop - start) + 1;   /* Add 1 to be inclusive. */
     
-    /* TODO: Look into removing this shit. */
-    if (!s) {
-        /* Create node, but initialize newstr->string to NULL. */
-        newstr = init_string(0);
-        return newstr;
-    }
+    /* If the original String is NULL, create then create a string. */
+    if (!s) return init_string(0);
     
     newstr = init_string(size + NEWLINE);
     newstr->len = size;
