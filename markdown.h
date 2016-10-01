@@ -13,7 +13,6 @@
 #include <stdbool.h>
 #include <stdio.h>
 
-#include "block_types.h"
 #include "strings.h"
 
 
@@ -88,6 +87,13 @@ typedef struct Markdown
 } Markdown;
 
 
+/** CodeBlock -- Markdown extension for fenced code blocks **************/
+typedef struct CodeBlock
+{
+    char lang[20];		/* User-provided language for the code block. */
+} CodeBlock;
+
+
 /************************************************************************
  * @section Markdown Queue
  *
@@ -113,6 +119,6 @@ void free_markdown(Markdown *node);
  *****************************************************************************/
 
 /* Allocate space for new md_code_block_t node. */
-md_code_block_t *alloc_code_block_data(void);
+CodeBlock *alloc_code_block_data(void);
 
 #endif

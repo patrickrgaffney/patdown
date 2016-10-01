@@ -11,7 +11,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#include "block_types.h"
 #include "errors.h"
 #include "markdown.h"
 #include "strings.h"
@@ -88,10 +87,10 @@ void free_markdown(Markdown *node)
  ************************************************************************/
 
 /** alloc_code_block_data() - allocate memory for new md_code_block_t node */
-md_code_block_t *alloc_code_block_data(void)
+CodeBlock *alloc_code_block_data(void)
 {
-    md_code_block_t *node = NULL;
-    node = malloc(sizeof(md_code_block_t));
+    CodeBlock *node = NULL;
+    node = malloc(sizeof(CodeBlock));
     if (!node) throw_memory_error();
     return node;
 }

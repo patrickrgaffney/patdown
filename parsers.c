@@ -12,7 +12,6 @@
 #include <stdlib.h>
 #include <stdbool.h>
 
-#include "block_types.h"
 #include "files.h"
 #include "links.h"
 #include "markdown.h"
@@ -42,7 +41,7 @@ Markdown *markdown(FILE *fp)
         if (temp) {
             if (temp->type == LINK_REFERENCE_DEF) {
                 insert_link_ref(&links, temp->data);
-                free_markdown(temp)
+                free_markdown(temp);
             }
             else insert_markdown_queue(&head, &tail, temp);
         }
@@ -430,7 +429,7 @@ static Markdown *parse_indented_code_block(FILE *fp)
 static Markdown *parse_fenced_code_block(FILE *fp)
 {
     Markdown *node = NULL;          /* Node to be returned.             */
-    md_code_block_t *info = NULL;   /* Used to hold info string.        */
+    CodeBlock *info = NULL;         /* Used to hold info string.        */
     size_t openFenceLength = 0;     /* Length of opening fence.         */
     size_t closeFenceLength = 0;    /* Length of closing fence.         */
     size_t i = indentation;         /* Index used to create substring.  */
