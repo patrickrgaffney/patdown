@@ -24,6 +24,7 @@
  * These methods operate on basic `char *` strings.
  ************************************************************************/
 
+/* TODO: Rename this function alloc_char_array(size). */
 /** Allocate space for a character array of size characters. *****/
 char *alloc_string(const size_t size)
 {
@@ -34,6 +35,7 @@ char *alloc_string(const size_t size)
 }
 
 
+/* TODO: Rename this function realloc_char_array(size). */
 /** Reallocate the size of s to hold size characters. *******************/
 char *realloc_string(char *s, const size_t size)
 {
