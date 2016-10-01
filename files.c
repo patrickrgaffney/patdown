@@ -3,7 +3,7 @@
  * 
  * @author      Pat Gaffney <pat@hypepat.com>
  * @created     2016-06-17
- * @modified    2016-09-15
+ * @modified    2016-09-30
  * 
  ************************************************************************/
 
@@ -41,9 +41,9 @@ void close_file(FILE *io)
 /**
  * read_line(inputFile) -- read a line of text from inputFile
  **
- * @return -- string_t node containing string from file
+ * @return -- String node containing string from file
  ************************************************************************/
-string_t *read_line(FILE *inputFile)
+String *read_line(FILE *inputFile)
 {
     if (feof(inputFile)) return NULL;
     
@@ -52,7 +52,7 @@ string_t *read_line(FILE *inputFile)
     int lim = 2500;     /* Max number of characters to allocate for.    */
     int order = 1;      /* Multiplier for lim if we realloc() string.   */
     
-    string_t *newstr = init_stringt(lim);
+    String *newstr = init_string(lim);
     
     while ((c = getc(inputFile)) != EOF && c != '\n') {
         

@@ -103,10 +103,10 @@ static bool match_html_block_element(const char *e, const size_t len)
 /************************************************************************
  * @section State Information and Manipulation
  ************************************************************************/
-static mdblock_t lastBlock = UNKNOWN;   /* Last parsed mdblock_t. */
-static size_t indentation  = 0;         /* Indentation of current line. */
-static string_t *line      = NULL;      /* Line currently being parsed. */
-static Markdown *ready_node = NULL;     /* Next node to be inserted. */
+static mdblock_t lastBlock  = UNKNOWN; /* Last parsed mdblock_t. */
+static size_t indentation   = 0;       /* Indentation of current line. */
+static String *line         = NULL;    /* Line currently being parsed. */
+static Markdown *ready_node = NULL;    /* Next node to be inserted. */
 
 
 /* Save or free the current line when updating state variables. */
@@ -119,7 +119,7 @@ static void update_state(const bool lineAction, const mdblock_t last)
 {
     indentation = 0;
     if (lineAction) {
-        free_stringt(line);
+        free_string(line);
         line = NULL;
     }
     lastBlock = last;

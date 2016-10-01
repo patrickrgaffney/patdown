@@ -31,7 +31,7 @@ static Markdown *alloc_markdown(void)
 
 
 /** init_markdown(s, start, stop, type) -- init new markdown_t node *****/
-Markdown *init_markdown(string_t *s, const size_t start, 
+Markdown *init_markdown(String *s, const size_t start, 
                         const size_t stop, const mdblock_t type)
 {
     Markdown *node = alloc_markdown();
@@ -75,7 +75,7 @@ void free_markdown(Markdown *node)
         /* TODO: free the node->data pointer by determining the 
          *       correct function to call via node->type. */
         
-        free_stringt(node->value);
+        free_string(node->value);
         free_markdown(node->next);
         free(node);
     }

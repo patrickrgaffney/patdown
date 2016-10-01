@@ -80,7 +80,7 @@ typedef enum
 /** Markdown -- container node for a parsed Markdown block **************/
 typedef struct Markdown
 {
-    string_t *value;			/* String value of parsed block. */
+    String *value;			    /* String value of parsed block. */
     mdblock_t type;				/* Type (element) of parsed block. */
     void *data;					/* (Optional) additional block data. */
     struct Markdown *next;      /* Pointer to next node in the queue. */
@@ -101,7 +101,7 @@ typedef struct CodeBlock
  ************************************************************************/
 
 /* Allocate and initialize a new markdown_t node. */
-Markdown *init_markdown(string_t *s, const size_t start, 
+Markdown *init_markdown(String *s, const size_t start, 
                         const size_t stop, const mdblock_t type);
 
 /* Insert temp node at the tail of the markdown queue. */

@@ -3,7 +3,7 @@
  * 
  * @author      Pat Gaffney <pat@hypepat.com>
  * @created     2016-06-17
- * @modified    2016-09-15
+ * @modified    2016-09-30
  * 
  ************************************************************************/
 
@@ -18,7 +18,7 @@
 FILE *open_file(const char *fileName);
 
 /* Read a line of text from inputFile. */
-string_t *read_line(FILE *inputFile);
+String *read_line(FILE *inputFile);
 
 /* Close a file stream. */
 void close_file(FILE *io);
