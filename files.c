@@ -14,12 +14,7 @@
 #include "strings.h"
 
 
-/**
- * open_file(fileName) -- open a file stream for reading
- **
- * @throws -- throw_file_opening_error()
- * @return -- pointer to an open file stream
- ************************************************************************/
+/** Open a file stream for reading. *************************************/
 FILE *open_file(const char *fileName)
 {
     FILE *filePtr = NULL;
@@ -29,28 +24,22 @@ FILE *open_file(const char *fileName)
 }
 
 
-/**
- * close_file() -- close a file stream
- ************************************************************************/
+/** Close a file stream. ************************************************/
 void close_file(FILE *io)
 {
     if (io) fclose(io);
 }
 
 
-/**
- * read_line(inputFile) -- read a line of text from inputFile
- **
- * @return -- String node containing string from file
- ************************************************************************/
+/** Read a line of text from inputFile. *********************************/
 String *read_line(FILE *inputFile)
 {
     if (feof(inputFile)) return NULL;
     
-    int c = 0;          /* Character read from inputFile.               */
-    int i = 0;          /* Index to iterate over the new string.        */
-    int lim = 2500;     /* Max number of characters to allocate for.    */
-    int order = 1;      /* Multiplier for lim if we realloc() string.   */
+    int c = 0;          /* Character read from inputFile. */
+    int i = 0;          /* Index to iterate over the new string. */
+    int lim = 2500;     /* Max number of characters to allocate for. */
+    int order = 1;      /* Multiplier for lim if we realloc() string. */
     
     String *newstr = init_string(lim);
     
@@ -61,7 +50,7 @@ String *read_line(FILE *inputFile)
         if (--lim == 0) {
             lim = newstr->size * ++order;
             newstr->size = lim;
-            newstr->string = realloc_string(newstr->string, newstr->size);
+            newstr->string = realloc_char_array(newstr->string, newstr->size);
         }
         
         /* Convert all tabs to 4 spaces -- makes for easier parsing. */
