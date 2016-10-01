@@ -105,7 +105,7 @@ int main(int argc, char **argv)
     if (optind < argc)
     {
         if (!opts.inFileName) opts.inFileName = argv[optind++];
-        else throw_multiple_input_files_error();
+        else throw_fatal_input_files_error();
     }
     
     /* If both helpFlag and versionFlag were turned on during command-

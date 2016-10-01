@@ -26,7 +26,7 @@ LinkRef *init_link_ref(void)
 {
     LinkRef *ref = NULL;
     ref = malloc(sizeof(LinkRef));
-    if (!ref) throw_memory_error();
+    if (!ref) throw_fatal_memory_error();
     
     ref->left  = NULL;
     ref->right = NULL;

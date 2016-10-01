@@ -19,7 +19,7 @@ FILE *open_file(const char *fileName)
 {
     FILE *filePtr = NULL;
     filePtr = fopen(fileName, "r");
-    if (!filePtr) throw_file_opening_error(fileName);
+    if (!filePtr) throw_fatal_fopen_error(fileName);
     return filePtr;
 }
 

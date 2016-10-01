@@ -25,7 +25,7 @@ static Markdown *alloc_markdown(void)
 {
     Markdown *node = NULL;
     node = malloc(sizeof(Markdown));
-    if (!node) throw_memory_error();
+    if (!node) throw_fatal_memory_error();
     return node;
 }
 
@@ -91,6 +91,6 @@ CodeBlock *alloc_code_block_data(void)
 {
     CodeBlock *node = NULL;
     node = malloc(sizeof(CodeBlock));
-    if (!node) throw_memory_error();
+    if (!node) throw_fatal_memory_error();
     return node;
 }

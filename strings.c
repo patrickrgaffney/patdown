@@ -30,7 +30,7 @@ char *alloc_char_array(const size_t size)
 {
     char *string = NULL;
     string = malloc(sizeof(char) * size);
-    if (!string) throw_memory_error();
+    if (!string) throw_fatal_memory_error();
     return string;
 }
 
@@ -39,7 +39,7 @@ char *realloc_char_array(char *s, const size_t size)
 {
     char *newstr = NULL;
     newstr = realloc(s, sizeof(char) * size);
-    if (!newstr) throw_memory_error();
+    if (!newstr) throw_fatal_memory_error();
     return newstr;
 }
 
@@ -69,12 +69,12 @@ static String *alloc_stringt(const size_t size)
 {
     String *str = NULL;
     str = malloc(sizeof(String));
-    if (!str) throw_memory_error();
+    if (!str) throw_fatal_memory_error();
     return str;
 }
 
 
-/** Initialize a new String node -- external String API *****************/
+/** String API: Initialize a new String node ****************************/
 String *init_string(const size_t size)
 {
     String *str = alloc_stringt(size);
