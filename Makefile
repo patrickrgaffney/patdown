@@ -2,7 +2,7 @@ CC=clang
 TARGET=patdown
 
 BUILD_OBJS=main.o
-GEN_OBJS=errors.o markdown.o parsers.o strings.o files.o
+GEN_OBJS=errors.o markdown.o parsers.o strings.o files.o links.o
 
 build: $(BUILD_OBJS) $(GEN_OBJS)
 	$(CC) -o $(TARGET) $(BUILD_OBJS) $(GEN_OBJS)
@@ -15,6 +15,9 @@ main.o: main.c errors.h files.h markdown.h parsers.h
 	
 errors.o: errors.c errors.h
 	$(CC) -c errors.c
+	
+links.o: links.c links.h errors.h
+	$(CC) -c links.c
 
 markdown.o: markdown.c block_types.h errors.h markdown.h strings.h
 	$(CC) -c markdown.c
