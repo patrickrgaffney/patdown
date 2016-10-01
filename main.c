@@ -44,26 +44,19 @@ struct progopts
 
 /**
  * check_output_type(arg) -- determine if arg is a valid output_t
- *
- *  TODO: Move the @throws call to the caller, and return -1 if **no** 
- *        match was found.
  **
  * @throws -- throw_invalid_output_t_error()
  * @return -- the determined arg_t output constant
  ************************************************************************/
 static output_t check_output_type(const char *arg)
 {
-    output_t type  = HTML_OUT;
+    output_t type  = HTML_OUT;      /* Default to HTML output. */
     char *lowerArg = get_lowercase_char_array(arg);
 
     if (strcmp(lowerArg, "html") == 0) {
-        // TODO: add this error function
-        // throw_invalid_output_t_error(arg - size);
         type = HTML_OUT;
     }
-    else {
-        printf("ERROR: unknown output_t, default to HTML.\n");
-    }
+    else throw_invalid_output_type(arg);
     
     free(lowerArg);
     return HTML_OUT;
