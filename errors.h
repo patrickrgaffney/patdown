@@ -16,14 +16,14 @@
  *  All of these errors cause program execution to be halted.
  ************************************************************************/
 
-/* Memory could not be allocated */
-void throw_memory_error(void);
+/* Memory could not be allocated. */
+void throw_fatal_memory_error(void);
 
-/* File could not be opened */
-void throw_file_opening_error(const char *file);
+/* File could not be opened. */
+void throw_fatal_fopen_error(const char *file);
 
-/* Multiple input files provided */
-void throw_multiple_input_files_error(void);
+/* Multiple input files provided. */
+void throw_fatal_input_files_error(void);
 
 
 /************************************************************************
@@ -34,6 +34,6 @@ void throw_multiple_input_files_error(void);
  ************************************************************************/
 
 /* Unknown output type. */
-void throw_invalid_output_type(const char *type)
+void throw_invalid_output_type(const char *type);
 
 #endif

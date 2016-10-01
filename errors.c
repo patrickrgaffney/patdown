@@ -19,21 +19,21 @@
  ************************************************************************/
 
 /** FATAL-ERROR: memory could not be allocated **************************/
-void throw_memory_error(void)
+void throw_fatal_memory_error(void)
 {
     fprintf(stderr, "FATAL: memory could not be allocated.\n");
     exit(EXIT_FAILURE);
 }
 
 /** FATAL-ERROR: file could not be opened *******************************/
-void throw_file_opening_error(const char *file)
+void throw_fatal_fopen_error(const char *file)
 {
     fprintf(stderr, "FATAL: file could not be opened: \'%s\'\n", file);
     exit(EXIT_FAILURE);
 }
 
 /** FATAL-ERROR: multiple input files provided **************************/
-void throw_multiple_input_files_error(void)
+void throw_fatal_input_files_error(void)
 {
     fprintf(stderr, "FATAL: Multiple input files provided.\n");
     exit(EXIT_FAILURE);
