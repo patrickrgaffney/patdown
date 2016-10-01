@@ -563,7 +563,7 @@ static Markdown *parse_link_ref_defs(FILE *fp)
     size_t i = indentation;
     size_t j = 0;               /* Index for the link_ref_t members.    */
     Markdown *node = NULL;      /* Node to be returned.                 */
-    link_ref_t *ref = NULL;     /* Link information to attach to node.  */
+    LinkRef *ref = NULL;        /* Link information to attach to node.  */
     
     /* Link definition cannot be indented more than 3 spaces. */
     if (i > 3) return NULL;

@@ -85,7 +85,7 @@ int main(int argc, char **argv)
         .inputFile      = stdin,        /* Input file pointer. */
         .outputFile     = stdout        /* Output file pointer. */
     };
-    markdown_t *queue   = NULL;         /* MD list returned by parser. */
+    Markdown *queue   = NULL;           /* MD list returned by parser. */
     int helpFlag        = 0;            /* Flag for help dialog. */
     int versionFlag     = 0;            /* Flag for version dialog. */
     
