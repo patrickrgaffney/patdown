@@ -28,9 +28,10 @@ static Markdown *block_parser(FILE *fp);
 /** markdown(fp) -- parse an input file into markdown *******************/
 Markdown *markdown(FILE *fp)
 {
-    Markdown *head = NULL;    /* Head of the markdown queue. */
-    Markdown *tail = NULL;    /* Tail of the markdown queue. */
-    Markdown *temp = NULL;    /* Node to be inserted into the queue. */
+    Markdown *head = NULL;  /* Head of the markdown queue. */
+    Markdown *tail = NULL;  /* Tail of the markdown queue. */
+    Markdown *temp = NULL;  /* Node to be inserted into the queue. */
+    LinkRef *links = NULL;  /* Head of the link reference tree. */
     
     /* Return NULL if file pointer is not open. */
     if (!fp) return NULL;
@@ -38,9 +39,19 @@ Markdown *markdown(FILE *fp)
     while (true) {
         temp = block_parser(fp);
         
-        if (temp) insert_markdown_queue(&head, &tail, temp);
+        if (temp) {
+            if (temp->type == LINK_REFERENCE_DEF) {
+                insert_link_ref(&links, temp->data);
+            }
+            else insert_markdown_queue(&head, &tail, temp);
+        }
         else break;
     }
+    
+    /* Print the LinkRef tree and then free it -- remove this later. */
+    print_link_refs(links);
+    free_link_ref_tree(links);
+    
     return head;
 }
 
