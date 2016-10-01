@@ -3,7 +3,7 @@
  * 
  * @author      Pat Gaffney <pat@hypepat.com>
  * @created     2016-06-15
- * @modified    2016-09-15
+ * @modified    2016-09-30
  * 
  ************************************************************************/
 
@@ -24,12 +24,7 @@
  * These methods operate on basic `char *` strings.
  ************************************************************************/
 
-/*****
- * alloc_string(size) -- allocate space for a size-character string
- **
- * @throws -- throw_memory_error()
- * @return -- a pointer to the allocated string
- ************************************************************************/
+/** Allocate space for a character array of size characters. *****/
 char *alloc_string(const size_t size)
 {
     char *string = NULL;
@@ -39,12 +34,7 @@ char *alloc_string(const size_t size)
 }
 
 
-/**
- * realloc_string(s, size) -- reallocate the size of s
- **
- * @throws -- throw_memory_error()
- * @return -- a pointer to the reallocated string
- ************************************************************************/
+/** Reallocate the size of s to hold size characters. *******************/
 char *realloc_string(char *s, const size_t size)
 {
     char *newstr = NULL;
@@ -55,43 +45,27 @@ char *realloc_string(char *s, const size_t size)
 
 
 /************************************************************************
- * @section string_t Nodes
- **
- *  These methods operate on string_t nodes -- as they were defined in 
+ * @section String Nodes
+ *
+ *  These methods operate on String nodes -- as they were defined in 
  *  strings.h. These nodes provide a wrapper for a basic `char *` string
  *  in order to hold some additional information about the string.
  ************************************************************************/
 
-/**
- * alloc_stringt(size) -- allocate space for a new string_t node
- **
- *  TODO: Remove the size parameter from this function -- it is not used.
- **
- * @throws -- throw_memory_error()
- * @return -- a pointer to a string_t node
- ************************************************************************/
-static string_t *alloc_stringt(const size_t size)
+/** Allocate space for a new String node. *******************************/
+static String *alloc_stringt(const size_t size)
 {
-    string_t *str = NULL;
-    str = malloc(sizeof(string_t));
+    String *str = NULL;
+    str = malloc(sizeof(String));
     if (!str) throw_memory_error();
     return str;
 }
 
 
-/**
- * init_stringt(size) -- initialize a new string_t node
- **
- *  If size is 0, the node still gets created, but its values are NULL.
- *
- *  TODO: Remove the str->size member.
- **
- * @throws  throw_memory_error()
- * @return  An allocated and initialized `string_t` node.
- ************************************************************************/
-string_t *init_stringt(const size_t size)
+/** Initialize a new String node -- external String API *****************/
+String *init_string(const size_t size)
 {
-    string_t *str = alloc_stringt(size);
+    String *str = alloc_stringt(size);
     
     if (size == 0) {
         str->size   = 0;
@@ -106,10 +80,8 @@ string_t *init_stringt(const size_t size)
 }
 
 
-/**
- * free_stringt(s) -- free the memory occupied by s
- ************************************************************************/
-void free_stringt(string_t *s)
+/** Free the memory occupied by s. **************************************/
+void free_string(String *s)
 {
     if (s) {
         if (s->string) free(s->string);
@@ -118,30 +90,20 @@ void free_stringt(string_t *s)
 }
 
 
-/**
- * create_substring(s, start, stop) -- create substring of a string_t node
- **
- *  If s is NULL, the string_t node that is returned will have 
- *  all members initiated to 0 or NULL. So, this function never 
- *  returns NULL directly -- worst case, it returns a container 
- *  string_t node with all members set to NULL.
- *
- *  TODO: determine if the who free's the s node -- caller or function.
- **
- * @return -- a pointer to the newly allocated substring
- ************************************************************************/
-string_t *create_substring(string_t *s, size_t start, const size_t stop)
+/** Create substring of a s from s[start] to s[stop]. *******************/
+String *create_substring(String *s, size_t start, const size_t stop)
 {
-    string_t *newstr = NULL;            /* String node to be returned.  */
-    size_t size = (stop - start) + 1;   /* Add 1 to be inclusive.       */
+    String *newstr = NULL;              /* String node to be returned. */
+    size_t size = (stop - start) + 1;   /* Add 1 to be inclusive. */
     
+    /* TODO: Look into removing this shit. */
     if (!s) {
         /* Create node, but initialize newstr->string to NULL. */
-        newstr = init_stringt(0);
+        newstr = init_string(0);
         return newstr;
     }
     
-    newstr = init_stringt(size + NEWLINE);
+    newstr = init_string(size + NEWLINE);
     newstr->len = size;
     memcpy(newstr->string, s->string + start, size);
     newstr->string[size] = '\0';
@@ -149,21 +111,14 @@ string_t *create_substring(string_t *s, size_t start, const size_t stop)
 }
 
 
-/**
- * combine_strings(fmt, s1, s2) -- combine s1 and s2 into a single string
- **
- *  The fmt string is the format string used by snprintf() to combine
- *  s1 and s2. If either s1 or s2 is NULL, this function returns NULL.
- **
- * @return -- a pointer to the new string node, or NULL
- *****************************************************************************/
-string_t *combine_strings(const char *fmt, string_t *s1, string_t *s2)
+/** Combine s1 and s2 into a single String according to fmt. ************/
+String *combine_strings(const char *fmt, String *s1, String *s2)
 {
     if (!s1 || !s2) return NULL;
     
     /* Get size of the new string then allocate space for it. */
     size_t size    = s1->len + s2->len + 1;
-    string_t *dest = init_stringt(size + NULL_CHAR);
+    String *dest = init_string(size + NULL_CHAR);
     
     dest->len = size;
     snprintf(dest->string, size + NULL_CHAR, fmt, s1->string, s2->string);
