@@ -1,5 +1,5 @@
 /***** 
- * main.c -- parse arguments and open files
+ * main.c -- parse command-line arguments and open files
  * 
  * @author      Pat Gaffney <pat@hypepat.com>
  * @created     2016-06-15
@@ -24,33 +24,28 @@
  * @section Command-line Argument Parsing
  ************************************************************************/
 
-/** output_t -- valid output type constants **/
+/** output_t: valid output type constants *******************************/
 typedef enum 
 {
-    HTML_OUT    /* Default -- HTML5 element syntax. */
+    HTML_OUT    /* Default: HTML5 element syntax. */
 } output_t;
 
 
-/** options_t -- container for various program options **/
-struct progopts 
+/** ProgramOpts: a container for various program options ****************/
+typedef struct
 {
     const char *inFileName;     /* Name of input file, default: NULL. */
     const char *outFileName;    /* Name of output file, default: NULL. */
     output_t outputType;        /* Output file type, default: HTML_OUT. */
     FILE *inputFile;            /* Input file pointer, default: stdin. */
     FILE *outputFile;           /* Output file pointer, default: stdout.*/
-};
+} ProgramOpts;
 
 
-/**
- * check_output_type(arg) -- determine if arg is a valid output_t
- **
- * @throws -- throw_invalid_output_t_error()
- * @return -- the determined arg_t output constant
- ************************************************************************/
+/** Determine if arg is a valid output type. ****************************/
 static output_t check_output_type(const char *arg)
 {
-    output_t type  = HTML_OUT;      /* Default to HTML output. */
+    output_t type  = HTML_OUT;  /* Default to HTML output. */
     char *lowerArg = get_lowercase_char_array(arg);
 
     if (strcmp(lowerArg, "html") == 0) {
@@ -67,19 +62,19 @@ static output_t check_output_type(const char *arg)
  * @section Main Function
  ************************************************************************/
 
-/** main(argc, argv) -- parse arguments, open files, and call parser ****/
+/** Parse arguments, open files, and call parser. ***********************/
 int main(int argc, char **argv)
 {
-    struct progopts opts = {
-        .inFileName     = NULL,         /* String name of input file. */
-        .outFileName    = NULL,         /* String name of output file. */
-        .outputType     = HTML_OUT,     /* Enumerated output type. */
-        .inputFile      = stdin,        /* Input file pointer. */
-        .outputFile     = stdout        /* Output file pointer. */
+    ProgramOpts opts = {
+        .inFileName  = NULL,        /* String name of input file. */
+        .outFileName = NULL,        /* String name of output file. */
+        .outputType  = HTML_OUT,    /* Enumerated output type. */
+        .inputFile   = stdin,       /* Input file pointer. */
+        .outputFile  = stdout       /* Output file pointer. */
     };
-    Markdown *queue     = NULL;         /* MD list returned by parser. */
-    int helpFlag        = 0;            /* Flag for help dialog. */
-    int versionFlag     = 0;            /* Flag for version dialog. */
+    Markdown *queue  = NULL;        /* MD list returned by parser. */
+    int helpFlag     = 0;           /* Flag for help dialog. */
+    int versionFlag  = 0;           /* Flag for version dialog. */
     
     while (true) {
         int optindex = 0;
