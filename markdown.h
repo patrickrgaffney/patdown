@@ -115,7 +115,4 @@ void free_markdown(Markdown *node);
 /* Allocate space for new md_code_block_t node. */
 md_code_block_t *alloc_code_block_data(void);
 
-/* Allocate space for new link_ref_t node. */
-link_ref_t *alloc_link_reference_data(void);
-
 #endif

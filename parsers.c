@@ -14,6 +14,7 @@
 
 #include "block_types.h"
 #include "files.h"
+#include "links.h"
 #include "markdown.h"
 #include "parsers.h"
 #include "strings.h"
@@ -562,7 +563,7 @@ static Markdown *parse_link_ref_defs(FILE *fp)
     size_t i = indentation;
     size_t j = 0;               /* Index for the link_ref_t members.    */
     Markdown *node = NULL;      /* Node to be returned.                 */
-    link_ref_t *link = NULL;    /* Link information to attach to node.  */
+    link_ref_t *ref = NULL;     /* Link information to attach to node.  */
     
     /* Link definition cannot be indented more than 3 spaces. */
     if (i > 3) return NULL;
@@ -570,12 +571,13 @@ static Markdown *parse_link_ref_defs(FILE *fp)
     /* Link label must begin with an open bracket. */
     if (line->string[i++] != '[') return NULL;
     
-    link = alloc_link_reference_data();
+    ref = init_link_ref();
     
     /* Pull the link label out of the definition. */
     while (isalnum(line->string[i]) || line->string[i] == '_') {
-        link->link[j++] = line->string[i++];
+        ref->label[j++] = line->string[i++];
     }
+    ref->label[j] = '\0';
     
     /* Link label must end with a closing bracket. */
     if (line->string[i++] != ']') return NULL;
@@ -597,8 +599,9 @@ static Markdown *parse_link_ref_defs(FILE *fp)
     /* Pull the link destination out of the definition. */
     j = 0;
     while (isgraph(line->string[i])) {
-        link->dest[j++] = line->string[i++];
+        ref->dest[j++] = line->string[i++];
     }
+    ref->dest[j] = '\0';
     
     /* Parse an unlimited number of whitespace characters. */
     while (line->string[i] == ' ') i++;
@@ -616,14 +619,14 @@ static Markdown *parse_link_ref_defs(FILE *fp)
     /* Pull the link title out of the definition. */
     j = 0;
     while (line->string[i] && line->string[i] != '\"') {
-        link->title[j++] = line->string[i++];
+        ref->title[j++] = line->string[i++];
     }
+    ref->title[j] = '\0';
     goto return_node;
     
-    return_node: {
+    return_node:
         update_state(FREE_LINE, LINK_REFERENCE_DEF);
         node = init_markdown(NULL, 0, 0, LINK_REFERENCE_DEF);
-        node->data = link;
+        node->data = ref;
         return node;
-    }
 }

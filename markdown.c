@@ -85,8 +85,6 @@ void free_markdown(Markdown *node)
 
 /************************************************************************
  * @section Specific Markdown Data Information
- **
- *  TODO: Move alloc_link_reference_data() to a new links.(c|h) file.
  ************************************************************************/
 
 /** alloc_code_block_data() - allocate memory for new md_code_block_t node */
@@ -96,14 +94,4 @@ md_code_block_t *alloc_code_block_data(void)
     node = malloc(sizeof(md_code_block_t));
     if (!node) throw_memory_error();
     return node;
-}
-
-
-/** alloc_link_reference_data() - allocate space for new link_ref_t node */
-link_ref_t *alloc_link_reference_data(void)
-{
-    link_ref_t *link = NULL;
-    link = malloc(sizeof(link_ref_t));
-    if (!link) throw_memory_error();
-    return link;
 }
