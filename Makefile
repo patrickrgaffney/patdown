@@ -19,10 +19,10 @@ errors.o: errors.c errors.h
 links.o: links.c links.h errors.h
 	$(CC) -c links.c
 
-markdown.o: markdown.c block_types.h errors.h markdown.h strings.h
+markdown.o: markdown.c errors.h markdown.h strings.h
 	$(CC) -c markdown.c
 	
-parsers.o: parsers.c block_types.h files.h markdown.h parsers.h strings.h
+parsers.o: parsers.c files.h markdown.h parsers.h strings.h
 	$(CC) -c parsers.c
 	
 strings.o: strings.c errors.h strings.h
