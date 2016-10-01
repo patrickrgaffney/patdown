@@ -9,6 +9,7 @@
 
 #include <stdlib.h>
 #include <string.h>
+#include <stdio.h>
 
 #include "errors.h"
 #include "links.h"
@@ -39,37 +40,38 @@ void insert_link_ref(LinkRef **head, LinkRef *node)
     else {
         int rc = strcmp(node->label, (*head)->label);
         if (rc < 0) {
-            insert_link_reference(&((*head)->left), node);
+            insert_link_ref(&((*head)->left), node);
         }
         else if (rc > 0) {
-            insert_link_reference(&((*head)->right), node);
+            insert_link_ref(&((*head)->right), node);
         }
         else printf("DUPLICATE NODE: \'%s\'\n", node->label);
     }
 }
 
 /** Search LinkRef tree for node by link label. *************************/
-LinkRef *search_link_refs(LinkRef *head, char *label);
+LinkRef *search_link_refs(LinkRef *head, char *label)
 {
     if (!head) return NULL;
     
     int rc = strcmp(label, head->label);
     if (rc < 0) {
-        search_link_references(head->left, node);
+        search_link_refs(head->left, label);
     }
     else if (rc > 0) {
-        search_link_references(head->right, node);
+        search_link_refs(head->right, label);
     }
-    else return head;
+    
+    return head;
 }
 
 /** Debug-print a tree of LinkRef nodes -- in-order traversal ***********/
 void print_link_refs(LinkRef *node)
 {
     if (node) {
-        print_link_references(node->left);
+        print_link_refs(node->left);
         printf("[%s]: %s \'%s\'", node->label, node->dest, node->title);
-        print_link_references(node->right);
+        print_link_refs(node->right);
     }
 }
 
@@ -77,8 +79,8 @@ void print_link_refs(LinkRef *node)
 void free_link_ref_tree(LinkRef *node)
 {
     if (node) {
-        free_link_ref_node(node->left);
-        free_link_ref_node(node->right);
+        free_link_ref_tree(node->left);
+        free_link_ref_tree(node->right);
         free(node);
     }
 }
