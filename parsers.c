@@ -42,6 +42,7 @@ Markdown *markdown(FILE *fp)
         if (temp) {
             if (temp->type == LINK_REFERENCE_DEF) {
                 insert_link_ref(&links, temp->data);
+                free_markdown(temp)
             }
             else insert_markdown_queue(&head, &tail, temp);
         }
