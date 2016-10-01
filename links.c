@@ -70,7 +70,7 @@ void print_link_refs(LinkRef *node)
 {
     if (node) {
         print_link_refs(node->left);
-        printf("[%s]: %s \'%s\'", node->label, node->dest, node->title);
+        printf("[%s]: <%s> -> \'%s\'\n", node->label, node->dest, node->title);
         print_link_refs(node->right);
     }
 }
