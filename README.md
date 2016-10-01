@@ -2,7 +2,7 @@
 
 `patdown` is a Markdown parser. It is still very-much a work-in-progress and does not implement the full Markdown spec.
 
-The aim of the this project is to write a [CommonMark][cm]-compliant parser in C99. With the following two caveats:
+The aim of the this project is to write a [CommonMark][cm]-compliant parser in C99 with the following caveats:
 
 -   no regular expressions or peg's  
 
