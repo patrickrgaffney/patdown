@@ -49,7 +49,9 @@ Markdown *markdown(FILE *fp)
     }
     
     /* Print the LinkRef tree and then free it -- remove this later. */
+    printf("\nBEGIN INORDER TRAVERSAL OF LINKREF TREE:\n");
     print_link_refs(links);
+    printf("\n\n");
     free_link_ref_tree(links);
     
     return head;
@@ -585,7 +587,7 @@ static Markdown *parse_link_ref_defs(FILE *fp)
     ref = init_link_ref();
     
     /* Pull the link label out of the definition. */
-    while (isalnum(line->string[i]) || line->string[i] == '_') {
+    while (line->string[i] && line->string[i] != ']' && j < 1000) {
         ref->label[j++] = line->string[i++];
     }
     ref->label[j] = '\0';
@@ -609,7 +611,7 @@ static Markdown *parse_link_ref_defs(FILE *fp)
     
     /* Pull the link destination out of the definition. */
     j = 0;
-    while (isgraph(line->string[i])) {
+    while (line->string[i] && line->string[i] != ' ' && j < 1000) {
         ref->dest[j++] = line->string[i++];
     }
     ref->dest[j] = '\0';
@@ -629,7 +631,7 @@ static Markdown *parse_link_ref_defs(FILE *fp)
 
     /* Pull the link title out of the definition. */
     j = 0;
-    while (line->string[i] && line->string[i] != '\"') {
+    while (line->string[i] && line->string[i] != '\"' && j < 1000) {
         ref->title[j++] = line->string[i++];
     }
     ref->title[j] = '\0';
