@@ -23,10 +23,10 @@
  ************************************************************************/
 
 /* Allocate space for a size-character string. */
-char *alloc_string(const size_t size);
+char *alloc_char_array(const size_t size);
 
 /* Reallocate the size of s. */
-char *realloc_string(char *s, const size_t size);
+char *realloc_char_array(char *s, const size_t size);
 
 
 /************************************************************************

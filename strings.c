@@ -26,7 +26,7 @@
 
 /* TODO: Rename this function alloc_char_array(size). */
 /** Allocate space for a character array of size characters. *****/
-char *alloc_string(const size_t size)
+char *alloc_char_array(const size_t size)
 {
     char *string = NULL;
     string = malloc(sizeof(char) * size);
@@ -37,7 +37,7 @@ char *alloc_string(const size_t size)
 
 /* TODO: Rename this function realloc_char_array(size). */
 /** Reallocate the size of s to hold size characters. *******************/
-char *realloc_string(char *s, const size_t size)
+char *realloc_char_array(char *s, const size_t size)
 {
     char *newstr = NULL;
     newstr = realloc(s, sizeof(char) * size);
@@ -75,7 +75,7 @@ String *init_string(const size_t size)
     }
     else {
         str->size   = size;
-        str->string = alloc_string(size);
+        str->string = alloc_char_array(size);
     }
     str->len    = 0;
     return str;
