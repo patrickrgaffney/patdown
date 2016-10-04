@@ -34,7 +34,7 @@ void close_file(FILE *io)
 /** Read a line of text from inputFile. *********************************/
 String *read_line(FILE *inputFile)
 {
-    if (feof(inputFile)) return NULL;
+    // if (feof(inputFile)) return NULL;
     
     int c = 0;          /* Character read from inputFile. */
     int i = 0;          /* Index to iterate over the new string. */
@@ -59,6 +59,11 @@ String *read_line(FILE *inputFile)
             lim -= 4;
         }
         else newstr->string[i++] = c;
+    }
+    if (c == EOF && i == 0) {
+        printf("EOF ENCOUNTERED\n");
+        free_string(newstr);
+        return NULL;
     }
     newstr->len = i;
     newstr->string[i] = '\0';
