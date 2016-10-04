@@ -68,7 +68,7 @@ void print_markdown_queue(Markdown *node)
 void free_markdown(Markdown *node)
 {
     if (node) {
-        if (node->data) free(node->data)
+        if (node->data) free(node->data);
         free_string(node->value);
         free_markdown(node->next);
         free(node);
