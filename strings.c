@@ -7,128 +7,147 @@
  * 
  ************************************************************************/
 
-#include <ctype.h>
-#include <stdbool.h>
-#include <stdio.h>
+#include <stddef.h>
 #include <stdlib.h>
-#include <string.h>
 
 #include "errors.h"
 #include "strings.h"
 
-#define NEWLINE 1
-#define NULL_CHAR 1
-
 /************************************************************************
- * @section Basic String Handling Utilities
- **
- * These methods operate on basic `char *` strings.
- ************************************************************************/
-
-/** Allocate space for a character array of size characters. ************/
-char *alloc_char_array(const size_t size)
-{
-    char *string = NULL;
-    string = malloc(sizeof(char) * size);
-    if (!string) throw_fatal_memory_error();
-    return string;
-}
-
-/** Reallocate the size of s to hold size characters. *******************/
-char *realloc_char_array(char *s, const size_t size)
-{
-    char *newstr = NULL;
-    newstr = realloc(s, sizeof(char) * size);
-    if (!newstr) throw_fatal_memory_error();
-    return newstr;
-}
-
-/* Return the lowercase version of upper. *******************************/
-char *get_lowercase_char_array(const char *upper)
-{
-    if (!upper) return NULL;
-    size_t size = strlen(upper);
-    char *lower = alloc_char_array(size + NULL_CHAR);
-    
-    while (*upper) *lower++ = tolower(*upper++);
-    *lower = '\0';
-
-    return lower - size;
-}
-
-/************************************************************************
- * @section String Nodes
+ * Data Array Utilities
  *
- *  These methods operate on String nodes -- as they were defined in 
- *  strings.h. These nodes provide a wrapper for a basic `char *` string
- *  in order to hold some additional information about the string.
+ *  A data array is defined to be an array of uint8_t elements.
  ************************************************************************/
 
-/** Allocate space for a new String node. *******************************/
-static String *alloc_stringt(const size_t size)
+/*****
+ * Allocate memory for a data array of `size` elements.
+ *
+ * ARGUMENTS
+ *  size    The number of elements to be stored in the array.
+ *
+ * ERRORS
+ *  fatal_memory_error  Memory could not be allocated.
+ *
+ * RETURNS
+ *  A pointer to the new data array.
+ *****/
+static uint8_t *__alloc_data_array(const size_t size)
 {
-    String *str = NULL;
-    str = malloc(sizeof(String));
-    if (!str) throw_fatal_memory_error();
-    return str;
+    uint8_t *data = NULL;
+    data = malloc(sizeof(uint8_t) * size);
+    if (!data) throw_fatal_memory_error();
+    return data;
 }
 
 
-/** String API: Initialize a new String node ****************************/
+/************************************************************************
+ * String Nodes
+ ************************************************************************/
+
+/*****
+ * Allocate memory for a String node.
+ *
+ * ERRORS
+ *  fatal_memory_error  Memory could not be allocated.
+ *
+ * RETURNS
+ *  A pointer to the new String node.
+ *****/
+static String *__alloc_string_container(void)
+{
+    String *s = NULL;
+    s = malloc(sizeof(String));
+    if (!s) throw_fatal_memory_error();
+    return s;
+}
+
+/*****
+ * Allocate a String node to store size bytes.
+ *
+ *  If the size passed to this function is zero (0), it will allocate 
+ *  and return a node that has all of it's members initialized to zero.
+ *
+ * ARGUMENTS
+ *  size    The number of bytes to allocate for the data member.
+ *
+ * RETURNS
+ *  A pointer to the new String node.
+ *****/
 String *init_string(const size_t size)
 {
-    String *str = alloc_stringt(size);
+    String *str = __alloc_string_container();
     
     if (size == 0) {
-        str->size   = 0;
-        str->string = NULL;
+        str->allocd = 0;
+        str->data   = NULL;
     }
     else {
-        str->size   = size;
-        str->string = alloc_char_array(size);
+        str->allocd = size;
+        str->data   = __alloc_data_array(size);
     }
-    str->len = 0;
+    str->length = 0;
     return str;
 }
 
-
-/** Free the memory occupied by s. **************************************/
-void free_string(String *s)
+/*****
+ * Reallocate a String node's data member.
+ *
+ * ARGUMENTS
+ *  str     The String node whose member should be reallocated.
+ *  size    The new size (in bytes) of the requested memory.
+ *****/
+void realloc_string(String *str, const size_t size)
 {
-    if (s) {
-        if (s->string) free(s->string);
-        free(s);
+    str->data = realloc(str->data, sizeof(uint8_t) * size);
+    str->allocd = size;
+    if (!str->data) throw_fatal_memory_error();
+}
+
+/*****
+ * Free the memory allocated for a String node, if it exists.
+ *
+ *  String nodes have a dynamically allocated member, `data`
+ *  that is also free'd, if it exists.
+ *
+ * ARGUMENTS
+ *  str     The String node to be free'd.
+ *****/
+void free_string(String *str)
+{
+    if (str) {
+        if (str->data) free(str->data);
+        free(str);
     }
 }
 
 
 /** Create substring of a s from s[start] to s[stop]. *******************/
-String *create_substring(String *s, size_t start, const size_t stop)
-{
-    String *newstr = NULL;              /* String node to be returned. */
-    size_t size = (stop - start) + 1;   /* Add 1 to be inclusive. */
-    
-    /* If the original String is NULL, create then create a string. */
-    if (!s) return init_string(0);
-    
-    newstr = init_string(size + NEWLINE);
-    newstr->len = size;
-    memcpy(newstr->string, s->string + start, size);
-    newstr->string[size] = '\0';
-    return newstr;
-}
+// String *create_substring(String *s, size_t start, const size_t stop)
+// {
+//     String *newstr = NULL;              /* String node to be returned. */
+//     size_t size = (stop - start) + 1;   /* Add 1 to be inclusive. */
+//
+//     /* If the original String is NULL, create then create a string. */
+//     if (!s) return init_string(0);
+//
+//     newstr = init_string(size + NEWLINE);
+//     newstr->len = size;
+//     memcpy(newstr->string, s->string + start, size);
+//     newstr->string[size] = '\0';
+//     return newstr;
+// }
 
 
 /** Combine s1 and s2 into a single String according to fmt. ************/
-String *combine_strings(const char *fmt, String *s1, String *s2)
-{
-    if (!s1 || !s2) return NULL;
-    
-    /* Get size of the new string then allocate space for it. */
-    size_t size    = s1->len + s2->len + 1;
-    String *dest = init_string(size + NULL_CHAR);
-    
-    dest->len = size;
-    snprintf(dest->string, size + NULL_CHAR, fmt, s1->string, s2->string);
-    return dest;
-}
+// String *combine_strings(const char *fmt, String *s1, String *s2)
+// {
+//     if (!s1 || !s2) return NULL;
+//
+//     /* Get size of the new string then allocate space for it. */
+//     size_t size    = s1->len + s2->len + 1;
+//     String *dest = init_string(size + NULL_CHAR);
+//
+//     dest->len = size;
+//     snprintf(dest->string, size + NULL_CHAR, fmt, s1->string, s2->string);
+//     return dest;
+// }

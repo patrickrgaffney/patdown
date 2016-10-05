@@ -3,61 +3,40 @@
  * 
  * @author      Pat Gaffney <pat@hypepat.com>
  * @created     2016-06-15
- * @modified    2016-09-30
+ * @modified    2016-10-04
  * 
  ************************************************************************/
 
-#ifndef STRINGS_H
-#define STRINGS_H
+#ifndef __MD_STRINGS_H__
+#define __MD_STRINGS_H__
 
-#include <stdbool.h>
 #include <stddef.h>
-
-#include "errors.h"
-
-
-/************************************************************************
- * @section Basic String Handling Utilities
- *
- * These methods operate on basic `char *` strings.
- ************************************************************************/
-
-/* Allocate space for a size-character string. */
-char *alloc_char_array(const size_t size);
-
-/* Reallocate the size of s. */
-char *realloc_char_array(char *s, const size_t size);
-
-/* Return the lowercase version of upper. */
-char *get_lowercase_char_array(const char *upper);
+#include <stdint.h>
 
 
 /************************************************************************
- * @section String Nodes
- *
- *  These methods operate on String nodes -- as they were defined in 
- *  strings.h. These nodes provide a wrapper for a basic `char *` string
- *  in order to hold some additional information about the string.
+ * String Nodes
  ************************************************************************/
 
-/** String -- a wrapper type for `char *` strings **/
-typedef struct String
+/*****
+ * A wrapper type for NULL-terminated byte strings.
+ * 
+ *  This type is used internally to store byte strings. It provides a 
+ *  simple wrapper for bytes unsigned bytes stored in an array.
+ *****/
+typedef struct
 {
-    size_t size;    /* The size of the memory allocated -- in bytes. */
-    char *string;   /* The actual character array to be stored. */
-    size_t len;     /* The number of character currently stored. */
+    size_t allocd;      /* The number of bytes allocated. */
+    size_t length;      /* The number of bytes written. */
+    uint8_t *data;      /* The actual data. */
 } String;
 
-/* Initialize a new string_t node. */
+/** Allocate a String node to store size bytes. **/
 String *init_string(const size_t size);
 
-/* Free the memory occupied by s. */
-void free_string(String *s);
+/** Free the memory allocated for a String node, if it exists. **/
+void free_string(String *str);
 
-/* Create substring of a String node. */
-String *create_substring(String *s, size_t start, const size_t stop);
-
-/* Combine s1 and s2 into a single string. */
-String *combine_strings(const char *fmt, String *s1, String *s2);
+void realloc_string(String *str, const size_t size);
 
 #endif
