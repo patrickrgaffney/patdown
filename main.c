@@ -119,10 +119,14 @@ int main(int argc, char **argv)
     
 
     if (opts.inFileName) {
-        opts.inputFile = open_file(opts.inFileName);
+        opts.inputFile = open_file(opts.inFileName, "r");
+    }
+    
+    if (opts.outFileName) {
+        opts.inputFile = open_file(opts.inFileName, "w");
     }
 
-    /* If opts.outFileName... open for reading. */
+    /* If opts.outFileName... open for writing. */
 
     queue = markdown(opts.inputFile);
     print_markdown_queue(queue);

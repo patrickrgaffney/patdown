@@ -15,10 +15,10 @@
 
 
 /** Open a file stream for reading. *************************************/
-FILE *open_file(const char *fileName)
+FILE *open_file(const char *fileName, const char *type)
 {
     FILE *filePtr = NULL;
-    filePtr = fopen(fileName, "r");
+    filePtr = fopen(fileName, type);
     if (!filePtr) throw_fatal_fopen_error(fileName);
     return filePtr;
 }
@@ -34,8 +34,6 @@ void close_file(FILE *io)
 /** Read a line of text from inputFile. *********************************/
 String *read_line(FILE *inputFile)
 {
-    // if (feof(inputFile)) return NULL;
-    
     int c = 0;          /* Character read from inputFile. */
     int i = 0;          /* Index to iterate over the new string. */
     int lim = 2500;     /* Max number of characters to allocate for. */
@@ -61,7 +59,6 @@ String *read_line(FILE *inputFile)
         else newstr->string[i++] = c;
     }
     if (c == EOF && i == 0) {
-        printf("EOF ENCOUNTERED\n");
         free_string(newstr);
         return NULL;
     }
