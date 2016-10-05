@@ -3,21 +3,18 @@
  * 
  * @author      Pat Gaffney <pat@hypepat.com>
  * @created     2016-06-15
- * @modified    2016-09-30
+ * @modified    2016-10-05
  * 
  ************************************************************************/
 
-#ifndef MARKDOWN_H
-#define MARKDOWN_H
-
-#include <stdbool.h>
-#include <stdio.h>
+#ifndef __MD_MARKDOWN_H__
+#define __MD_MARKDOWN_H__
 
 #include "strings.h"
 
 
 /************************************************************************
- * @section Markdown Data Structures
+ * Markdown Blocks
  *
  *  Markdown nodes are created and inserted into a queue. They are 
  *  distinguished by their mdblock_t and their place in the queue. The
@@ -25,12 +22,17 @@
  *  top to bottom.
  ************************************************************************/
 
-/** mdblock_t -- enumerated values for a markdown_t block ***************/
+/*****
+ * Valid representations for a Markdown block.
+ *
+ *  These constants are used to differentiate between different types
+ *  of Markdown blocks. They control how the block is written.
+ *****/
 typedef enum
 {
     /* Meta blocks */
-    UNKNOWN,                    /* Used as a placeholder. */
-    BLANK_LINE,                 /* Inserted into queue as a placeholder. */
+    UNKNOWN,                    /* Placeholder while parsing. */
+    BLANK_LINE,                 /* Separates certain container blocks. */
     
     /* Implemented blocks */
     ATX_HEADER_1,               /* <h1></h1> */
@@ -47,6 +49,7 @@ typedef enum
     FENCED_CODE_BLOCK,          /* <div class=""></pre> */
     HTML_BLOCK,                 /* Holds only content, no wrapper element. */
     HTML_COMMENT,               /* Not inserted into queue. */
+    LINK_REFERENCE_DEF,         /* Not inserted into queue. */
     
     /* Unimplemented blocks */
     BLOCKQUOTE_START,
@@ -57,11 +60,15 @@ typedef enum
     ORDERED_LIST_START,
     ORDERED_LIST_ITEM,
     ORDERED_LIST_END,
-    LINK_REFERENCE_DEF
 } mdblock_t;
 
 
-/** mdinline_t -- enumerated values for a markdown_t inline span ********/
+/*****
+ * Valid representations for a span of Markdown->data.
+ *
+ *  These constants are used to differentiate between different types
+ *  of text when printing Markdown->data.
+ *****/
 typedef enum
 {
     ESCAPED_CHAR,
@@ -76,49 +83,54 @@ typedef enum
     LINE_BREAK
 } mdinline_t;
 
-
-/** Markdown -- container node for a parsed Markdown block **************/
+/*****
+ * A container node for a parsed Markdown block.
+ *
+ *  These nodes are aligned to form a queue representing the linear
+ *  structure of the input file.
+ *****/
 typedef struct Markdown
 {
-    String *value;			    /* String value of parsed block. */
-    mdblock_t type;				/* Type (element) of parsed block. */
-    void *data;					/* (Optional) additional block data. */
-    struct Markdown *next;      /* Pointer to next node in the queue. */
+    String *string;         /* String value of parsed block. */
+    mdblock_t type;         /* Type (element) of parsed block. */
+    void *addtinfo;         /* (Optional) additional block data. */
+    struct Markdown *next;  /* Pointer to next node in the queue. */
 } Markdown;
 
+/** Allocate a Markdown block with a String and mdblock_t. **/
+Markdown *init_markdown(String *s, const mdblock_t type);
 
-/** CodeBlock -- Markdown extension for fenced code blocks **************/
-typedef struct CodeBlock
+
+/************************************************************************
+ * Markdown Queue Manipulation
+ ************************************************************************/
+
+/** Insert a Markdown block into the queue at the tail. **/
+void insert_queue_tail(Markdown **head, Markdown **tail, Markdown *node);
+
+/** Debug-print the entire Markdown queue. **/
+void debug_print_queue(Markdown *node);
+
+/** Free all the Markdown nodes in the queue. **/
+void free_markdown(Markdown *node);
+
+
+/************************************************************************
+ * Markdown Block Extensions
+ ************************************************************************/
+
+/*****
+ * A container node for additional information on a FENCED_CODE_BLOCK.
+ *
+ *  This node is assigned to the Markdown->addtinfo member of a 
+ *  FENCED_CODE_BLOCK Markdown block.
+ *****/
+typedef struct
 {
     char lang[20];		/* User-provided language for the code block. */
 } CodeBlock;
 
-
-/************************************************************************
- * @section Markdown Queue
- *
- *  These functions operate on a queue of Markdown nodes.
- ************************************************************************/
-
-/* Allocate and initialize a new markdown_t node. */
-Markdown *init_markdown(String *s, const size_t start, 
-                        const size_t stop, const mdblock_t type);
-
-/* Insert temp node at the tail of the markdown queue. */
-void insert_markdown_queue(Markdown **head, Markdown **tail, Markdown *temp);
-
-/* Debug-print a markdown_t node. */
-void print_markdown_queue(Markdown *node);
-
-/* Free the memory allocated for a markdown_t node. */
-void free_markdown(Markdown *node);
-
-
-/******************************************************************************
- * @section Specific Markdown Data Information
- *****************************************************************************/
-
-/* Allocate space for new md_code_block_t node. */
-CodeBlock *alloc_code_block_data(void);
+/** Allocate memory for a new CodeBlock info node. **/
+CodeBlock *alloc_code_block_info(void);
 
 #endif
