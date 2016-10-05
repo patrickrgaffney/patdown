@@ -3,79 +3,65 @@
  * 
  * @author      Pat Gaffney <pat@hypepat.com>
  * @created     2016-06-15
- * @modified    2016-09-30
+ * @modified    2016-10-04
  * 
  ************************************************************************/
 
+#include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <ctype.h>
-#include <string.h>
 #include <getopt.h>
 
 #include "errors.h"
-#include "html.h"
 #include "files.h"
-#include "markdown.h"
-#include "parsers.h"
 #include "strings.h"
+
+static const char *program = "patdown";
+static const char *version = "0.0.1";
 
 
 /************************************************************************
- * @section Command-line Argument Parsing
+ * Command-line Argument Parsing
  ************************************************************************/
 
-/** output_t: valid output type constants *******************************/
+/*****
+ * Valid ouput type constants.
+ *
+ *  These constants are used to differentiate between the valid output 
+ *  types supported by patdown.
+ * 
+ *  TODO: Add support for more types: RTF, PDF (...maybe...)
+ *****/
 typedef enum 
 {
-    HTML_OUT    /* Default: HTML5 element syntax. */
+    OUT_HTML5,      /* Default: HTML5 element syntax. */ 
+    OUT_PARSED      /* Internal parsing information (for debugging). */
 } output_t;
-
-
-/** ProgramOpts: a container for various program options ****************/
-typedef struct
-{
-    const char *inFileName;     /* Name of input file, default: NULL. */
-    const char *outFileName;    /* Name of output file, default: NULL. */
-    output_t outputType;        /* Output file type, default: HTML_OUT. */
-    FILE *inputFile;            /* Input file pointer, default: stdin. */
-    FILE *outputFile;           /* Output file pointer, default: stdout.*/
-} ProgramOpts;
-
-
-/** Determine if arg is a valid output type. ****************************/
-static output_t check_output_type(const char *arg)
-{
-    output_t type  = HTML_OUT;  /* Default to HTML output. */
-    char *lowerArg = get_lowercase_char_array(arg);
-
-    if (strcmp(lowerArg, "html") == 0) {
-        type = HTML_OUT;
-    }
-    else throw_invalid_output_type(arg);
-    
-    free(lowerArg);
-    return HTML_OUT;
-}
 
 
 /************************************************************************
  * @section Main Function
  ************************************************************************/
 
-/** Parse arguments, open files, and call parser. ***********************/
+/*****
+ * Begin program execution and parse command-line arguments.
+ *
+ * ERRORS
+ *  throw_fatal_input_files_error   Multiple input files provided.
+ *
+ * RETURNS
+ *  0 or EXIT_SUCCESS.
+ *****/
 int main(int argc, char **argv)
-{
-    ProgramOpts opts = {
-        .inFileName  = NULL,        /* String name of input file. */
-        .outFileName = NULL,        /* String name of output file. */
-        .outputType  = HTML_OUT,    /* Enumerated output type. */
-        .inputFile   = stdin,       /* Input file pointer. */
-        .outputFile  = stdout       /* Output file pointer. */
-    };
-    Markdown *queue  = NULL;        /* MD list returned by parser. */
+{   
+    char *iFileName  = NULL;        /* Input file name. */
+    FILE *ifp        = stdin;       /* Input file stream. */
+    char *oFileName  = NULL;        /* Output file name. */
+    FILE *ofp        = stdout;      /* Output file stream. */
+    output_t outType = OUT_HTML5;   /* Output type. */
     int helpFlag     = 0;           /* Flag for help dialog. */
     int versionFlag  = 0;           /* Flag for version dialog. */
+    String *rawBytes = NULL;        /* Raw bytes read from inputfile. */
     
     while (true) {
         int optindex = 0;
@@ -86,27 +72,38 @@ int main(int argc, char **argv)
         };
         
         /* Get character code or EOF for current argument. */
-        int c = getopt_long(argc, argv, "o:t:", long_opts, &optindex);
+        int c = getopt_long(argc, argv, "5dho:v", long_opts, &optindex);
         if (c == -1) break;
         
         switch (c) {
-            case 'o':
-                opts.outFileName = optarg;
+            case '5':   /* Change ouptut type to OUT_HTML5. */
+                outType = OUT_HTML5;
                 break;
-            case 't':
-                opts.outputType = check_output_type(optarg);
+            case 'd':   /* Change output type to OUT_PARSED. */
+                outType = OUT_PARSED;
+                break;
+            case 'h':   /* Output help dialog. */
+                helpFlag = 1;
+                break;
+            case 'o':   /* Set the output file. */
+                oFileName = optarg;
+                break;
+            case 'v':   /* Output version dialog. */
+                versionFlag = 1;
                 break;
             default: break;
         }
     }
     
     /* Assign the remaining arguments to be the input file names. 
-     * Currently, we only accept a single input file. Sending 
-     * multiple files to patdown will throw a fatal error. */
-    if (optind < argc)
+     * Currently, we only accept a single input file. Any filenames
+     * provided after the first will be ignored. */
+    while (optind < argc)
     {
-        if (!opts.inFileName) opts.inFileName = argv[optind++];
-        else throw_fatal_input_files_error();
+        if (!iFileName) {
+            iFileName = argv[optind++];
+            break;
+        }
     }
     
     /* If both helpFlag and versionFlag were turned on during command-
@@ -119,20 +116,25 @@ int main(int argc, char **argv)
     }
     
 
-    if (opts.inFileName) {
-        opts.inputFile = open_file(opts.inFileName, "r");
+    if (iFileName) {
+        ifp = open_file(iFileName, "r");
+    }
+    if (oFileName) {
+        ofp = open_file(oFileName, "w");
     }
     
-    if (opts.outFileName) {
-        opts.inputFile = open_file(opts.inFileName, "w");
-    }
+    
+    rawBytes = read_all_input_bytes(ifp);
+    
+    printf("-----bytes allocated for: %zu\n", rawBytes->allocd);
+    printf("-----bytes read from file: %zu\n", rawBytes->length);
+    printf("-----begin raw bytes:\n%s", rawBytes->data);
+    printf("-----end raw bytes\n");
 
+    if (iFileName) close_file(ifp);
+    if (oFileName) close_file(ofp);
+    if (rawBytes) free_string(rawBytes);
 
-    queue = markdown(opts.inputFile);
-    // print_markdown_queue(queue);
-    output_html(opts.outputFile, queue);
-    close_file(opts.inputFile);
-    free_markdown(queue);
     
     return EXIT_SUCCESS;
 }
