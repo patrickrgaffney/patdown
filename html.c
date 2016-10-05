@@ -9,7 +9,9 @@
 
 #include <stdio.h>
 
+#include "html.h"
 #include "markdown.h"
+#include "strings.h"
 
 static void write_paragraph(FILE *fp, String *p)
 {
