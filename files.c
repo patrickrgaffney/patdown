@@ -1,68 +1,83 @@
 /***** 
- * files.c -- opening, reading, and writing to files
+ * files.c -- opening, closing, and reading input from files
  * 
  * @author      Pat Gaffney <pat@hypepat.com>
  * @created     2016-06-17
- * @modified    2016-09-30
+ * @modified    2016-10-04
  * 
  ************************************************************************/
 
+#include <stdbool.h>
 #include <stdio.h>
 
 #include "errors.h"
 #include "files.h"
 #include "strings.h"
 
+/************************************************************************
+ * Opening & Closing Files
+ ************************************************************************/
 
-/** Open a file stream for reading. *************************************/
-FILE *open_file(const char *fileName, const char *type)
+/*****
+ * Open a file stream for some given file access mode.
+ *
+ * ARGUMENTS
+ *  fileName    the name of the file to be opened (a C-string)
+ *  type        the mode by which the file should be opened: "r", "w"
+ *
+ * RETURNS
+ *  A pointer to the file stream.
+ *****/
+FILE *open_file(const char *fileName, const char *mode)
 {
     FILE *filePtr = NULL;
-    filePtr = fopen(fileName, type);
+    filePtr = fopen(fileName, mode);
     if (!filePtr) throw_fatal_fopen_error(fileName);
     return filePtr;
 }
 
 
-/** Close a file stream. ************************************************/
+/*****
+ * Close a file stream, but only if the file stream exists.
+ *****/
 void close_file(FILE *io)
 {
     if (io) fclose(io);
 }
 
 
-/** Read a line of text from inputFile. *********************************/
-String *read_line(FILE *inputFile)
+/************************************************************************
+ * Reading Input From Files
+ ************************************************************************/
+
+/*****
+ * Read all bytes from a supplied input file stream.
+ *
+ * ARGUMENTS
+ *  ifp     Input file stream (must be opened for reading).
+ *
+ * RETURNS
+ *  A String node initialized with the bytes read from file, the memory
+ *  allocated for this node (in bytes), and the number of bytes actually
+ *  read from the input file stream.
+ *****/
+String *read_all_input_bytes(FILE *ifp)
 {
-    int c = 0;          /* Character read from inputFile. */
-    int i = 0;          /* Index to iterate over the new string. */
-    int lim = 2500;     /* Max number of characters to allocate for. */
-    int order = 1;      /* Multiplier for lim if we realloc() string. */
+    int ret   = 0;      /* The return value from fread(). */
+    int lim   = 5120;   /* Max number of bytes to allocate for. */
+    int order = 1;      /* Multiplier for lim if we realloc() memory. */    
+    String *bytes = init_string(lim);
     
-    String *newstr = init_string(lim);
-    
-    while ((c = getc(inputFile)) != EOF && c != '\n') {
+    while (true) {
+        ret = fread(bytes->data + bytes->length, 1, bytes->allocd - bytes->length, ifp);
+        bytes->length += ret;
         
-        /* Reallocate string if we have read lim characters from 
-         * inputFile and havent reached a newline yet. */
-        if (--lim == 0) {
-            lim = newstr->size * ++order;
-            newstr->size = lim;
-            newstr->string = realloc_char_array(newstr->string, newstr->size);
+        if (feof(ifp)) break;
+        else {
+            lim += lim * ++order;
+            realloc_string(bytes, lim);
         }
-        
-        /* Convert all tabs to 4 spaces -- makes for easier parsing. */
-        if (c == '\t') {
-            for (size_t j = 0; j < 4; j++) newstr->string[i++] = ' ';
-            lim -= 4;
-        }
-        else newstr->string[i++] = c;
     }
-    if (c == EOF && i == 0) {
-        free_string(newstr);
-        return NULL;
-    }
-    newstr->len = i;
-    newstr->string[i] = '\0';
-    return newstr;
+    bytes->data[bytes->length] = '\0';
+    return bytes;
 }

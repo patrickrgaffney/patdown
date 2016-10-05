@@ -1,26 +1,35 @@
 /***** 
- * files.h -- opening, reading, and writing to files
+ * files.h -- opening, closing, and reading input from files
  * 
  * @author      Pat Gaffney <pat@hypepat.com>
  * @created     2016-06-17
- * @modified    2016-09-30
+ * @modified    2016-10-04
  * 
  ************************************************************************/
 
-#ifndef FILES_H
-#define FILES_H
+#ifndef __MD_FILES_H__
+#define __MD_FILES_H__
 
 #include <stdio.h>
 
 #include "strings.h"
 
-/* Open a file stream for reading */
-FILE *open_file(const char *fileName, const char *type);
+/************************************************************************
+ * Opening & Closing Files
+ ************************************************************************/
 
-/* Read a line of text from inputFile. */
-String *read_line(FILE *inputFile);
+/** Open a file stream for some given file access mode. **/
+FILE *open_file(const char *fileName, const char *mode);
 
-/* Close a file stream. */
+/** Close a file stream, but only if the file stream exists. **/
 void close_file(FILE *io);
+
+
+/************************************************************************
+ * Reading Input From Files
+ ************************************************************************/
+
+/** Read all bytes from a supplied input file stream. **/
+String *read_all_input_bytes(FILE *ifp);
 
 #endif
