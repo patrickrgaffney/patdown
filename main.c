@@ -14,6 +14,7 @@
 #include <getopt.h>
 
 #include "errors.h"
+#include "html.h"
 #include "files.h"
 #include "markdown.h"
 #include "parsers.h"
@@ -126,10 +127,10 @@ int main(int argc, char **argv)
         opts.inputFile = open_file(opts.inFileName, "w");
     }
 
-    /* If opts.outFileName... open for writing. */
 
     queue = markdown(opts.inputFile);
-    print_markdown_queue(queue);
+    // print_markdown_queue(queue);
+    output_html(opts.outputFile, queue);
     close_file(opts.inputFile);
     free_markdown(queue);
     
