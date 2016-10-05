@@ -3,7 +3,7 @@
  * 
  * @author      Pat Gaffney <pat@hypepat.com>
  * @created     2016-06-17
- * @modified    2016-10-04
+ * @modified    2016-10-05
  * 
  ************************************************************************/
 
@@ -53,6 +53,9 @@ void close_file(FILE *io)
 /*****
  * Read all bytes from a supplied input file stream.
  *
+ *  Bytes are read into a String buffer that is reallocated by an order
+ *  of 5120 bytes in order to make room for the entire file.
+ *
  * ARGUMENTS
  *  ifp     Input file stream (must be opened for reading).
  *
@@ -69,7 +72,8 @@ String *read_all_input_bytes(FILE *ifp)
     String *bytes = init_string(lim);
     
     while (true) {
-        ret = fread(bytes->data + bytes->length, 1, bytes->allocd - bytes->length, ifp);
+        ret = fread(bytes->data + bytes->length, 1, 
+                    bytes->allocd - bytes->length, ifp);
         bytes->length += ret;
         
         if (feof(ifp)) break;
