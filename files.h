@@ -15,7 +15,7 @@
 #include "strings.h"
 
 /* Open a file stream for reading */
-FILE *open_file(const char *fileName);
+FILE *open_file(const char *fileName, const char *type);
 
 /* Read a line of text from inputFile. */
 String *read_line(FILE *inputFile);
