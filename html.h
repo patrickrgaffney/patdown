@@ -11,4 +11,4 @@
 
 #include "markdown.h"
 
-void write_html(FILE *fp, Markdown *node);
+void output_html(FILE *fp, Markdown *node);

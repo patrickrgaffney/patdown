@@ -20,7 +20,7 @@ static void write_paragraph(FILE *fp, String *p)
 
 static void write_header(FILE *fp, String *h, size_t level)
 {
-    fprintf(fp, "<h%s>%s</h%s>\n", level, h->string, level);
+    fprintf(fp, "<h%zu>%s</h%zu>\n", level, h->string, level);
 }
 
 static void write_hr(FILE *fp)
@@ -39,7 +39,7 @@ static void write_html(FILE *fp, String *h)
     fprintf(fp, "%s", h->string);
 }
 
-void write_html(FILE *fp, Markdown *node)
+void output_html(FILE *fp, Markdown *node)
 {
     while (node) {
         switch (node->type) {
@@ -73,12 +73,13 @@ void write_html(FILE *fp, Markdown *node)
                 write_code(fp, node->value, NULL);
                 break;
             case FENCED_CODE_BLOCK:
-                write_code(fp, node->value, ((CodeBlock)node->data)->lang);
+                write_code(fp, node->value, ((CodeBlock *)node->data)->lang);
                 break;
             case HTML_BLOCK:
-                write_html(fp, node);
+                write_html(fp, node->value);
                 break;
             default: break;
         }
+        node = node->next;
     }
 }
