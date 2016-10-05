@@ -3,7 +3,7 @@
  * 
  * @author      Pat Gaffney <pat@hypepat.com>
  * @created     2016-06-15
- * @modified    2016-10-04
+ * @modified    2016-10-05
  * 
  ************************************************************************/
 
@@ -16,8 +16,34 @@
 #include "files.h"
 #include "strings.h"
 
-static const char *program = "patdown";
-static const char *version = "0.0.1";
+static const char *_program = "patdown";
+static const char *_version = "0.0.1";
+static const char *_author  = "Pat Gaffney";
+static const char *_email   = "pat@hypepat.com";
+
+static void __print_version()
+{
+    fprintf(stderr, "%s Version %s\n", _program, _version);
+    fprintf(stderr, "\n");
+    fprintf(stderr, "-- A Markdown compiler.\n");
+    fprintf(stderr, "-- Written by %s <%s>\n", _author, _email);
+}
+
+static void __print_help()
+{
+    __print_version();
+    fprintf(stderr, "\n");
+    fprintf(stderr, "  USAGE: %s [options <arg>] <inputfile>\n", _program);
+    fprintf(stderr, "\n");
+    fprintf(stderr, "  OPTIONS:\n");
+    fprintf(stderr, "  -5               Output HTML5 [default]\n");
+    fprintf(stderr, "  -d               Output parsing information\n");
+    fprintf(stderr, "  -h, --help       Show help\n");
+    fprintf(stderr, "  -o <file>        Set output file [default: stdout]\n");
+    fprintf(stderr, "  -v, --version    Show version\n");
+    fprintf(stderr, "\n");
+    fprintf(stderr, "\n");
+}
 
 
 /************************************************************************
@@ -108,12 +134,8 @@ int main(int argc, char **argv)
     
     /* If both helpFlag and versionFlag were turned on during command-
      * line parsing, only print the help output dialog. */
-    if (helpFlag) {
-        printf("HELP!\n");
-    }
-    else if (versionFlag) {
-        printf("VERSION!\n");
-    }
+    if (helpFlag) __print_help();
+    else if (versionFlag) __print_version();
     
 
     if (iFileName) {
