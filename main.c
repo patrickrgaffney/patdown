@@ -14,6 +14,7 @@
 
 #include "errors.h"
 #include "files.h"
+#include "output.h"
 #include "strings.h"
 
 static const char *_program = "patdown";
@@ -44,25 +45,6 @@ static void __print_help()
     fprintf(stderr, "\n");
     fprintf(stderr, "\n");
 }
-
-
-/************************************************************************
- * Command-line Argument Parsing
- ************************************************************************/
-
-/*****
- * Valid ouput type constants.
- *
- *  These constants are used to differentiate between the valid output 
- *  types supported by patdown.
- * 
- *  TODO: Add support for more types: RTF, PDF (...maybe...)
- *****/
-typedef enum 
-{
-    OUT_HTML5,      /* Default: HTML5 element syntax. */ 
-    OUT_PARSED      /* Internal parsing information (for debugging). */
-} output_t;
 
 
 /************************************************************************
