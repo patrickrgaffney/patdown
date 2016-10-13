@@ -66,9 +66,9 @@ void close_file(FILE *io)
  *****/
 String *read_all_input_bytes(FILE *ifp)
 {
-    int ret   = 0;      /* The return value from fread(). */
-    int lim   = 5120;   /* Max number of bytes to allocate for. */
-    int order = 1;      /* Multiplier for lim if we realloc() memory. */    
+    int ret    = 0;         /* The return value from fread(). */
+    size_t lim = 5120;      /* Max number of bytes to allocate for. */
+    size_t order  = 1;      /* Multiplier for lim if we realloc() memory. */
     String *bytes = init_string(lim);
     
     while (true) {
