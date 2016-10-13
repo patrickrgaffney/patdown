@@ -15,6 +15,14 @@
 
 
 /************************************************************************
+ * Data Array Utilities
+ ************************************************************************/
+
+/** Allocate memory for a data array of size elements. **/
+uint8_t *alloc_data_array(const size_t size);
+
+
+/************************************************************************
  * String Nodes
  ************************************************************************/
 
@@ -22,7 +30,7 @@
  * A wrapper type for NULL-terminated byte strings.
  * 
  *  This type is used internally to store byte strings. It provides a 
- *  simple wrapper for bytes unsigned bytes stored in an array.
+ *  simple wrapper for unsigned bytes stored in an array.
  *****/
 typedef struct
 {
@@ -37,6 +45,7 @@ String *init_string(const size_t size);
 /** Free the memory allocated for a String node, if it exists. **/
 void free_string(String *str);
 
+/** Reallocate a String node's data member to contain size elements. **/
 void realloc_string(String *str, const size_t size);
 
 #endif
