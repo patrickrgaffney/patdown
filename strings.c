@@ -13,6 +13,7 @@
 #include "errors.h"
 #include "strings.h"
 
+
 /************************************************************************
  * Data Array Utilities
  *
@@ -31,7 +32,7 @@
  * RETURNS
  *  A pointer to the new data array.
  *****/
-uint8_t *alloc_data_array(const size_t size)
+static uint8_t *__alloc_data_array(const size_t size)
 {
     uint8_t *data = NULL;
     data = malloc(sizeof(uint8_t) * size);
@@ -83,7 +84,7 @@ String *init_string(const size_t size)
     }
     else {
         str->allocd = size;
-        str->data   = alloc_data_array(size);
+        str->data   = __alloc_data_array(size);
     }
     str->length = 0;
     return str;
