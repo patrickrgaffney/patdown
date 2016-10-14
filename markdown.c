@@ -1,12 +1,14 @@
 /*****
- * markdown.c -- markdown queue methods
+ * markdown.c -- markdown queue implementation
  * 
- * @author      Pat Gaffney <pat@hypepat.com>
- * @created     2016-06-15
- * @modified    2016-10-05
+ *  author:     Pat Gaffney <pat@hypepat.com>
+ *  created:    2016-06-15
+ *  modified:   2016-10-13
+ *  project:    patdown
  * 
  ************************************************************************/
 
+#include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -24,6 +26,26 @@
  *  top to bottom.
  ************************************************************************/
 
+/** A container node for a parsed Markdown block. **/
+typedef struct Markdown
+{
+    String *string;         /* String value of parsed block. */
+    mdblock_t type;         /* Type (element) of parsed block. */
+    void *addtinfo;         /* (Optional) additional block data. */
+    struct Markdown *next;  /* Pointer to next node in the queue. */
+} Markdown;
+
+
+/** Markdown Queue Pointers **/
+static Markdown *head = NULL;   /* Head of the queue. */
+static Markdown *tail = NULL;   /* Tail of the queue. */
+
+
+/** File private functions. **/
+static Markdown *md_alloc_node(void);
+static bool md_insert_queue(Markdown **head, Markdown **tail, Markdown *node);
+
+
 /*****
  * Allocate memory for a new Markdown block.
  *
@@ -33,7 +55,7 @@
  * RETURNS
  *  A pointer to the new Markdown node.
  *****/
-static Markdown *__alloc_markdown_node(void)
+static Markdown *md_alloc_node(void)
 {
     Markdown *node = NULL;
     node = malloc(sizeof(Markdown));
@@ -41,30 +63,30 @@ static Markdown *__alloc_markdown_node(void)
     return node;
 }
 
+
 /*****
- * Allocate a Markdown block with a String and mdblock_t.
+ * Add a Markdown node to the queue with a given set of data.
  *
  * ARGUMENTS
- *  s       The String node for this particular Markdown block.
- *  type    The type of this Markdown block.
+ *  s           The actual string of parsed markdown.
+ *  type        The block type, or, HTML element.
+ *  addtinfo    Any additional information -- optional.
  *
  * RETURNS
- *  A pointer to the new Markdown block.
+ *  true if node is inserted, false if node is NULL.
  *****/
-Markdown *init_markdown(String *s, const mdblock_t type)
+bool add_markdown(String *s, const mdblock_t type, void *addtinfo)
 {
-    Markdown *node = __alloc_markdown_node();
+    Markdown *node = md_alloc_node();
     node->string   = s;
     node->type     = type;
+    node->addtinfo = addtinfo;
     node->next     = NULL;
-    node->addtinfo = NULL;
-    return node;
+    
+    if (md_insert_queue(&head, &tail, node)) return true;
+    else return false;
 }
 
-
-/************************************************************************
- * Markdown Queue Manipulation
- ************************************************************************/
 
 /*****
  * Insert a Markdown block into the queue at the tail.
@@ -73,66 +95,75 @@ Markdown *init_markdown(String *s, const mdblock_t type)
  *  head    The first node in the queue.
  *  tail    The last node in the queue.
  *  node    The node to be inserted at the tail.
+ * 
+ * RETURNS
+ *  true if node is inserted, false if node is NULL.
  *****/
-void insert_queue_tail(Markdown **head, Markdown **tail, Markdown *node)
+static bool md_insert_queue(Markdown **head, Markdown **tail, Markdown *node)
 {
     if (node) {
         if (!*head) *head = node;
         else (*tail)->next = node;
         *tail = node;
+        return true;
     }
+    else return false;
 }
+
 
 /*****
  * Debug-print the entire Markdown queue.
  *
  *  This function is used for debugging purposes only.
- *
- * ARGUMENTS
- *  node    The current node to print.
  *****/
-void debug_print_queue(Markdown *node)
+void debug_print_queue(void)
 {
-    if (node) {
-        printf("%d: \'%s\'\n", node->type, node->string->data);
-        debug_print_queue(node->next);
+    Markdown *tmp = head;
+    static char *blocknames[25] = {
+        "UNKNOWN",
+        "BLANK_LINE",
+        "ATX_HEADER_1",
+        "ATX_HEADER_2",
+        "ATX_HEADER_3",
+        "ATX_HEADER_4",
+        "ATX_HEADER_5",
+        "ATX_HEADER_6",
+        "HORIZONTAL_RULE",
+        "PARAGRAPH",
+        "SETEXT_HEADER_1",
+        "SETEXT_HEADER_2",
+        "INDENTED_CODE_BLOCK",
+        "FENCED_CODE_BLOCK",
+        "HTML_BLOCK",
+        "HTML_COMMENT",
+        "LINK_REFERENCE_DEF",
+        "BLOCKQUOTE_START",
+        "BLOCKQUOTE_END",
+        "UNORDERED_LIST_START",
+        "UNORDERED_LIST_ITEM",
+        "UNORDERED_LIST_END",
+        "ORDERED_LIST_START",
+        "ORDERED_LIST_ITEM",
+        "ORDERED_LIST_END"
+    };
+    
+    while (tmp) {
+        printf("%s: \'%s\'\n", blocknames[tmp->type], tmp->string->data);
+        tmp = tmp->next;
     }
 }
+
 
 /*****
  * Free all the Markdown nodes in the queue.
- *
- * ARGUMENTS
- *  node    The current node to free.
  *****/
-void free_markdown(Markdown *node)
+void free_markdown(void)
 {
-    if (node) {
-        if (node->addtinfo) free(node->addtinfo);
-        free_string(node->string);
-        free_markdown(node->next);
-        free(node);
+    if ((tail = head)) {
+        if (tail->addtinfo) free(tail->addtinfo);
+        free_string(tail->string);
+        head = head->next;
+        free(tail);
+        free_markdown();
     }
-}
-
-
-/************************************************************************
- * Markdown Block Extensions
- ************************************************************************/
-
-/*****
- * Allocate memory for a new CodeBlock info node.
- *
- * ERRORS
- *  fatal_memory_error  Memory could not be allocated.
- *
- * RETURNS
- *  A pointer to the new CodeBlock node.
- *****/
-CodeBlock *alloc_code_block_info(void)
-{
-    CodeBlock *code = NULL;
-    code = malloc(sizeof(CodeBlock));
-    if (!code) throw_fatal_memory_error();
-    return code;
 }
