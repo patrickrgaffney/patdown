@@ -1,15 +1,20 @@
 /*****
  * markdown.h -- markdown types and methods
  * 
- * @author      Pat Gaffney <pat@hypepat.com>
- * @created     2016-06-15
- * @modified    2016-10-13
+ *  author:     Pat Gaffney <pat@hypepat.com>
+ *  created:    2016-06-15
+ *  modified:   2016-10-13
+ *  project:    patdown
  * 
  ************************************************************************/
 
 #pragma once
 
 #include "strings.h"
+
+/************************************************************************
+ * Markdown Types
+ ************************************************************************/
 
 /** Valid types of a Markdown block. **/
 typedef enum

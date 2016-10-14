@@ -1,14 +1,14 @@
 /***** 
  * files.h -- opening, closing, and reading input from files
  * 
- * @author      Pat Gaffney <pat@hypepat.com>
- * @created     2016-06-17
- * @modified    2016-10-04
+ *  author:     Pat Gaffney <pat@hypepat.com>
+ *  created:    2016-06-17
+ *  modified:   2016-10-13
+ *  project:    patdown
  * 
  ************************************************************************/
 
-#ifndef __MD_FILES_H__
-#define __MD_FILES_H__
+#pragma once
 
 #include <stdio.h>
 
@@ -31,5 +31,3 @@ void close_file(FILE *io);
 
 /** Read all bytes from a supplied input file stream. **/
 String *read_all_input_bytes(FILE *ifp);
-
-#endif

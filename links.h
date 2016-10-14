@@ -1,14 +1,17 @@
 /*****
  * links.h -- data methods for link manipulation
  * 
- * @author      Pat Gaffney <pat@hypepat.com>
- * @created     2016-09-30
- * @modified    2016-09-30
+ *  author:     Pat Gaffney <pat@hypepat.com>
+ *  created:    2016-09-30
+ *  modified:   2016-10-13
+ *  project:    patdown
  *
  ************************************************************************/
 
+#pragma once
+
 /************************************************************************
- * @section Link Reference Data Structures
+ * Link Reference Data Structures
  ************************************************************************/
 
 /** LinkRef -- node to hold link data information **/
@@ -23,7 +26,7 @@ typedef struct LinkRef
 
 
 /************************************************************************
- * @section Link Reference Methods
+ * Link Reference Methods
  *
  *  These methods create a binary search tree of LinkRef nodes that can
  *  then be searched to resolve inline link references.
