@@ -12,6 +12,13 @@
 #include <stddef.h>
 #include <stdint.h>
 
+/************************************************************************
+ * Data Array Utilities
+ ************************************************************************/
+
+/** Count the WS to the first non-WS character. **/
+size_t count_indentation(uint8_t *data);
+
 
 /************************************************************************
  * String Nodes

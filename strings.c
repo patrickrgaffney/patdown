@@ -8,6 +8,7 @@
  * 
  ************************************************************************/
 
+#include <ctype.h>
 #include <stddef.h>
 #include <stdlib.h>
 
@@ -39,6 +40,29 @@ static uint8_t *__alloc_data_array(const size_t size)
     data = malloc(sizeof(uint8_t) * size);
     if (!data) throw_fatal_memory_error();
     return data;
+}
+
+
+/*****
+ * Count the WS from *data to the first non-WS character.
+ *
+ *  Here, WS is "white space".
+ *
+ * ARGUMENTS
+ *  data    An array of byte data (utf8 string).
+ *
+ * RETURNS
+ *  The absolute number of WS characters encountered before a non-WS
+ *  character, where a space is one and a tab is four.
+ *****/
+size_t count_indentation(uint8_t *data)
+{
+    size_t ws = 0;
+    while (isblank(*data)) {
+        if (*data++ == 0x20) ws++;
+        else ws += 4;
+    }
+    return ws;
 }
 
 
