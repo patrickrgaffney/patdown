@@ -16,6 +16,7 @@
 #include "errors.h"
 #include "files.h"
 #include "output.h"
+#include "parsers.h"
 #include "strings.h"
 
 static const char *_program = "patdown";
@@ -25,10 +26,10 @@ static const char *_email   = "pat@hypepat.com";
 
 static void __print_version()
 {
-    fprintf(stderr, "%s Version %s\n", _program, _version);
+    fprintf(stderr, "%s %s\n", _program, _version);
     fprintf(stderr, "\n");
-    fprintf(stderr, "-- A Markdown compiler.\n");
-    fprintf(stderr, "-- Written by %s <%s>\n", _author, _email);
+    fprintf(stderr, "A Markdown compiler.\n");
+    fprintf(stderr, "Written by %s <%s>\n", _author, _email);
 }
 
 static void __print_help()
@@ -85,21 +86,11 @@ int main(int argc, char **argv)
         if (c == -1) break;
         
         switch (c) {
-            case '5':   /* Change ouptut type to OUT_HTML5. */
-                outType = OUT_HTML5;
-                break;
-            case 'd':   /* Change output type to OUT_PARSED. */
-                outType = OUT_PARSED;
-                break;
-            case 'h':   /* Output help dialog. */
-                helpFlag = 1;
-                break;
-            case 'o':   /* Set the output file. */
-                oFileName = optarg;
-                break;
-            case 'v':   /* Output version dialog. */
-                versionFlag = 1;
-                break;
+            case '5': outType = OUT_HTML5;  break;
+            case 'd': outType = OUT_PARSED; break;
+            case 'h': helpFlag = 1;         break;
+            case 'o': oFileName = optarg;   break;
+            case 'v': versionFlag = 1;      break;
             default: break;
         }
     }
@@ -131,14 +122,13 @@ int main(int argc, char **argv)
     
     rawBytes = read_all_input_bytes(ifp);
     
-    printf("-----bytes allocated for: %zu\n", rawBytes->allocd);
-    printf("-----bytes read from file: %zu\n", rawBytes->length);
-    printf("-----begin raw bytes:\n%s", rawBytes->data);
-    printf("-----end raw bytes\n");
-
+    markdown(rawBytes);
+    if (rawBytes) free_string(rawBytes);
+    
+    debug_print_queue();
+    
     if (iFileName) close_file(ifp);
     if (oFileName) close_file(ofp);
-    if (rawBytes) free_string(rawBytes);
 
     
     return EXIT_SUCCESS;
