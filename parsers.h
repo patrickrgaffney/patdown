@@ -1,20 +1,20 @@
 /*****
  * parsers.h -- markdown parsing methods
  * 
- * @author      Pat Gaffney <pat@hypepat.com>
- * @created     2016-06-15
- * @modified    2016-09-30
+ *  author:     Pat Gaffney <pat@hypepat.com>
+ *  created:    2016-06-15
+ *  modified:   2016-10-13
+ *  project:    patdown
  * 
  *****************************************************************************/
 
-#ifndef PARSERS_H
-#define PARSERS_H
+#pragma once
 
 #include "markdown.h"
+#include "output.h"
+#include "strings.h"
 
 /*****************************************************************************
  * @section External Parsing API
  *****************************************************************************/
-Markdown *markdown(FILE *fp);
-
-#endif
+bool markdown(String *rawBytes);
