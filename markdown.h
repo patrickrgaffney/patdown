@@ -80,3 +80,6 @@ void debug_print_queue();
 
 /** Add a new Markdown block to the data queue. **/
 bool add_markdown(String *s, const mdblock_t type, void *addtinfo);
+
+/** Get the number of parsed Markdown blocks. **/
+size_t get_queue_length(void);

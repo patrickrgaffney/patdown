@@ -21,9 +21,9 @@
  * Markdown Blocks
  *
  *  Markdown nodes are created and inserted into a queue. They are 
- *  distinguished by their mdblock_t and their place in the queue. The
- *  queue becomes a linear structure of nodes parsed from the file, from
- *  top to bottom.
+ *  distinguished by their mdblock_t and their position in the queue. 
+ *  The queue forms a linear structure of nodes parsed from the file.
+ *
  ************************************************************************/
 
 /** A container node for a parsed Markdown block. **/
@@ -41,7 +41,7 @@ static Markdown *head = NULL;   /* Head of the queue. */
 static Markdown *tail = NULL;   /* Tail of the queue. */
 
 
-/** File private functions. **/
+/** Private queue function prototypes. **/
 static Markdown *md_alloc_node(void);
 static bool md_insert_queue(Markdown **head, Markdown **tail, Markdown *node);
 
@@ -108,6 +108,26 @@ static bool md_insert_queue(Markdown **head, Markdown **tail, Markdown *node)
         return true;
     }
     else return false;
+}
+
+/*****
+ * Get the number of parsed Markdown blocks.
+ *
+ * RETURNS
+ *  The number of nodes in the queue.
+ *****/
+size_t get_queue_length(void)
+{
+    size_t len = 0;
+    Markdown *node = head;
+    
+    if (!node) return 0;
+    
+    while (node) {
+        len++;
+        node = node->next;
+    }
+    return len;
 }
 
 
