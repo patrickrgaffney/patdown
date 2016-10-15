@@ -20,25 +20,25 @@
 typedef enum
 {
     /* Meta blocks */
-    UNKNOWN,                    /* Placeholder while parsing. */
-    BLANK_LINE,                 /* Separates certain container blocks. */
+    UNKNOWN,                    /* 0. Placeholder while parsing. */
+    BLANK_LINE,                 /* 1. Separates certain container blocks. */
     
     /* Implemented blocks */
-    ATX_HEADER_1,               /* <h1></h1> */
-    ATX_HEADER_2,               /* <h2></h2> */
-    ATX_HEADER_3,               /* <h3></h3> */
-    ATX_HEADER_4,               /* <h4></h4> */
-    ATX_HEADER_5,               /* <h5></h5> */
-    ATX_HEADER_6,               /* <h6></h6> */
-    HORIZONTAL_RULE,            /* <hr> */
-    PARAGRAPH,                  /* <p></p> */
-    SETEXT_HEADER_1,            /* <h1></h1> */
-    SETEXT_HEADER_2,            /* <h2></h2> */
-    INDENTED_CODE_BLOCK,        /* <pre></pre> */
-    FENCED_CODE_BLOCK,          /* <div class=""></pre> */
-    HTML_BLOCK,                 /* No wrapper element. */
-    HTML_COMMENT,               /* Not inserted into queue. */
-    LINK_REFERENCE_DEF,         /* Not inserted into queue. */
+    ATX_HEADER_1,               /* 2. <h1></h1> */
+    ATX_HEADER_2,               /* 3. <h2></h2> */
+    ATX_HEADER_3,               /* 4. <h3></h3> */
+    ATX_HEADER_4,               /* 5. <h4></h4> */
+    ATX_HEADER_5,               /* 6. <h5></h5> */
+    ATX_HEADER_6,               /* 7. <h6></h6> */
+    HORIZONTAL_RULE,            /* 8. <hr> */
+    PARAGRAPH,                  /* 9. <p></p> */
+    SETEXT_HEADER_1,            /* 10. <h1></h1> */
+    SETEXT_HEADER_2,            /* 11. <h2></h2> */
+    INDENTED_CODE_BLOCK,        /* 12. <pre></pre> */
+    FENCED_CODE_BLOCK,          /* 13. <div class=""></pre> */
+    HTML_BLOCK,                 /* 14. No wrapper element. */
+    HTML_COMMENT,               /* 15. Not inserted into queue. */
+    LINK_REFERENCE_DEF,         /* 16. Not inserted into queue. */
     
     /* Unimplemented blocks */
     BLOCKQUOTE_START,
