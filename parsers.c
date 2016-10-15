@@ -23,9 +23,8 @@
 /** The base-size in bytes of a block buffer. **/
 #define BLK_BUF 256
 
-/** The byte-length of a newline, blank (WS). **/
+/** The byte-length of a newline. **/
 #define NEWLINE 1
-#define BLANK 1
 
 /** Block parsing prototypes. **/
 bool block_parser(String *);
