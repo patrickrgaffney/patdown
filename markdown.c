@@ -132,6 +132,21 @@ size_t get_queue_length(void)
 
 
 /*****
+ * Get the type of the last block added to the queue.
+ *
+ * RETURNS
+ *  The mdblock_t of tail.
+ *****/
+mdblock_t get_last_block(void)
+{
+    if (tail) {
+        return tail->type;
+    }
+    return UNKNOWN;
+}
+
+
+/*****
  * Debug-print the entire Markdown queue.
  *
  *  This function is used for debugging purposes only.
