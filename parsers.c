@@ -26,14 +26,19 @@
 /** The byte-length of a newline. **/
 #define NEWLINE 1
 
+/** When calling the block-functions, we can either parse the 
+ ** block -- call add_markdown() -- or just check the syntax. */
+#define PARSE_BLK true
+#define CHK_SYNTX false
+
 /** Block parsing prototypes. **/
 static bool block_parser(String *);
-static ssize_t is_blank_line(uint8_t *);
-static ssize_t is_paragraph(uint8_t *);
+static ssize_t is_blank_line(uint8_t *, bool);
+static ssize_t is_paragraph(uint8_t *, bool);
 static ssize_t parse_paragraph(uint8_t *);
-static ssize_t is_atx_header(uint8_t *);
+static ssize_t is_atx_header(uint8_t *, bool);
 static ssize_t parse_atx_header(uint8_t *, size_t, size_t);
-static ssize_t is_horizontal_rule(uint8_t *data);
+static ssize_t is_horizontal_rule(uint8_t *, bool);
 
 /************************************************************************
  * External Parsing API
@@ -88,17 +93,17 @@ static bool block_parser(String *bytes)
         if (!(*(doc + ws))) break;
         
         /* Check for blank line. */
-        else if (((len = is_blank_line(doc))) > 0) {
+        else if (((len = is_blank_line(doc, PARSE_BLK))) > 0) {
             doc += len;
             continue;
         }
         
         /* Switch on first non-WS character of the line. */
         switch(*(doc + ws)) {
-            case '-': len = is_horizontal_rule(doc);    break;
-            case '_': len = is_horizontal_rule(doc);    break;
-            case '*': len = is_horizontal_rule(doc);    break;
-            case '#': len = is_atx_header(doc);         break;
+            case '-': len = is_horizontal_rule(doc, PARSE_BLK); break;
+            case '_': len = is_horizontal_rule(doc, PARSE_BLK); break;
+            case '*': len = is_horizontal_rule(doc, PARSE_BLK); break;
+            case '#': len = is_atx_header(doc, PARSE_BLK);      break;
             default:  len = -1;
         }
         
@@ -120,11 +125,12 @@ static bool block_parser(String *bytes)
  *
  * ARGUMENTS
  *  data    An array of byte data (input utf8 string).
+ *  parse   If true, parse the block; if false, just check syntax.
  *
  * RETURNS
  *  The size in bytes of the raw block, or -1 if not a blank line.
  *****/
-static ssize_t is_blank_line(uint8_t *data)
+static ssize_t is_blank_line(uint8_t *data, bool parse)
 {
     size_t i = 0;
     
@@ -133,7 +139,7 @@ static ssize_t is_blank_line(uint8_t *data)
     /* Cannot have any non-WS chars on a blank line. Also ensure 
      * that if we reached EOF on the input, we include this block. */
     if (*data == '\n' || !(*data)) {
-        add_markdown(NULL, BLANK_LINE, NULL);
+        if (parse) add_markdown(NULL, BLANK_LINE, NULL);
         return i + NEWLINE;
     }
     return -1;
@@ -145,17 +151,21 @@ static ssize_t is_blank_line(uint8_t *data)
  *
  * ARGUMENTS
  *  data    An array of byte data (input utf8 string).
+ *  parse   If true, parse the block; if false, just check syntax.
  *
  * RETURNS
  *  The size in bytes of the raw block, or -1 if not a paragraph.
  *****/
-static ssize_t is_paragraph(uint8_t *data)
+static ssize_t is_paragraph(uint8_t *data, bool parse)
 {
     size_t ws = count_indentation(data);
     
     /* TODO: check against blocks that can interrupt paragraphs. */
     
-    if (ws < 3) return parse_paragraph(data);
+    if (ws < 3) {
+        if (parse) return parse_paragraph(data);
+        else return 1;
+    }
     return -1;
 }
 
@@ -220,11 +230,12 @@ static ssize_t parse_paragraph(uint8_t *data)
  *
  * ARGUMENTS
  *  data    An array of byte data (input utf8 string).
+ *  parse   If true, parse the block; if false, just check syntax.
  *
  * RETURNS
  *  The size in bytes of the raw block, or -1 if not a ATX header.
  *****/
-static ssize_t is_atx_header(uint8_t *data)
+static ssize_t is_atx_header(uint8_t *data, bool parse)
 {
     size_t ws = count_indentation(data);
     size_t hashes = 0;  /* Number of leading hashes. */
@@ -239,7 +250,10 @@ static ssize_t is_atx_header(uint8_t *data)
     if (hashes < 1 || hashes > 6 || (*data != 0x20 && *data != '\t')) {
         return -1;
     }
-    return parse_atx_header(++data, hashes, ++i);
+    if (parse) {
+        return parse_atx_header(++data, hashes, ++i);
+    }
+    else return ++i;
 }
 
 
@@ -302,11 +316,12 @@ static ssize_t parse_atx_header(uint8_t *data, size_t hashes, size_t i)
  *
  * ARGUMENTS
  *  data    An array of byte data (input utf8 string).
+ *  parse   If true, parse the block; if false, just check syntax.
  *
  * RETURNS
  *  The size in bytes of the raw block, or -1 if not a horizontal rule.
  *****/
-static ssize_t is_horizontal_rule(uint8_t *data)
+static ssize_t is_horizontal_rule(uint8_t *data, bool parse)
 {
     size_t ws = count_indentation(data);
     size_t rc = 0;      /* Number of rule characters. */
@@ -328,7 +343,7 @@ static ssize_t is_horizontal_rule(uint8_t *data)
 
     /* No other characters may occur inline. */
     if ((*data == '\n' || !(*data)) && rc > 2) {
-        add_markdown(NULL, HORIZONTAL_RULE, NULL);
+        if (parse) add_markdown(NULL, HORIZONTAL_RULE, NULL);
         return i + NEWLINE;
     }
     return -1;
