@@ -23,14 +23,17 @@
 /** The default base-size (in bytes) of a block buffer. **/
 #define BLK_BUF 256
 
-/** The byte-length of a newline character. **/
+/** The byte-length of a newline, blank (WS). **/
 #define NEWLINE 1
+#define BLANK 1
 
 /** Block parsing prototypes. **/
-bool block_parser(String *bytes);
-static ssize_t is_blank_line(uint8_t *data);
-static ssize_t is_paragraph(uint8_t *data);
-static ssize_t parse_paragraph(uint8_t *data);
+bool block_parser(String *);
+static ssize_t is_blank_line(uint8_t *);
+static ssize_t is_paragraph(uint8_t *);
+static ssize_t parse_paragraph(uint8_t *);
+static ssize_t is_atx_header(uint8_t *);
+static ssize_t parse_atx_header(uint8_t *, size_t, size_t);
 
 
 /*****
@@ -85,7 +88,13 @@ bool block_parser(String *bytes)
         
         /* Switch on first non-WS character of the line. */
         switch(*(doc + ws)) {
-            default: len = parse_paragraph(doc + ws) + ws;
+            case '#': len = is_atx_header(doc);             break;
+            default:  len = -1;
+        }
+        
+        /* Default to paragraph if no nodes were added. */
+        if (len == -1) {
+            len = parse_paragraph(doc + ws) + ws;
         }
         doc += len;
     }
@@ -191,14 +200,14 @@ static ssize_t parse_paragraph(uint8_t *data)
     String *p = init_string(BLK_BUF);
     
     /* Add characters until we reach a newline. */
-    while (*data != '\n') {
+    while (*data && *data != '\n') {
         if (p->length < p->allocd) {
             *p->data++ = *data++;
             p->length++;
         }
         else realloc_string(p, p->allocd + BLK_BUF);
     }
-    
+    *p->data = '\0';
     p->data -= p->length;
     add_markdown(p, PARAGRAPH, NULL);
     return p->length + NEWLINE;
@@ -274,87 +283,78 @@ static ssize_t is_blank_line(uint8_t *data)
     
     while (isblank(*data)) data++, i++;
 
-    /* TODO: check for '\0' also. */
-    /* Cannot have any non-WS chars on a blank line. */
-    if (*data == '\n') {
+    /* Cannot have any non-WS chars on a blank line. Also ensure 
+     * that if we reached EOF on the input, we include this block. */
+    if (*data == '\n' || !(*data)) {
         add_markdown(NULL, BLANK_LINE, NULL);
         return i + NEWLINE;
     }
     return -1;
 }
 
-// /** is_atx_header() -- is the current line an ATX header? ***************/
-// static bool is_atx_header(void)
-// {
-//     size_t i = indentation;
-//     size_t hashes = 0;          /* Number of leading hashes. */
-//
-//     /* Must be less than 4 spaces of indentation. */
-//     if (i > 3) return NULL;
-//
-//     /* Count the number of leading hashes. */
-//     while (line->string[i] == '#') hashes++, i++;
-//
-//     /* Required space after initial hashes and beginning of heading. */
-//     if (hashes < 1 || hashes > 6 || line->string[i] != ' ') return false;
-//
-//     /* At least one space required between hashes and first word. */
-//     return (line->string[i] == ' ');
-// }
-//
-//
-// /** parse_atx_header() -- parse an ATX header element. ******************/
-// static Markdown *parse_atx_header(void)
-// {
-//     size_t i = indentation;
-//     size_t hashes = 0;              /* Number of leading hashes. */
-//     size_t trailing = 0;            /* Number of trailing hashes. */
-//     size_t end = line->len - 1;     /* Index of last character in line. */
-//     mdblock_t type;                 /* ATX_HEADING_{1-6} */
-//     Markdown *node;                 /* Node to be returned. */
-//
-//     if (i > 3) return NULL;
-//
-//     /* Count the number of leading hashes. */
-//     while (line->string[i] == '#') hashes++, i++;
-//
-//     /* Required space after initial hashes and beginning of heading. */
-//     if (hashes < 1 || hashes > 6 || line->string[i] != ' ') return NULL;
-//
-//     /* 1-unlimited spaces between hashes and first word. */
-//     while (line->string[i] == ' ') i++;
-//
-//     /* Remove all spaces at back-end of string. */
-//     while (line->string[end] == ' ') end--;
-//
-//     /* Remove all trailing hashes *if* they are
-//      * followed by 1-unlimited spaces. */
-//     while (line->string[end] == '#') end--, trailing++;
-//
-//     /* Required space after trailing hashes and end of heading. */
-//     if (line->string[end] != ' ') end += trailing;
-//
-//     /* If required space was there, also remove all the
-//      * trailing spaces between the end of the heading and
-//      * the start of the trailing hashes. */
-//     else {
-//         while (line->string[end] == ' ') end--;
-//     }
-//
-//     switch (hashes) {
-//         case 1: type = ATX_HEADER_1; break;
-//         case 2: type = ATX_HEADER_2; break;
-//         case 3: type = ATX_HEADER_3; break;
-//         case 4: type = ATX_HEADER_4; break;
-//         case 5: type = ATX_HEADER_5; break;
-//         case 6: type = ATX_HEADER_6; break;
-//         default: break;
-//     }
-//     node = init_markdown(line, i, end, type);
-//     update_state(FREE_LINE, type);
-//     return node;
-// }
-//
+
+static ssize_t is_atx_header(uint8_t *data)
+{
+    size_t ws = count_indentation(data);
+    size_t hashes = 0;  /* Number of leading hashes. */
+    size_t i = ws;      /* Byte-index to increment and return. */
+
+    if (ws > 3) return -1;
+    data += ws;
+
+    while (*data == '#') hashes++, i++, data++;
+
+    /* Required space after initial hashes and beginning of heading. */
+    if (hashes < 1 || hashes > 6 || (*data != 0x20 && *data != '\t')) {
+        return -1;
+    }
+    return parse_atx_header(++data, hashes, ++i);
+}
+
+
+static ssize_t parse_atx_header(uint8_t *data, size_t hashes, size_t i)
+{
+    String *h = init_string(BLK_BUF);
+
+    /* Add characters until we reach a newline. */
+    while (*data && *data != '\n') {
+        if (h->length < h->allocd) {
+            *h->data++ = *data++;
+            h->length++;
+        }
+        else realloc_string(h, h->allocd + BLK_BUF);
+    }
+
+    /* Add the current length to the index, even if we retract
+     * some characters, increment past this entire line. */
+    i += h->length;
+
+    /* Cycle back through trailing spaces before the newline. */
+    if (*(h->data - 1) == 0x20 && h->data--) {
+        while (*h->data == 0x20) h->data--, h->length--;
+
+        /* Cycle back through trailing hashes if they exist. */
+        while (*h->data == '#') h->data--, h->length--;
+    
+        /* Required space after trailing hashes and the end of the heading. */
+        if (*h->data == 0x20) {
+            while (*h->data == 0x20) h->data--, h->length--;
+            h->data++;
+        }
+        /* If the required space was missing, the trailing hashes are kept. */
+        else if (*h->data == '#') {
+            while (*h->data == '#') h->data++, h->length++;
+        }
+        /* Otherwise, we just removed spaces -- make room for '\0'. */
+        else h->data++;
+    }
+    *h->data = '\0';
+    h->data -= h->length;
+    add_markdown(h, (ATX_HEADER_1 - 1) + hashes, NULL);
+    return i + NEWLINE;
+}
+
+
 // /** is_horizontal_rule() -- is the current line a horizontal rule? ******/
 // static bool is_horizontal_rule(void)
 // {
