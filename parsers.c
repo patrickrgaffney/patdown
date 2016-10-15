@@ -27,7 +27,7 @@
 #define NEWLINE 1
 
 /** Block parsing prototypes. **/
-bool block_parser(String *);
+static bool block_parser(String *);
 static ssize_t is_blank_line(uint8_t *);
 static ssize_t is_paragraph(uint8_t *);
 static ssize_t parse_paragraph(uint8_t *);
@@ -76,7 +76,7 @@ bool markdown(String *bytes)
  * RETURNS
  *  true if the parsing completed, false if no nodes were parsed.
  *****/
-bool block_parser(String *bytes)
+static bool block_parser(String *bytes)
 {
     int len = 0;                    /* Length of last block. */
     uint8_t *doc = bytes->data;     /* Document pointer. */
