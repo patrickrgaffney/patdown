@@ -32,7 +32,7 @@
 #define CHK_SYNTX false
 
 /** Block parsing prototypes. **/
-static bool block_parser(String *);
+static bool    block_parser(String *);
 static ssize_t is_blank_line(uint8_t *, bool);
 static ssize_t is_paragraph(uint8_t *, bool);
 static ssize_t parse_paragraph(uint8_t *);
@@ -350,31 +350,32 @@ static ssize_t is_horizontal_rule(uint8_t *data, bool parse)
 }
 
 
-// /** is_setext_header() -- is the current line a setext header? **********/
-// static bool is_setext_header(void)
-// {
-//     size_t i = indentation;
-//     size_t numChars = 0;        /* Number of setext characters (=|-). */
-//     int setextChar;             /* Character used for header. */
-//     int c = line->string[i];    /* First non-WS character in line. */
-//
-//     /* A setext header can only follow a PARAGRAPH. */
-//     if (lastBlock != PARAGRAPH) return false;
-//
-//     setextChar = (c == '-' || c == '=') ? c : -1;
-//     if (setextChar == -1) return false;
-//
-//     /* Parse *n* number of setextChar's. */
-//     while (line->string[i] == setextChar) numChars++, i++;
-//
-//     /* Parse *n* number of spaces. */
-//     while (line->string[i] == ' ') i++;
-//
-//    /* If we found any non-setextChar character, or only
-//     * found one, this cannot be a setext header. */
-//    return (line->string[i] == '\0' && numChars > 1);
-// }
-//
+static ssize_t is_setext_header(uint8_t *data)
+{
+    size_t ws = count_indentation(data);
+    int8_t sc = -1;     /* Setext character used in this header. */
+    size_t i  = ws;     /* Byte-index to increment and return. */
+    
+    data += ws;
+    sc = (*data == '-' || *data == '=') ? *data : -1;
+    
+    /* The last block must be a paragraph. */
+    if (get_last_block() != PARAGRAPH || sc == -1) return -1;
+
+    /* Parse *n* number of consecutive setext characters. */
+    while (*data && (*data == sc)) data++, i++;
+
+    /* Parse *n* number of spaces. */
+    while (*data && (*data == 0x20)) data++, i++;
+
+   /* No other characters may occur inline. */
+   if (*data == '\n' || !(*data)) {
+       return i + NEWLINE;
+   }
+   return -1;
+}
+
+
 // /** is_indented_code_block() -- are we in an indented code block? *******/
 // static bool is_indented_code_block(void)
 // {
