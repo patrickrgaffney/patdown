@@ -78,7 +78,11 @@ static Markdown *md_alloc_node(void)
 bool add_markdown(String *s, const mdblock_t type, void *addtinfo)
 {
     Markdown *node = md_alloc_node();
-    node->string   = s;
+    
+    /* Create an empty String node if *s was NULL. */
+    if (!s) node->string = init_string(0);
+    else    node->string = s;
+    
     node->type     = type;
     node->addtinfo = addtinfo;
     node->next     = NULL;
