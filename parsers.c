@@ -36,6 +36,9 @@ static ssize_t is_atx_header(uint8_t *);
 static ssize_t parse_atx_header(uint8_t *, size_t, size_t);
 static ssize_t is_horizontal_rule(uint8_t *data);
 
+/************************************************************************
+ * External Parsing API
+ ************************************************************************/
 
 /*****
  * Call upon the parsers and generate the Markdown queue.
@@ -60,6 +63,10 @@ bool markdown(String *bytes)
     return true;
 }
 
+
+/************************************************************************
+ * Block Parsing Functions
+ ************************************************************************/
 
 /*****
  * Parse a String of input bytes into a Markdown queue.
@@ -116,8 +123,7 @@ bool block_parser(String *bytes)
  *  data    An array of byte data (input utf8 string).
  *
  * RETURNS
- *  The size in bytes of the line that was parsed, 
- *  or -1 if this line was not a blank line.
+ *  The size in bytes of the raw block, or -1 if not a blank line.
  *****/
 static ssize_t is_blank_line(uint8_t *data)
 {
@@ -278,7 +284,7 @@ static ssize_t parse_atx_header(uint8_t *data, size_t hashes, size_t i)
             while (*h->data == 0x20) h->data--, h->length--;
             h->data++;
         }
-        /* If the required space was missing, the trailing hashes are kept. */
+        /* If the required space was missing, keep the trailing hashes. */
         else if (*h->data == '#') {
             while (*h->data == '#') h->data++, h->length++;
         }
@@ -292,6 +298,15 @@ static ssize_t parse_atx_header(uint8_t *data, size_t hashes, size_t i)
 }
 
 
+/*****
+ * Is the current line a horizontal rule?
+ *
+ * ARGUMENTS
+ *  data    An array of byte data (input utf8 string).
+ *
+ * RETURNS
+ *  The size in bytes of the raw block, or -1 if not a horizontal rule.
+ *****/
 static ssize_t is_horizontal_rule(uint8_t *data)
 {
     size_t ws = count_indentation(data);
@@ -306,7 +321,7 @@ static ssize_t is_horizontal_rule(uint8_t *data)
     if (get_last_block() == PARAGRAPH && hr == '-') return -1;
     if (ws > 3 || hr == -1) return -1;
 
-    /* Parse *n* number of spaces and *n* number of hrChar's. */
+    /* Parse *n* number of spaces and *n* number of rule characters. */
     while (*data && (*data == 0x22 || *data == hr)) {
         if (*data++ == hr) rc++;
         i++;
@@ -344,19 +359,6 @@ static ssize_t is_horizontal_rule(uint8_t *data)
 //    /* If we found any non-setextChar character, or only
 //     * found one, this cannot be a setext header. */
 //    return (line->string[i] == '\0' && numChars > 1);
-// }
-//
-//
-// /** parse_horizontal_rule() -- parse an <hr> element ********************/
-// static Markdown *parse_horizontal_rule(void)
-// {
-//     Markdown *node = NULL;      /* Node to be returned. */
-//
-//     if (!is_horizontal_rule()) return NULL;
-//
-//     node = init_markdown(NULL, 0, 0, HORIZONTAL_RULE);
-//     update_state(FREE_LINE, HORIZONTAL_RULE);
-//     return node;
 // }
 //
 // /** is_indented_code_block() -- are we in an indented code block? *******/
