@@ -3,7 +3,7 @@
  * 
  *  author:     Pat Gaffney <pat@hypepat.com>
  *  created:    2016-06-15
- *  modified:   2016-10-13
+ *  modified:   2016-10-14
  *  project:    patdown
  * 
  ************************************************************************/
@@ -20,7 +20,7 @@
 #include "parsers.h"
 #include "strings.h"
 
-/** The default base-size (in bytes) of a block buffer. **/
+/** The base-size in bytes of a block buffer. **/
 #define BLK_BUF 256
 
 /** The byte-length of a newline, blank (WS). **/
@@ -34,6 +34,7 @@ static ssize_t is_paragraph(uint8_t *);
 static ssize_t parse_paragraph(uint8_t *);
 static ssize_t is_atx_header(uint8_t *);
 static ssize_t parse_atx_header(uint8_t *, size_t, size_t);
+static ssize_t is_horizontal_rule(uint8_t *data);
 
 
 /*****
@@ -88,7 +89,10 @@ bool block_parser(String *bytes)
         
         /* Switch on first non-WS character of the line. */
         switch(*(doc + ws)) {
-            case '#': len = is_atx_header(doc);             break;
+            case '-': len = is_horizontal_rule(doc);    break;
+            case '_': len = is_horizontal_rule(doc);    break;
+            case '*': len = is_horizontal_rule(doc);    break;
+            case '#': len = is_atx_header(doc);         break;
             default:  len = -1;
         }
         
@@ -105,64 +109,30 @@ bool block_parser(String *bytes)
 }
 
 
+/*****
+ * Is the current line a blank line?
+ *
+ * ARGUMENTS
+ *  data    An array of byte data (input utf8 string).
+ *
+ * RETURNS
+ *  The size in bytes of the line that was parsed, 
+ *  or -1 if this line was not a blank line.
+ *****/
+static ssize_t is_blank_line(uint8_t *data)
+{
+    size_t i = 0;
+    
+    while (isblank(*data)) data++, i++;
 
-/************************************************************************
- * Generic Helper Functions
- ************************************************************************/
-
-// /** match_html_block_element(e, len) -- determine if e is html5 element name */
-// static bool match_html_block_element(const char *e, const size_t len)
-// {
-//     static char *elements[7][14] = {
-//         { "p" },
-//         { "dd", "dl", "dt", "td", "th", "tr" },
-//         { "col", "dir", "div", "nav" },
-//         { "base", "body", "form", "head", "html", "link", "main", "menu",
-//           "meta" },
-//         { "aside", "frame", "param", "style", "table", "tbody", "tfoot",
-//           "thead", "title", "track" },
-//         { "center", "dialog", "figure", "footer", "header", "iframe",
-//           "legend", "option", "script", "source" },
-//         { "address", "article", "basefont", "caption", "colgroup", "details",
-//           "fieldset", "figcaption", "frameset", "menuitem", "noframes",
-//           "optgroup", "section", "summary" }
-//     };
-//
-//     if (len == 0) return false;
-//
-//     for (size_t i = 0; i < 14; i++) {
-//         if (elements[len][i] && strcmp(e, elements[len][i]) == 0) {
-//             return true;
-//         }
-//     }
-//     return false;
-// }
-//
-//
-// /************************************************************************
-//  * @section Block Parsing Functions
-//  *
-//  *  If the function is passed a file pointer fp, then it will consume raw
-//  *  lines of input until it is satisfied that the block has been exited.
-//  *
-//  *  Each of the parsing functions crawl the raw string using indexes to
-//  *  determine where the actual text, or *content*, begins and ends, then
-//  *  create a substring of the raw string using those indexes.
-//  *
-//  *  Each type of mdblock_t has its own parsing function.
-//  ************************************************************************/
-// static bool is_setext_header(void);
-// static bool is_atx_header(void);
-// static Markdown *parse_atx_header(void);
-// static bool is_horizontal_rule(void);
-// static Markdown *parse_horizontal_rule(void);
-// static bool is_indented_code_block(void);
-// static Markdown *parse_indented_code_block(FILE *fp);
-// static bool is_code_fence(void);
-// static Markdown *parse_fenced_code_block(FILE *fp);
-// static Markdown *parse_html_block(FILE *fp);
-// static Markdown *parse_html_comment(FILE *fp);
-// static Markdown *parse_link_ref_defs(FILE *fp);
+    /* Cannot have any non-WS chars on a blank line. Also ensure 
+     * that if we reached EOF on the input, we include this block. */
+    if (*data == '\n' || !(*data)) {
+        add_markdown(NULL, BLANK_LINE, NULL);
+        return i + NEWLINE;
+    }
+    return -1;
+}
 
 
 /*****
@@ -172,8 +142,7 @@ bool block_parser(String *bytes)
  *  data    An array of byte data (input utf8 string).
  *
  * RETURNS
- *  The size in bytes of the block that was parsed, 
- *  or -1 if this line was not a paragraph.
+ *  The size in bytes of the raw block, or -1 if not a paragraph.
  *****/
 static ssize_t is_paragraph(uint8_t *data)
 {
@@ -240,7 +209,118 @@ static ssize_t parse_paragraph(uint8_t *data)
     // }
     // return node;
 }
-//
+
+/*****
+ * Is the current line an ATX header?
+ *
+ * ARGUMENTS
+ *  data    An array of byte data (input utf8 string).
+ *
+ * RETURNS
+ *  The size in bytes of the raw block, or -1 if not a ATX header.
+ *****/
+static ssize_t is_atx_header(uint8_t *data)
+{
+    size_t ws = count_indentation(data);
+    size_t hashes = 0;  /* Number of leading hashes. */
+    size_t i = ws;      /* Byte-index to increment and return. */
+
+    if (ws > 3) return -1;
+    data += ws;
+
+    while (*data == '#') hashes++, i++, data++;
+
+    /* Required space after initial hashes and beginning of heading. */
+    if (hashes < 1 || hashes > 6 || (*data != 0x20 && *data != '\t')) {
+        return -1;
+    }
+    return parse_atx_header(++data, hashes, ++i);
+}
+
+
+/*****
+ * Parse an ATX header and add it to the queue.
+ *
+ * ARGUMENTS
+ *  data    An array of byte data (input utf8 string).
+ *  hashes  The number of leading hashes (determines mdblock_t).
+ *  i       Index of *data for the current block (return value).
+ *
+ * RETURNS
+ *  The size in bytes of the block that was parsed.
+ *****/
+static ssize_t parse_atx_header(uint8_t *data, size_t hashes, size_t i)
+{
+    String *h = init_string(BLK_BUF);
+
+    /* Add characters until we reach a newline. */
+    while (*data && *data != '\n') {
+        if (h->length < h->allocd) {
+            *h->data++ = *data++;
+            h->length++;
+        }
+        else realloc_string(h, h->allocd + BLK_BUF);
+    }
+
+    /* Add the current length to the index, even if we retract
+     * some characters, increment past this entire line. */
+    i += h->length;
+
+    /* Remove any trailing spaces before the newline. */
+    if (*(h->data - 1) == 0x20 && h->data--) {
+        while (*h->data == 0x20) h->data--, h->length--;
+
+        /* Remove any trailing hashes if they exist. */
+        while (*h->data == '#') h->data--, h->length--;
+    
+        /* Required space after trailing hashes and the end of the heading. */
+        if (*h->data == 0x20) {
+            while (*h->data == 0x20) h->data--, h->length--;
+            h->data++;
+        }
+        /* If the required space was missing, the trailing hashes are kept. */
+        else if (*h->data == '#') {
+            while (*h->data == '#') h->data++, h->length++;
+        }
+        /* Otherwise, we just removed spaces -- make room for '\0'. */
+        else h->data++;
+    }
+    *h->data = '\0';
+    h->data -= h->length;
+    add_markdown(h, (ATX_HEADER_1 - 1) + hashes, NULL);
+    return i + NEWLINE;
+}
+
+
+static ssize_t is_horizontal_rule(uint8_t *data)
+{
+    size_t ws = count_indentation(data);
+    size_t rc = 0;      /* Number of rule characters. */
+    size_t i  = ws;     /* Byte-index to increment and return. */
+    int8_t hr = -1;     /* Specific rule character used in this <hr>. */
+    
+    data += ws;
+    hr = (*data == '*' || *data == '_' || *data == '-') ? *data : -1;
+    
+    /* Ensure that this isn't a setext header. */
+    if (get_last_block() == PARAGRAPH && hr == '-') return -1;
+    if (ws > 3 || hr == -1) return -1;
+
+    /* Parse *n* number of spaces and *n* number of hrChar's. */
+    while (*data && (*data == 0x22 || *data == hr)) {
+        if (*data++ == hr) rc++;
+        i++;
+    }
+
+    /* No other characters may occur inline. */
+    if ((*data == '\n' || !(*data)) && rc > 2) {
+        add_markdown(NULL, HORIZONTAL_RULE, NULL);
+        return i + NEWLINE;
+    }
+    return -1;
+}
+
+
 // /** is_setext_header() -- is the current line a setext header? **********/
 // static bool is_setext_header(void)
 // {
@@ -265,116 +345,7 @@ static ssize_t parse_paragraph(uint8_t *data)
 //     * found one, this cannot be a setext header. */
 //    return (line->string[i] == '\0' && numChars > 1);
 // }
-
-
-/*****
- * Is the current line a blank line?
- *
- * ARGUMENTS
- *  data    An array of byte data (input utf8 string).
- *
- * RETURNS
- *  The size in bytes of the line that was parsed, 
- *  or -1 if this line was not a blank line.
- *****/
-static ssize_t is_blank_line(uint8_t *data)
-{
-    size_t i = 0;
-    
-    while (isblank(*data)) data++, i++;
-
-    /* Cannot have any non-WS chars on a blank line. Also ensure 
-     * that if we reached EOF on the input, we include this block. */
-    if (*data == '\n' || !(*data)) {
-        add_markdown(NULL, BLANK_LINE, NULL);
-        return i + NEWLINE;
-    }
-    return -1;
-}
-
-
-static ssize_t is_atx_header(uint8_t *data)
-{
-    size_t ws = count_indentation(data);
-    size_t hashes = 0;  /* Number of leading hashes. */
-    size_t i = ws;      /* Byte-index to increment and return. */
-
-    if (ws > 3) return -1;
-    data += ws;
-
-    while (*data == '#') hashes++, i++, data++;
-
-    /* Required space after initial hashes and beginning of heading. */
-    if (hashes < 1 || hashes > 6 || (*data != 0x20 && *data != '\t')) {
-        return -1;
-    }
-    return parse_atx_header(++data, hashes, ++i);
-}
-
-
-static ssize_t parse_atx_header(uint8_t *data, size_t hashes, size_t i)
-{
-    String *h = init_string(BLK_BUF);
-
-    /* Add characters until we reach a newline. */
-    while (*data && *data != '\n') {
-        if (h->length < h->allocd) {
-            *h->data++ = *data++;
-            h->length++;
-        }
-        else realloc_string(h, h->allocd + BLK_BUF);
-    }
-
-    /* Add the current length to the index, even if we retract
-     * some characters, increment past this entire line. */
-    i += h->length;
-
-    /* Cycle back through trailing spaces before the newline. */
-    if (*(h->data - 1) == 0x20 && h->data--) {
-        while (*h->data == 0x20) h->data--, h->length--;
-
-        /* Cycle back through trailing hashes if they exist. */
-        while (*h->data == '#') h->data--, h->length--;
-    
-        /* Required space after trailing hashes and the end of the heading. */
-        if (*h->data == 0x20) {
-            while (*h->data == 0x20) h->data--, h->length--;
-            h->data++;
-        }
-        /* If the required space was missing, the trailing hashes are kept. */
-        else if (*h->data == '#') {
-            while (*h->data == '#') h->data++, h->length++;
-        }
-        /* Otherwise, we just removed spaces -- make room for '\0'. */
-        else h->data++;
-    }
-    *h->data = '\0';
-    h->data -= h->length;
-    add_markdown(h, (ATX_HEADER_1 - 1) + hashes, NULL);
-    return i + NEWLINE;
-}
-
-
-// /** is_horizontal_rule() -- is the current line a horizontal rule? ******/
-// static bool is_horizontal_rule(void)
-// {
-//     size_t i = indentation;
-//     size_t numChars = 0;
-//     int hrChar;
-//     int c = line->string[i];
 //
-//     hrChar = (c == '*' || c == '_' || c == '-') ? c : -1;
-//     if (lastBlock == PARAGRAPH && hrChar == '-') return false;
-//     if (i > 3 || hrChar == -1) return false;
-//
-//     /* Parse *n* number of spaces and *n* number of hrChar's. */
-//     while (line->string[i] == ' ' || line->string[i] == hrChar) {
-//         if (line->string[i++] == hrChar) numChars++;
-//     }
-//
-//     /* No other characters may occur inline. */
-//     return (line->string[i] == '\0' && numChars > 2);
-// }
 //
 // /** parse_horizontal_rule() -- parse an <hr> element ********************/
 // static Markdown *parse_horizontal_rule(void)
@@ -516,6 +487,35 @@ static ssize_t parse_atx_header(uint8_t *data, size_t hashes, size_t i)
 //     update_state(FREE_LINE, FENCED_CODE_BLOCK);
 //     return node;
 // }
+// 
+// /** match_html_block_element(e, len) -- determine if e is html5 element name */
+// static bool match_html_block_element(const char *e, const size_t len)
+// {
+//     static char *elements[7][14] = {
+//         { "p" },
+//         { "dd", "dl", "dt", "td", "th", "tr" },
+//         { "col", "dir", "div", "nav" },
+//         { "base", "body", "form", "head", "html", "link", "main", "menu",
+//           "meta" },
+//         { "aside", "frame", "param", "style", "table", "tbody", "tfoot",
+//           "thead", "title", "track" },
+//         { "center", "dialog", "figure", "footer", "header", "iframe",
+//           "legend", "option", "script", "source" },
+//         { "address", "article", "basefont", "caption", "colgroup", "details",
+//           "fieldset", "figcaption", "frameset", "menuitem", "noframes",
+//           "optgroup", "section", "summary" }
+//     };
+//
+//     if (len == 0) return false;
+//
+//     for (size_t i = 0; i < 14; i++) {
+//         if (elements[len][i] && strcmp(e, elements[len][i]) == 0) {
+//             return true;
+//         }
+//     }
+//     return false;
+// }
+// 
 //
 //
 // /** parse_html_block(fp) -- attempt to parse an HTML block **************/
