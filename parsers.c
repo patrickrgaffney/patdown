@@ -20,7 +20,7 @@
 #include "parsers.h"
 #include "strings.h"
 
-/** The default size (in bytes) of a block buffer. **/
+/** The default base-size (in bytes) of a block buffer. **/
 #define BLK_BUF 256
 
 /** The byte-length of a newline character. **/
@@ -28,9 +28,9 @@
 
 /** Block parsing prototypes. **/
 bool block_parser(String *bytes);
-static int is_blank_line(uint8_t *data);
-static int is_paragraph(uint8_t *data);
-static int parse_paragraph(uint8_t *data);
+static ssize_t is_blank_line(uint8_t *data);
+static ssize_t is_paragraph(uint8_t *data);
+static ssize_t parse_paragraph(uint8_t *data);
 
 
 /*****
@@ -142,10 +142,7 @@ bool block_parser(String *bytes)
 //  *
 //  *  Each type of mdblock_t has its own parsing function.
 //  ************************************************************************/
-// static bool is_paragraph(void);
-// static Markdown *parse_paragraph(FILE *fp);
 // static bool is_setext_header(void);
-// static bool is_blank_line(void);
 // static bool is_atx_header(void);
 // static Markdown *parse_atx_header(void);
 // static bool is_horizontal_rule(void);
@@ -166,9 +163,10 @@ bool block_parser(String *bytes)
  *  data    An array of byte data (input utf8 string).
  *
  * RETURNS
- *  true if it is a node was added to the queue, false otherwise.
+ *  The size in bytes of the block that was parsed, 
+ *  or -1 if this line was not a paragraph.
  *****/
-static int is_paragraph(uint8_t *data)
+static ssize_t is_paragraph(uint8_t *data)
 {
     size_t ws = count_indentation(data);
     
@@ -186,9 +184,9 @@ static int is_paragraph(uint8_t *data)
  *  data    An array of byte data (input utf8 string).
  *
  * RETURNS
- *  true if it is a node was added to the queue, false otherwise.
+ *  The size in bytes of the block that was parsed.
  *****/
-static int parse_paragraph(uint8_t *data)
+static ssize_t parse_paragraph(uint8_t *data)
 {
     String *p = init_string(BLK_BUF);
     
@@ -203,7 +201,7 @@ static int parse_paragraph(uint8_t *data)
     
     p->data -= p->length;
     add_markdown(p, PARAGRAPH, NULL);
-    return p->length + 1;
+    return p->length + NEWLINE;
     
     // /* TODO: Check for line break around here. */
     // node = init_markdown(line, i, line->len - 1, PARAGRAPH);
@@ -267,14 +265,16 @@ static int parse_paragraph(uint8_t *data)
  *  data    An array of byte data (input utf8 string).
  *
  * RETURNS
- *  true if it is a node was added to the queue, false otherwise.
+ *  The size in bytes of the line that was parsed, 
+ *  or -1 if this line was not a blank line.
  *****/
-static int is_blank_line(uint8_t *data)
+static ssize_t is_blank_line(uint8_t *data)
 {
     size_t i = 0;
     
     while (isblank(*data)) data++, i++;
 
+    /* TODO: check for '\0' also. */
     /* Cannot have any non-WS chars on a blank line. */
     if (*data == '\n') {
         add_markdown(NULL, BLANK_LINE, NULL);
