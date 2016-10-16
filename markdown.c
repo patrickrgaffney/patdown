@@ -40,6 +40,10 @@ typedef struct Markdown
 static Markdown *head = NULL;   /* Head of the queue. */
 static Markdown *tail = NULL;   /* Tail of the queue. */
 
+/* Allow parser to prematurely set the return value of get_last_block()
+ * if we are parsing a multi-line block (i.e. paragraphs). */
+static mdblock_t currentblk = UNKNOWN;
+
 
 /** Private queue function prototypes. **/
 static Markdown *md_alloc_node(void);
@@ -86,6 +90,8 @@ bool add_markdown(String *s, const mdblock_t type, void *addtinfo)
     node->type     = type;
     node->addtinfo = addtinfo;
     node->next     = NULL;
+    
+    currentblk = UNKNOWN
     
     if (md_insert_queue(&head, &tail, node)) return true;
     else return false;
@@ -134,6 +140,22 @@ size_t get_queue_length(void)
     return len;
 }
 
+/*****
+ * Set the current block being parsed.
+ *
+ *  This is useful when parsing multi-line blocks (i.e. paragraphs).
+ *  This value will be returned from get_last_block() instead of
+ *  tail->type when available. The value of currentblk is reset to
+ *  UNKNOWN everytime add_markdown() is called.
+ *
+ * ARGUMENTS
+ *  blk     The new value of currentblk;
+ ******/
+void set_current_block(const mdblock_t blk)
+{
+    currentblk = blk;
+}
+
 
 /*****
  * Get the type of the last block added to the queue.
@@ -143,7 +165,10 @@ size_t get_queue_length(void)
  *****/
 mdblock_t get_last_block(void)
 {
-    if (tail) {
+    if (currentblk != UNKNOWN) {
+        return currentblk;
+    }
+    else if (tail) {
         return tail->type;
     }
     return UNKNOWN;
