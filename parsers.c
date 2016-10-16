@@ -23,8 +23,9 @@
 /** The base-size in bytes of a block buffer. **/
 #define BLK_BUF 256
 
-/** The byte-length of a newline. **/
+/** The byte-length of a newline, NULL-character. **/
 #define NEWLINE 1
+#define NULL_CHAR 1
 
 /** When calling the block-functions, we can either parse the 
  ** block -- call add_markdown() -- or just check the syntax. */
@@ -34,11 +35,12 @@
 /** Block parsing prototypes. **/
 static bool    block_parser(String *);
 static ssize_t is_blank_line(uint8_t *, bool);
-static ssize_t is_paragraph(uint8_t *, bool);
+static bool    is_still_paragraph(uint8_t *);
 static ssize_t parse_paragraph(uint8_t *);
 static ssize_t is_atx_header(uint8_t *, bool);
 static ssize_t parse_atx_header(uint8_t *, size_t, size_t);
 static ssize_t is_horizontal_rule(uint8_t *, bool);
+static ssize_t is_setext_header(uint8_t *);
 
 /************************************************************************
  * External Parsing API
@@ -147,26 +149,26 @@ static ssize_t is_blank_line(uint8_t *data, bool parse)
 
 
 /*****
- * Is the current line a paragraph?
+ * Is the current line a continuation of the current paragraph?
+ *
+ *  Checks to ensure that this new line is still part of the PARAGRAPH
+ *  that began on a previous line and is still *open*. No check is
+ *  made to determine if this line is a setext header, as that is done
+ *  by default everytime we *close* a PARAGRAPH block.
  *
  * ARGUMENTS
  *  data    An array of byte data (input utf8 string).
- *  parse   If true, parse the block; if false, just check syntax.
  *
  * RETURNS
- *  The size in bytes of the raw block, or -1 if not a paragraph.
+ *  true if this is still a PARAGRAPH, false if this line belongs 
+ *  to a different (*new*) block.
  *****/
-static ssize_t is_paragraph(uint8_t *data, bool parse)
+static bool is_still_paragraph(uint8_t *data)
 {
-    size_t ws = count_indentation(data);
-    
-    /* TODO: check against blocks that can interrupt paragraphs. */
-    
-    if (ws < 3) {
-        if (parse) return parse_paragraph(data);
-        else return 1;
-    }
-    return -1;
+    /* TODO: Add checks for code fence, blockquotes, and lists. */
+    return ((is_blank_line(data, CHK_SYNTX) < 0) &&
+            (is_atx_header(data, CHK_SYNTX) < 0) &&
+            (is_horizontal_rule(data, CHK_SYNTX) < 0));
 }
 
 
@@ -181,48 +183,42 @@ static ssize_t is_paragraph(uint8_t *data, bool parse)
  *****/
 static ssize_t parse_paragraph(uint8_t *data)
 {
-    String *p = init_string(BLK_BUF);
+    String *p  = init_string(BLK_BUF);
+    ssize_t sh = 0;             /* Length of the setext header. */
+    mdblock_t type = PARAGRAPH; /* or SETEXT_HEADER_x. */
+    set_current_block(PARAGRAPH);
     
-    /* Add characters until we reach a newline. */
-    while (*data && *data != '\n') {
-        if (p->length < p->allocd) {
-            *p->data++ = *data++;
-            p->length++;
+    do {
+        /* Add characters until we reach a newline. */
+        while (*data && *data != '\n') {
+            if (p->length < p->allocd - NULL_CHAR) {
+                *p->data++ = *data++;
+                p->length++;
+            }
+            else realloc_string(p, p->allocd + BLK_BUF);
         }
-        else realloc_string(p, p->allocd + BLK_BUF);
-    }
+        
+        /* Is this next line the same paragraph? Maybe a setext header? */
+        if (!is_still_paragraph(++data)) break;
+        if (((sh = is_setext_header(data))) > 0) {
+            if (*(data + count_indentation(data)) == '=') {
+                type = SETEXT_HEADER_1;
+            }
+            else type = SETEXT_HEADER_2;
+            break;
+        }
+        sh = 0;
+        
+        /* Add a newline and continue parsing. */
+        *p->data++ = '\n';
+        p->length++;
+        
+    } while (true);
+    
     *p->data = '\0';
     p->data -= p->length;
-    add_markdown(p, PARAGRAPH, NULL);
-    return p->length + NEWLINE;
-    
-    // /* TODO: Check for line break around here. */
-    // node = init_markdown(line, i, line->len - 1, PARAGRAPH);
-    // update_state(FREE_LINE, PARAGRAPH);
-    //
-    // /* Check for lazy continuation and setext headers. */
-    // while (fp) {
-    //     if (!(line = read_line(fp))) break;
-    //     i = indentation = count_indentation(line->string);
-    //
-    //     /* Change the type of the previous PARAGRAPH. */
-    //     if (is_setext_header()) {
-    //         if (line->string[i] == '=') node->type = SETEXT_HEADER_1;
-    //         else node->type = SETEXT_HEADER_2;
-    //         update_state(FREE_LINE, node->type);
-    //     }
-    //     /* Append the new PARAGRAPH to the previous PARAGRAPH. */
-    //     else if (is_paragraph()) {
-    //         line = create_substring(line, i, line->len - 1);
-    //         node->value = combine_strings("%s %s", node->value, line);
-    //         update_state(FREE_LINE, PARAGRAPH);
-    //     }
-    //     else {
-    //         update_state(KEEP_LINE, PARAGRAPH);
-    //         break;
-    //     }
-    // }
-    // return node;
+    add_markdown(p, type, NULL);
+    return p->length + sh + NEWLINE;
 }
 
 /*****
@@ -359,7 +355,7 @@ static ssize_t is_setext_header(uint8_t *data)
     data += ws;
     sc = (*data == '-' || *data == '=') ? *data : -1;
     
-    /* The last block must be a paragraph. */
+    /* The last (or current) block must be a paragraph. */
     if (get_last_block() != PARAGRAPH || sc == -1) return -1;
 
     /* Parse *n* number of consecutive setext characters. */
