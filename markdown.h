@@ -86,3 +86,6 @@ size_t get_queue_length(void);
 
 /** Get the type of the last block added to the queue. **/
 mdblock_t get_last_block(void);
+
+/** Set the current block being parsed. **/
+void set_current_block(const mdblock_t blk);

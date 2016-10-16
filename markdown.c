@@ -3,7 +3,7 @@
  * 
  *  author:     Pat Gaffney <pat@hypepat.com>
  *  created:    2016-06-15
- *  modified:   2016-10-13
+ *  modified:   2016-10-15
  *  project:    patdown
  * 
  ************************************************************************/
@@ -91,7 +91,7 @@ bool add_markdown(String *s, const mdblock_t type, void *addtinfo)
     node->addtinfo = addtinfo;
     node->next     = NULL;
     
-    currentblk = UNKNOWN
+    currentblk = UNKNOWN;
     
     if (md_insert_queue(&head, &tail, node)) return true;
     else return false;
