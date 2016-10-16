@@ -134,12 +134,11 @@ static bool block_parser(String *bytes)
  *****/
 static ssize_t is_blank_line(uint8_t *data, bool parse)
 {
-    size_t i = 0;
+    size_t i = 0;   /* Byte-index to increment and return. */
     
     while (isblank(*data)) data++, i++;
 
-    /* Cannot have any non-WS chars on a blank line. Also ensure 
-     * that if we reached EOF on the input, we include this block. */
+    /* Cannot have any non-WS chars on a blank line. */
     if (*data == '\n' || !(*data)) {
         if (parse) add_markdown(NULL, BLANK_LINE, NULL);
         return i + NEWLINE;
@@ -151,10 +150,10 @@ static ssize_t is_blank_line(uint8_t *data, bool parse)
 /*****
  * Is the current line a continuation of the current paragraph?
  *
- *  Checks to ensure that this new line is still part of the PARAGRAPH
- *  that began on a previous line and is still *open*. No check is
- *  made to determine if this line is a setext header, as that is done
- *  by default everytime we *close* a PARAGRAPH block.
+ *  Check to ensure that this new line is still part of the PARAGRAPH
+ *  that began on a previous line. No check is made to determine if 
+ *  this line is a setext header -- that is done by default everytime 
+ *  we *close* a PARAGRAPH block.
  *
  * ARGUMENTS
  *  data    An array of byte data (input utf8 string).
@@ -184,9 +183,9 @@ static bool is_still_paragraph(uint8_t *data)
 static ssize_t parse_paragraph(uint8_t *data)
 {
     String *p  = init_string(BLK_BUF);
-    ssize_t sh = 0;             /* Length of the setext header. */
-    mdblock_t type = PARAGRAPH; /* or SETEXT_HEADER_x. */
+    mdblock_t type = PARAGRAPH;
     set_current_block(PARAGRAPH);
+    ssize_t sh = 0;     /* Length of a possible setext header. */
     
     do {
         /* Add characters until we reach a newline. */
@@ -198,7 +197,7 @@ static ssize_t parse_paragraph(uint8_t *data)
             else realloc_string(p, p->allocd + BLK_BUF);
         }
         
-        /* Is this next line the same paragraph? Maybe a setext header? */
+        /* Is this next line the same paragraph? Setext header? */
         if (!is_still_paragraph(++data)) break;
         if (((sh = is_setext_header(data))) > 0) {
             if (*(data + count_indentation(data)) == '=') {
@@ -276,9 +275,6 @@ static ssize_t parse_atx_header(uint8_t *data, size_t hashes, size_t i)
         }
         else realloc_string(h, h->allocd + BLK_BUF);
     }
-
-    /* Add the current length to the index, even if we retract
-     * some characters, increment past this entire line. */
     i += h->length;
 
     /* Remove any trailing spaces before the newline. */
@@ -300,6 +296,7 @@ static ssize_t parse_atx_header(uint8_t *data, size_t hashes, size_t i)
         /* Otherwise, we just removed spaces -- make room for '\0'. */
         else h->data++;
     }
+    
     *h->data = '\0';
     h->data -= h->length;
     add_markdown(h, (ATX_HEADER_1 - 1) + hashes, NULL);
