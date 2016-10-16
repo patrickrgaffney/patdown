@@ -117,8 +117,7 @@ static bool block_parser(String *bytes)
     }
     
     /* Return true only if we added at least one block to the queue. */
-    if (doc == bytes->data) return false;
-    return true;
+    return (doc != bytes->data);
 }
 
 
