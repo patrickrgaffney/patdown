@@ -249,10 +249,12 @@ static ssize_t is_atx_header(uint8_t *data, bool parse)
     if (hashes < 1 || hashes > 6 || (*data != 0x20 && *data != '\t')) {
         return -1;
     }
-    if (parse) {
-        return parse_atx_header(++data, hashes, ++i);
-    }
-    else return ++i;
+    
+    /* Parse blanks until we reach a non-blank byte. */
+    while (isblank(*data)) i++, data++;
+    
+    if (parse) return parse_atx_header(data, hashes, i);
+    else return i;
 }
 
 
