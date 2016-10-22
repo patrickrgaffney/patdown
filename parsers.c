@@ -287,26 +287,24 @@ static ssize_t parse_atx_header(uint8_t *data, size_t hashes, size_t i)
     }
     i += h->length;
 
-    /* Remove any trailing spaces before the newline. */
-    if (*(h->data - 1) == 0x20 && h->data--) {
+    /* Remove any trailing spaces/hashes before the newline. */
+    h->data--;
+    if (*h->data == 0x20 || *h->data == '#') {
         while (*h->data == 0x20) h->data--, h->length--;
-
-        /* Remove any trailing hashes if they exist. */
         while (*h->data == '#') h->data--, h->length--;
-    
-        /* Required space after trailing hashes and the end of the heading. */
+        
+        /* Required space before trailing sequence of hashes. */
         if (*h->data == 0x20) {
             while (*h->data == 0x20) h->data--, h->length--;
+        }
+        /* If the space was missing, keep the trailing hashes. */
+        else {
             h->data++;
-        }
-        /* If the required space was missing, keep the trailing hashes. */
-        else if (*h->data == '#') {
             while (*h->data == '#') h->data++, h->length++;
+            h->data--;
         }
-        /* Otherwise, we just removed spaces -- make room for '\0'. */
-        else h->data++;
     }
-    
+    h->data++;
     *h->data = '\0';
     h->data -= h->length;
     add_markdown(h, (ATX_HEADER_1 - 1) + hashes, NULL);
