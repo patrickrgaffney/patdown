@@ -189,8 +189,12 @@ static ssize_t parse_paragraph(uint8_t *data)
     mdblock_t type = PARAGRAPH;
     set_current_block(PARAGRAPH);
     ssize_t sh = 0;     /* Length of a possible setext header. */
+    size_t  ws = 0;     /* Length of possible leading line WS. */
     
     do {
+        /* Remove all leading WS on the line. */
+        while (isblank(*data)) data++, ws++;
+        
         /* Add characters until we reach a newline. */
         while (*data && *data != '\n') {
             if (p->length < p->allocd - NULL_CHAR) {
@@ -220,7 +224,7 @@ static ssize_t parse_paragraph(uint8_t *data)
     *p->data = '\0';
     p->data -= p->length;
     add_markdown(p, type, NULL);
-    return p->length + sh + NEWLINE;
+    return p->length + sh + + ws + NEWLINE;
 }
 
 
