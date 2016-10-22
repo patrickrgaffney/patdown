@@ -13,8 +13,6 @@
 #include <stdlib.h>
 #include <stdbool.h>
 
-#include <stdio.h>
-
 #include "links.h"
 #include "markdown.h"
 #include "parsers.h"
@@ -41,6 +39,7 @@ static ssize_t is_atx_header(uint8_t *, bool);
 static ssize_t parse_atx_header(uint8_t *, size_t, size_t);
 static ssize_t is_horizontal_rule(uint8_t *, bool);
 static ssize_t is_setext_header(uint8_t *);
+static ssize_t parse_indented_code_block(uint8_t *);
 
 /************************************************************************
  * External Parsing API
@@ -74,7 +73,7 @@ bool markdown(String *bytes)
  * Block Parsing Functions
  ************************************************************************/
 
-/*****
+/**
  * Parse a String of input bytes into a Markdown queue.
  *
  * ARGUMENTS
@@ -82,7 +81,7 @@ bool markdown(String *bytes)
  *
  * RETURNS
  *  true if the parsing completed, false if no nodes were parsed.
- *****/
+ */
 static bool block_parser(String *bytes)
 {
     int len = 0;                    /* Length of last block. */
@@ -97,6 +96,12 @@ static bool block_parser(String *bytes)
         /* Check for blank line. */
         else if (((len = is_blank_line(doc, PARSE_BLK))) > 0) {
             doc += len;
+            continue;
+        }
+        
+        /* Check for indented code block. */
+        else if (ws > 3) {
+            doc += parse_indented_code_block(doc);
             continue;
         }
         
@@ -121,7 +126,7 @@ static bool block_parser(String *bytes)
 }
 
 
-/*****
+/**
  * Is the current line a blank line?
  *
  * ARGUMENTS
@@ -130,13 +135,12 @@ static bool block_parser(String *bytes)
  *
  * RETURNS
  *  The size in bytes of the raw block, or -1 if not a blank line.
- *****/
+ */
 static ssize_t is_blank_line(uint8_t *data, bool parse)
 {
     size_t i = 0;   /* Byte-index to increment and return. */
+    while (*data && isblank(*data)) data++, i++;
     
-    while (isblank(*data)) data++, i++;
-
     /* Cannot have any non-WS chars on a blank line. */
     if (*data == '\n' || !(*data)) {
         if (parse) add_markdown(NULL, BLANK_LINE, NULL);
@@ -146,7 +150,7 @@ static ssize_t is_blank_line(uint8_t *data, bool parse)
 }
 
 
-/*****
+/**
  * Is the current line a continuation of the current paragraph?
  *
  *  Check to ensure that this new line is still part of the PARAGRAPH
@@ -160,7 +164,7 @@ static ssize_t is_blank_line(uint8_t *data, bool parse)
  * RETURNS
  *  true if this is still a PARAGRAPH, false if this line belongs 
  *  to a different (*new*) block.
- *****/
+ */
 static bool is_still_paragraph(uint8_t *data)
 {
     /* TODO: Add checks for code fence, blockquotes, and lists. */
@@ -170,7 +174,7 @@ static bool is_still_paragraph(uint8_t *data)
 }
 
 
-/*****
+/**
  * Parse a paragraph and add it to the queue.
  *
  * ARGUMENTS
@@ -178,10 +182,10 @@ static bool is_still_paragraph(uint8_t *data)
  *
  * RETURNS
  *  The size in bytes of the block that was parsed.
- *****/
+ */
 static ssize_t parse_paragraph(uint8_t *data)
 {
-    String *p  = init_string(BLK_BUF);
+    String *p = init_string(BLK_BUF);
     mdblock_t type = PARAGRAPH;
     set_current_block(PARAGRAPH);
     ssize_t sh = 0;     /* Length of a possible setext header. */
@@ -219,7 +223,8 @@ static ssize_t parse_paragraph(uint8_t *data)
     return p->length + sh + NEWLINE;
 }
 
-/*****
+
+/**
  * Is the current line an ATX header?
  *
  * ARGUMENTS
@@ -228,7 +233,7 @@ static ssize_t parse_paragraph(uint8_t *data)
  *
  * RETURNS
  *  The size in bytes of the raw block, or -1 if not a ATX header.
- *****/
+ */
 static ssize_t is_atx_header(uint8_t *data, bool parse)
 {
     size_t ws = count_indentation(data);
@@ -251,7 +256,7 @@ static ssize_t is_atx_header(uint8_t *data, bool parse)
 }
 
 
-/*****
+/**
  * Parse an ATX header and add it to the queue.
  *
  * ARGUMENTS
@@ -261,7 +266,7 @@ static ssize_t is_atx_header(uint8_t *data, bool parse)
  *
  * RETURNS
  *  The size in bytes of the block that was parsed.
- *****/
+ */
 static ssize_t parse_atx_header(uint8_t *data, size_t hashes, size_t i)
 {
     String *h = init_string(BLK_BUF);
@@ -303,7 +308,7 @@ static ssize_t parse_atx_header(uint8_t *data, size_t hashes, size_t i)
 }
 
 
-/*****
+/**
  * Is the current line a horizontal rule?
  *
  * ARGUMENTS
@@ -312,7 +317,7 @@ static ssize_t parse_atx_header(uint8_t *data, size_t hashes, size_t i)
  *
  * RETURNS
  *  The size in bytes of the raw block, or -1 if not a horizontal rule.
- *****/
+ */
 static ssize_t is_horizontal_rule(uint8_t *data, bool parse)
 {
     size_t ws = count_indentation(data);
@@ -360,63 +365,54 @@ static ssize_t is_setext_header(uint8_t *data)
     /* Parse *n* number of spaces. */
     while (*data && (*data == 0x20)) data++, i++;
 
-   /* No other characters may occur inline. */
-   if (*data == '\n' || !(*data)) {
+    /* No other characters may occur inline. */
+    if (*data == '\n' || !(*data)) {
        return i + NEWLINE;
-   }
-   return -1;
+    }
+    return -1;
 }
 
 
-// /** is_indented_code_block() -- are we in an indented code block? *******/
-// static bool is_indented_code_block(void)
-// {
-//     return (lastBlock != PARAGRAPH && indentation > 3);
-// }
-//
-//
-// /** parse_indented_code_block(fp) -- attempt to parse indented code block */
-// static Markdown *parse_indented_code_block(FILE *fp)
-// {
-//     size_t i = indentation;
-//     Markdown *node = NULL;      /* Node to be returned. */
-//     Markdown *temp = NULL;      /* Node to hold temporary parsing data. */
-//     char *fmt_string;           /* Format string for combine_strings(). */
-//
-//     if (!is_indented_code_block()) return NULL;
-//
-//     node = init_markdown(line, 4, line->len - 1, INDENTED_CODE_BLOCK);
-//     update_state(FREE_LINE, INDENTED_CODE_BLOCK);
-//
-//     /* Continue parsing until we exit the code block (reach a blank line
-//      * followed by the start of a different block). A blank line followed
-//      * by a line with 4 spaces of indentation will continue this block. */
-//     while (true) {
-//         if (!(line = read_line(fp))) break;
-//         indentation = count_indentation(line->string);
-//
-//         if (is_indented_code_block()) {
-//             /* Add additional newline if last raw line was empty. */
-//             if (lastBlock == BLANK_LINE) fmt_string = "%s\n\n%s";
-//             else fmt_string = "%s\n%s";
-//
-//             /* This is a continutation of the code block. */
-//             line = create_substring(line, 4, line->len - 1);
-//             node->value = combine_strings(fmt_string, node->value, line);
-//             update_state(FREE_LINE, INDENTED_CODE_BLOCK);
-//         }
-//         else {
-//             /* Check for a blank line -- save it for later if found. */
-//             if (is_blank_line()) update_state(FREE_LINE, BLANK_LINE);
-//             else {
-//                 update_state(KEEP_LINE, INDENTED_CODE_BLOCK);
-//                 break;
-//             }
-//         }
-//     }
-//     return node;
-// }
-//
+static ssize_t parse_indented_code_block(uint8_t *data)
+{
+    size_t i   = 0;     /* Byte-index to increment and return. */
+    size_t ws  = 0;     /* White space index. */
+    String *c  = init_string(BLK_BUF);
+    
+    do {
+        /* Increment one tab or four spaces. */
+        if (((ws = count_indentation(data))) > 3) {
+            if (*data == '\t') data++, i++;
+            else data += 4, i += 4;
+        }
+        else break;
+        
+        /* Add characters until we reach a newline. */
+        while (*data && *data != '\n') {
+            if (c->length < c->allocd - NEWLINE) {
+                *c->data++ = *data++;
+                c->length++;
+            }
+            else realloc_string(c, c->allocd + BLK_BUF);
+        }
+        
+        /* Are we still in an indented code block? */
+        if (((ws = count_indentation(++data))) > 3) {
+            *c->data++ = '\n';
+            c->length++;
+            continue;
+        }
+        break;
+        
+    } while (true);
+    
+    *c->data = '\0';
+    c->data -= c->length;
+    add_markdown(c, INDENTED_CODE_BLOCK, NULL);
+    return i + c->length + NEWLINE;
+}
+
+
 // /* Maximum length of an info string on a fenced code block. */
 // #define INFO_STRING_MAX 20
 //
