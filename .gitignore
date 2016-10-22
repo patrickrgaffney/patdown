@@ -2,7 +2,7 @@
 *.o
 
 # Executable files
-*.out
+a.out
 patdown
 test
 
@@ -14,6 +14,7 @@ test
 *.md
 !README.md
 !TODO.md
+!tests/parser/*.md
 
 # valgrind files
 *.dSYM
