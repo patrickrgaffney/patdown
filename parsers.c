@@ -13,6 +13,8 @@
 #include <stdlib.h>
 #include <stdbool.h>
 
+#include <stdio.h>
+
 #include "links.h"
 #include "markdown.h"
 #include "parsers.h"
@@ -309,7 +311,7 @@ static ssize_t parse_atx_header(uint8_t *data, size_t hashes, size_t i)
 
 
 /**
- * Is the current line a horizontal rule?
+ * Is the current line a horizontal rule? If so, parse it.
  *
  * ARGUMENTS
  *  data    An array of byte data (input utf8 string).
@@ -333,7 +335,7 @@ static ssize_t is_horizontal_rule(uint8_t *data, bool parse)
     if (ws > 3 || hr == -1) return -1;
 
     /* Parse *n* number of spaces and *n* number of rule characters. */
-    while (*data && (*data == 0x22 || *data == hr)) {
+    while (*data == 0x20 || *data == hr) {
         if (*data++ == hr) rc++;
         i++;
     }
@@ -341,7 +343,7 @@ static ssize_t is_horizontal_rule(uint8_t *data, bool parse)
     /* No other characters may occur inline. */
     if ((*data == '\n' || !(*data)) && rc > 2) {
         if (parse) add_markdown(NULL, HORIZONTAL_RULE, NULL);
-        return i + NEWLINE;
+        return !(*data) ? i : (i + NEWLINE);
     }
     return -1;
 }
