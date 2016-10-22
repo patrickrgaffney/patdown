@@ -13,8 +13,6 @@
 #include <stdlib.h>
 #include <stdbool.h>
 
-#include <stdio.h>
-
 #include "links.h"
 #include "markdown.h"
 #include "parsers.h"
@@ -396,9 +394,9 @@ static ssize_t is_setext_header(uint8_t *data)
  */ 
 static ssize_t parse_indented_code_block(uint8_t *data)
 {
-    size_t i   = 0;     /* Byte-index to increment and return. */
-    size_t ws  = 0;     /* White space index. */
-    String *c  = init_string(BLK_BUF);
+    size_t i  = 0;      /* Byte-index to increment and return. */
+    size_t ws = 0;      /* White space index. */
+    String *c = init_string(BLK_BUF);
     
     ws = count_indentation(data);
     do {
