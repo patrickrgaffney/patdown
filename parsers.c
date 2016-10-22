@@ -347,6 +347,15 @@ static ssize_t is_horizontal_rule(uint8_t *data, bool parse)
 }
 
 
+/**
+ * Is the current line a setext header? 
+ *
+ * ARGUMENTS
+ *  data    An array of byte data (input utf8 string).
+ *
+ * RETURNS
+ *  The size in bytes of the raw block, or -1 if not a setext header.
+ */
 static ssize_t is_setext_header(uint8_t *data)
 {
     size_t ws = count_indentation(data);
@@ -373,15 +382,26 @@ static ssize_t is_setext_header(uint8_t *data)
 }
 
 
+/**
+ * Parse an ATX header and add it to the queue.
+ *
+ * ARGUMENTS
+ *  data    An array of byte data (input utf8 string).
+ *
+ * RETURNS
+ *  The size in bytes of the raw block, or -1 if not an indented
+ *  code block.
+ */ 
 static ssize_t parse_indented_code_block(uint8_t *data)
 {
     size_t i   = 0;     /* Byte-index to increment and return. */
     size_t ws  = 0;     /* White space index. */
     String *c  = init_string(BLK_BUF);
     
+    ws = count_indentation(data);
     do {
         /* Increment one tab or four spaces. */
-        if (((ws = count_indentation(data))) > 3) {
+        if (ws > 3) {
             if (*data == '\t') data++, i++;
             else data += 4, i += 4;
         }
