@@ -31,7 +31,12 @@ BOLD=$'\e[1m'
 RED=$'\e[31m'
 RESET=$'\e[0m'
 
-# Build the patdown executable doesn't exist.
+## Totals ##
+PASSED=0
+FAILED=0
+MISSING=0
+
+# Build the patdown executable if it doesn't exist.
 if [ -x "$BINARY" ]; then
     echo -e "$BOLD Run the parser tests for $BOLD$PROG$RESET:\n"
 else 
@@ -59,6 +64,7 @@ do
             # Test their respective equality.
             if [[ $answer == $result ]]; then
                 echo -e "$BOLD$GREEN --> 🍺  PASSED: $testfile $RESET"
+                let PASSED++
             else
                 echo -e "$BOLD$RED --> 🖕🏽  FAILED: $testfile $RESET\n"
                 echo -e "$BOLD input:$RESET"
@@ -67,9 +73,16 @@ do
                 echo -e "$result"
                 echo -e "$BOLD assertion:$RESET"
                 echo -e "$answer\n"
+                let FAILED++
             fi
         else
             echo -e "$BOLD$RED --> 📁  FAILED: $outfile does not exist!"
+            let MISSING++
         fi
     fi
 done
+
+echo -e 
+echo -e " 🍺 $BOLD$GREEN $PASSED tests $RESET"
+echo -e " 🖕🏽 $BOLD$RED $FAILED tests $RESET"
+echo -e " 📁 $BOLD $MISSING tests $RESET"
