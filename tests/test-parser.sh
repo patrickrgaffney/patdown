@@ -23,7 +23,7 @@ DIR="parser"
 BASEDIR="$(dirname $PWD)"
 TESTDIR="tests"
 BINARY="$BASEDIR/$PROG"
-MAKE="cd $BASEDIR; make; cd $BASEDIR/$TESTDIR"
+MAKECMD="cd $BASEDIR; make; cd $BASEDIR/$TESTDIR"
 
 ## Colors ##
 GREEN=$'\e[32m'
@@ -31,13 +31,13 @@ BOLD=$'\e[1m'
 RED=$'\e[31m'
 RESET=$'\e[0m'
 
-# Exit if the patdown executable doesn't exist.
+# Build the patdown executable doesn't exist.
 if [ -x "$BINARY" ]; then
     echo -e "$BOLD Run the parser tests for $BOLD$PROG$RESET:\n"
 else 
     echo -e "$BOLD$RED ERROR:$RESET$BOLD No $PROG executable found"
     echo -e " No worries though.. I'll cook something up...$RESET\n"
-    eval $MAKE
+    eval $MAKECMD
     echo -e
     echo -e "$BOLD Run the parser tests for $BOLD$PROG$RESET:\n"
 fi
@@ -61,10 +61,12 @@ do
                 echo -e "$BOLD$GREEN --> 🍺  PASSED: $testfile $RESET"
             else
                 echo -e "$BOLD$RED --> 🖕🏽  FAILED: $testfile $RESET"
-                echo -e "\t patdown output:\n"
+                echo -e
+                echo -e "$BOLD patdown output:$RESET"
                 echo -e "$result"
-                echo -e "\t assertion:\n"
+                echo -e "$BOLD assertion:$RESET"
                 echo -e "$answer"
+                echo -e
             fi
         else
             echo -e "$BOLD$RED --> 📁  FAILED: $outfile does not exist!"
