@@ -20,7 +20,10 @@
 ## Constants ##
 PROG=$'patdown'
 DIR="parser"
-BINARY="$(dirname $PWD)/$PROG"
+BASEDIR="$(dirname $PWD)"
+TESTDIR="tests"
+BINARY="$BASEDIR/$PROG"
+MAKE="cd $BASEDIR; make; cd $BASEDIR/$TESTDIR"
 
 ## Colors ##
 GREEN=$'\e[32m'
@@ -28,7 +31,16 @@ BOLD=$'\e[1m'
 RED=$'\e[31m'
 RESET=$'\e[0m'
 
-echo "$BOLD Run the parser tests for $BOLD$PROG$RESET:"
+# Exit if the patdown executable doesn't exist.
+if [ -x "$BINARY" ]; then
+    echo -e "$BOLD Run the parser tests for $BOLD$PROG$RESET:\n"
+else 
+    echo -e "$BOLD$RED ERROR:$RESET$BOLD No $PROG executable found"
+    echo -e " No worries though.. I'll cook something up...$RESET\n"
+    eval $MAKE
+    echo -e
+    echo -e "$BOLD Run the parser tests for $BOLD$PROG$RESET:\n"
+fi
 
 # Test every file in $DIR with the .md extension.
 for testfile in "$DIR"/*.md
