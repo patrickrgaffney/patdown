@@ -60,13 +60,13 @@ do
             if [[ $answer == $result ]]; then
                 echo -e "$BOLD$GREEN --> 🍺  PASSED: $testfile $RESET"
             else
-                echo -e "$BOLD$RED --> 🖕🏽  FAILED: $testfile $RESET"
-                echo -e
+                echo -e "$BOLD$RED --> 🖕🏽  FAILED: $testfile $RESET\n"
+                echo -e "$BOLD input:$RESET"
+                echo -e "$(< $testfile)"
                 echo -e "$BOLD patdown output:$RESET"
                 echo -e "$result"
                 echo -e "$BOLD assertion:$RESET"
-                echo -e "$answer"
-                echo -e
+                echo -e "$answer\n"
             fi
         else
             echo -e "$BOLD$RED --> 📁  FAILED: $outfile does not exist!"
