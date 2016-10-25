@@ -120,15 +120,29 @@ String *init_string(const size_t size)
 /**
  * Reallocate a String node's data member to contain size elements.
  *
+ *  Often, this function is called after some parsing has begun, which
+ *  will inevitably increment the data member of str. Becuase of this,
+ *  we subtract str by the number of bytes currently stored in the
+ *  array to ensure we are reallocating on the original pointer -- 
+ *  which would be str->data[0].
+ *
+ *  The str->data array is then incremented by the same amount after
+ *  the reallocation -- putting it back into the state at which this
+ *  function was called.
+ *
  * ARGUMENTS
  *  str     The String node whose member should be reallocated.
  *  size    The new size (in bytes) of the requested memory.
  */
 void realloc_string(String *str, const size_t size)
 {
+    if (str->length > 0) str->data -= str->length;
+    
     str->data = realloc(str->data, sizeof(uint8_t) * size);
     str->allocd = size;
     if (!str->data) throw_fatal_memory_error();
+    
+    if (str->length > 0) str->data += str->length;
 }
 
 
