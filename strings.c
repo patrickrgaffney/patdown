@@ -59,7 +59,7 @@ static uint8_t *__alloc_data_array(const size_t size)
 size_t count_indentation(uint8_t *data)
 {
     size_t ws = 0;
-    while (*data && isblank(*data)) {
+    while (isblank(*data)) {
         if (*data++ == 0x20) ws++;
         else ws += 4;
     }
