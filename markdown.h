@@ -89,3 +89,29 @@ mdblock_t get_last_block(void);
 
 /** Set the current block being parsed. **/
 void set_current_block(const mdblock_t);
+
+
+/************************************************************************
+ * Markdown Block Extensions
+ ************************************************************************/
+
+/* Maximum length of an info string on a fenced code block. */
+#define INFO_STR_MAX 20
+
+/**
+ * A type to hold additional information about a fenced code block.
+ *
+ *  The members of this type are used to parse and write the fenced
+ *  code block as output.
+ */
+typedef struct CodeBlk
+{
+    int8_t lang[INFO_STR_MAX];  /* Info string on the opening fence. */
+    size_t ws;                  /* Indentation on the opening fence. */
+    size_t fl;                  /* Length of the opening code fence. */
+    int8_t fc;                  /* Code fence character (`|~). */
+} CodeBlk;
+
+
+/** Allocate a CodeBlk structure. **/
+CodeBlk *init_code_blk(void);

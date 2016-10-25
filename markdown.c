@@ -44,10 +44,13 @@ static Markdown *tail = NULL;   /* Tail of the queue. */
  * if we are parsing a multi-line block (i.e. paragraphs). */
 static mdblock_t currentblk = UNKNOWN;
 
-/** Private queue function prototypes. **/
+/** Private Markdown queue functions. **/
 static Markdown *__md_alloc_node(void);
 static bool      __md_insert_queue(Markdown **, Markdown **, Markdown *);
 static void      __free_markdown_node(Markdown *);
+
+/** Private Markdown extension functions. **/
+static CodeBlk *__alloc_code_blk(void);
 
 
 /**
@@ -245,4 +248,37 @@ static void __free_markdown_node(Markdown *node)
         __free_markdown_node(node->next);
         free(node);
     }
+}
+
+
+/************************************************************************
+ * Markdown Block Extensions
+ ************************************************************************/
+
+/**
+ * Allocate memory for a CodeBlk structure.
+ *
+ * ERRORS   
+ *  fatal_memory_error  Memory could not be allocated.
+ *
+ * RETURNS
+ *  A pointer to the new structure.
+ */
+static CodeBlk *__alloc_code_blk(void)
+{
+    CodeBlk *cb = malloc(sizeof(CodeBlk));
+    if (!cb) throw_fatal_memory_error();
+    return cb;
+}
+
+
+/**
+ * Initialize a CodeBlk structure.
+ *
+ * RETURNS
+ *  A pointer to the new structure.
+ */
+CodeBlk *init_code_blk(void)
+{
+    return __alloc_code_blk();
 }
