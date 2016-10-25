@@ -134,6 +134,7 @@ int main(int argc, char **argv)
     if (iFileName) close_file(ifp);
     if (oFileName) close_file(ofp);
 
+    free_markdown();
     
     return EXIT_SUCCESS;
 }
