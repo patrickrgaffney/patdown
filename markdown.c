@@ -1,9 +1,9 @@
-/*****
+/**
  * markdown.c -- markdown queue implementation
  * 
  *  author:     Pat Gaffney <pat@hypepat.com>
  *  created:    2016-06-15
- *  modified:   2016-10-15
+ *  modified:   2016-10-24
  *  project:    patdown
  * 
  ************************************************************************/
@@ -44,13 +44,12 @@ static Markdown *tail = NULL;   /* Tail of the queue. */
  * if we are parsing a multi-line block (i.e. paragraphs). */
 static mdblock_t currentblk = UNKNOWN;
 
-
 /** Private queue function prototypes. **/
 static Markdown *md_alloc_node(void);
 static bool md_insert_queue(Markdown **head, Markdown **tail, Markdown *node);
 
 
-/*****
+/**
  * Allocate memory for a new Markdown block.
  *
  * ERRORS
@@ -58,7 +57,7 @@ static bool md_insert_queue(Markdown **head, Markdown **tail, Markdown *node);
  *
  * RETURNS
  *  A pointer to the new Markdown node.
- *****/
+ */
 static Markdown *md_alloc_node(void)
 {
     Markdown *node = NULL;
@@ -68,7 +67,7 @@ static Markdown *md_alloc_node(void)
 }
 
 
-/*****
+/**
  * Add a Markdown node to the queue with a given set of data.
  *
  * ARGUMENTS
@@ -78,7 +77,7 @@ static Markdown *md_alloc_node(void)
  *
  * RETURNS
  *  true if node is inserted, false if node is NULL.
- *****/
+ */
 bool add_markdown(String *s, const mdblock_t type, void *addtinfo)
 {
     Markdown *node = md_alloc_node();
@@ -98,7 +97,7 @@ bool add_markdown(String *s, const mdblock_t type, void *addtinfo)
 }
 
 
-/*****
+/**
  * Insert a Markdown block into the queue at the tail.
  *
  * ARGUMENTS
@@ -108,7 +107,7 @@ bool add_markdown(String *s, const mdblock_t type, void *addtinfo)
  * 
  * RETURNS
  *  true if node is inserted, false if node is NULL.
- *****/
+ */
 static bool md_insert_queue(Markdown **head, Markdown **tail, Markdown *node)
 {
     if (node) {
@@ -120,12 +119,12 @@ static bool md_insert_queue(Markdown **head, Markdown **tail, Markdown *node)
     else return false;
 }
 
-/*****
+/**
  * Get the number of parsed Markdown blocks.
  *
  * RETURNS
  *  The number of nodes in the queue.
- *****/
+ */
 size_t get_queue_length(void)
 {
     size_t len = 0;
@@ -140,7 +139,7 @@ size_t get_queue_length(void)
     return len;
 }
 
-/*****
+/**
  * Set the current block being parsed.
  *
  *  This is useful when parsing multi-line blocks (i.e. paragraphs).
@@ -150,19 +149,19 @@ size_t get_queue_length(void)
  *
  * ARGUMENTS
  *  blk     The new value of currentblk;
- ******/
+ */
 void set_current_block(const mdblock_t blk)
 {
     currentblk = blk;
 }
 
 
-/*****
+/**
  * Get the type of the last block added to the queue.
  *
  * RETURNS
  *  The mdblock_t of tail.
- *****/
+ */
 mdblock_t get_last_block(void)
 {
     if (currentblk != UNKNOWN) {
@@ -175,11 +174,11 @@ mdblock_t get_last_block(void)
 }
 
 
-/*****
+/**
  * Debug-print the entire Markdown queue.
  *
  *  This function is used for debugging purposes only.
- *****/
+ */
 void debug_print_queue(void)
 {
     Markdown *tmp = head;
@@ -218,9 +217,9 @@ void debug_print_queue(void)
 }
 
 
-/*****
+/**
  * Free all the Markdown nodes in the queue.
- *****/
+ */
 void free_markdown(void)
 {
     if ((tail = head)) {

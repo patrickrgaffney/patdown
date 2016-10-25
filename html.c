@@ -1,4 +1,4 @@
-/*****
+/**
  * html.c -- html output writer
  * 
  *  author:     Pat Gaffney <pat@hypepat.com>

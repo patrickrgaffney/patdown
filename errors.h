@@ -1,4 +1,4 @@
-/***** 
+/**
  * errors.h -- methods for throwing fatal and non-fatal errors
  * 
  *  author:     Pat Gaffney <pat@hypepat.com>
@@ -14,6 +14,7 @@
  * Fatal Errors
  *
  *  All of these errors cause program execution to be halted.
+ *
  ************************************************************************/
 
 /** Memory could not be allocated. **/

@@ -1,9 +1,9 @@
-/*****
+/**
  * parsers.c -- markdown parsing methods
  * 
  *  author:     Pat Gaffney <pat@hypepat.com>
  *  created:    2016-06-15
- *  modified:   2016-10-14
+ *  modified:   2016-10-24
  *  project:    patdown
  * 
  ************************************************************************/
@@ -21,7 +21,7 @@
 /** The base-size in bytes of a block buffer. **/
 #define BLK_BUF 256
 
-/** The byte-length of a newline, NULL-character. **/
+/** The byte-length of a newline / NULL-terminating character. **/
 #define NEWLINE 1
 #define NULL_CHAR 1
 
@@ -45,21 +45,18 @@ static ssize_t parse_indented_code_block(uint8_t *);
  * External Parsing API
  ************************************************************************/
 
-/*****
+/**
  * Call upon the parsers and generate the Markdown queue.
  *
  *  This function is the external API for the parser. Call it with 
  *  a bag of bytes and it will parse the input.
- *
- *  If there is an error while parsing -- and the error is non-
- *  fatal -- it will be displayed as a dialog to stdout.
  *
  * ARGUMENTS
  *  bytes   A string of raw bytes read from the input file.
  *
  * RETURNS
  *  true if the parsing completed, false if no nodes were parsed.
- *****/
+ */
 bool markdown(String *bytes)
 {
     if (!bytes->data || bytes->length == 0) return false;

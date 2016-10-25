@@ -1,9 +1,9 @@
-/***** 
+/**
  * main.c -- parse command-line arguments and open files
  * 
  *  author:     Pat Gaffney <pat@hypepat.com>
  *  created:    2016-06-15
- *  modified:   2016-10-13
+ *  modified:   2016-10-24
  *  project:    patdown
  * 
  ************************************************************************/
@@ -16,6 +16,7 @@
 #include "errors.h"
 #include "files.h"
 #include "output.h"
+#include "markdown.h"
 #include "parsers.h"
 #include "strings.h"
 
@@ -24,6 +25,7 @@ static const char *_version = "0.0.1";
 static const char *_author  = "Pat Gaffney";
 static const char *_email   = "pat@hypepat.com";
 
+/** Print the version dialog. **/
 static void __print_version()
 {
     fprintf(stderr, "%s %s\n", _program, _version);
@@ -32,6 +34,8 @@ static void __print_version()
     fprintf(stderr, "Written by %s <%s>\n", _author, _email);
 }
 
+
+/** Print the help dialog. **/
 static void __print_help()
 {
     __print_version();
@@ -50,10 +54,10 @@ static void __print_help()
 
 
 /************************************************************************
- * @section Main Function
+ * Main Function
  ************************************************************************/
 
-/*****
+/**
  * Begin program execution and parse command-line arguments.
  *
  * ERRORS
@@ -61,7 +65,7 @@ static void __print_help()
  *
  * RETURNS
  *  0 or EXIT_SUCCESS.
- *****/
+ */
 int main(int argc, char **argv)
 {   
     char *iFileName  = NULL;        /* Input file name. */

@@ -1,9 +1,9 @@
-/*****
+/**
  * strings.c -- string handling utilities
  * 
  *  author:     Pat Gaffney <pat@hypepat.com>
  *  created:    2016-06-15
- *  modified:   2016-10-13
+ *  modified:   2016-10-24
  *  project:    patdown
  * 
  ************************************************************************/
@@ -19,10 +19,13 @@
 /************************************************************************
  * Data Array Utilities
  *
- *  A data array is defined to be an array of uint8_t elements.
+ *  A data array is defined to be an array of uint8_t elements. Each
+ *  element of these arrays corresponds to one *byte*. An array of these
+ *  bytes is used to store a UTF8 string.
+ *
  ************************************************************************/
 
-/*****
+/**
  * Allocate memory for a data array of size elements.
  *
  * ARGUMENTS
@@ -33,7 +36,7 @@
  *
  * RETURNS
  *  A pointer to the new data array.
- *****/
+ */
 static uint8_t *__alloc_data_array(const size_t size)
 {
     uint8_t *data = NULL;
@@ -43,10 +46,8 @@ static uint8_t *__alloc_data_array(const size_t size)
 }
 
 
-/*****
+/**
  * Count the WS from *data to the first non-WS character.
- *
- *  Here, WS is "white space".
  *
  * ARGUMENTS
  *  data    An array of byte data (utf8 string).
@@ -54,7 +55,7 @@ static uint8_t *__alloc_data_array(const size_t size)
  * RETURNS
  *  The absolute number of WS characters encountered before a non-WS
  *  character, where a space is one and a tab is four.
- *****/
+ */
 size_t count_indentation(uint8_t *data)
 {
     size_t ws = 0;
@@ -70,7 +71,7 @@ size_t count_indentation(uint8_t *data)
  * String Nodes
  ************************************************************************/
 
-/*****
+/**
  * Allocate memory for a String node.
  *
  * ERRORS
@@ -78,7 +79,7 @@ size_t count_indentation(uint8_t *data)
  *
  * RETURNS
  *  A pointer to the new String node.
- *****/
+ */
 static String *__alloc_string_container(void)
 {
     String *s = NULL;
@@ -87,7 +88,8 @@ static String *__alloc_string_container(void)
     return s;
 }
 
-/*****
+
+/**
  * Allocate a String node to store size bytes.
  *
  *  If the size passed to this function is zero (0), it will allocate 
@@ -98,7 +100,7 @@ static String *__alloc_string_container(void)
  *
  * RETURNS
  *  A pointer to the new String node.
- *****/
+ */
 String *init_string(const size_t size)
 {
     String *str = __alloc_string_container();
@@ -115,13 +117,13 @@ String *init_string(const size_t size)
     return str;
 }
 
-/*****
+/**
  * Reallocate a String node's data member to contain size elements.
  *
  * ARGUMENTS
  *  str     The String node whose member should be reallocated.
  *  size    The new size (in bytes) of the requested memory.
- *****/
+ */
 void realloc_string(String *str, const size_t size)
 {
     str->data = realloc(str->data, sizeof(uint8_t) * size);
@@ -129,7 +131,8 @@ void realloc_string(String *str, const size_t size)
     if (!str->data) throw_fatal_memory_error();
 }
 
-/*****
+
+/**
  * Free the memory allocated for a String node, if it exists.
  *
  *  String nodes have a dynamically allocated member, `data`
@@ -137,7 +140,7 @@ void realloc_string(String *str, const size_t size)
  *
  * ARGUMENTS
  *  str     The String node to be free'd.
- *****/
+ */
 void free_string(String *str)
 {
     if (str) {
@@ -145,35 +148,3 @@ void free_string(String *str)
         free(str);
     }
 }
-
-
-/** Create substring of a s from s[start] to s[stop]. *******************/
-// String *create_substring(String *s, size_t start, const size_t stop)
-// {
-//     String *newstr = NULL;              /* String node to be returned. */
-//     size_t size = (stop - start) + 1;   /* Add 1 to be inclusive. */
-//
-//     /* If the original String is NULL, create then create a string. */
-//     if (!s) return init_string(0);
-//
-//     newstr = init_string(size + NEWLINE);
-//     newstr->len = size;
-//     memcpy(newstr->string, s->string + start, size);
-//     newstr->string[size] = '\0';
-//     return newstr;
-// }
-
-
-/** Combine s1 and s2 into a single String according to fmt. ************/
-// String *combine_strings(const char *fmt, String *s1, String *s2)
-// {
-//     if (!s1 || !s2) return NULL;
-//
-//     /* Get size of the new string then allocate space for it. */
-//     size_t size    = s1->len + s2->len + 1;
-//     String *dest = init_string(size + NULL_CHAR);
-//
-//     dest->len = size;
-//     snprintf(dest->string, size + NULL_CHAR, fmt, s1->string, s2->string);
-//     return dest;
-// }

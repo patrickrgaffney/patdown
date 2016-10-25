@@ -1,9 +1,9 @@
-/*****
+/**
  * strings.c -- string handling utilities
  * 
  * @author      Pat Gaffney <pat@hypepat.com>
  * @created     2016-06-15
- * @modified    2016-10-04
+ * @modified    2016-10-24
  * 
  ************************************************************************/
 

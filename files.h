@@ -1,9 +1,9 @@
-/***** 
+/**
  * files.h -- opening, closing, and reading input from files
  * 
  *  author:     Pat Gaffney <pat@hypepat.com>
  *  created:    2016-06-17
- *  modified:   2016-10-13
+ *  modified:   2016-10-24
  *  project:    patdown
  * 
  ************************************************************************/

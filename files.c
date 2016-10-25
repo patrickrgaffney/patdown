@@ -1,9 +1,9 @@
-/***** 
+/**
  * files.c -- opening, closing, and reading input from files
  * 
  *  author:     Pat Gaffney <pat@hypepat.com>
  *  created:    2016-06-17
- *  modified:   2016-10-13
+ *  modified:   2016-10-24
  *  project:    patdown
  * 
  ************************************************************************/
@@ -19,16 +19,16 @@
  * Opening & Closing Files
  ************************************************************************/
 
-/*****
+/**
  * Open a file stream for some given file access mode.
  *
  * ARGUMENTS
- *  fileName    the name of the file to be opened (a C-string)
- *  type        the mode by which the file should be opened: "r", "w"
+ *  fileName    The name of the file to be opened (a C-string).
+ *  type        The mode by which the file should be opened: "r", "w".
  *
  * RETURNS
  *  A pointer to the file stream.
- *****/
+ */
 FILE *open_file(const char *fileName, const char *mode)
 {
     FILE *filePtr = NULL;
@@ -38,12 +38,15 @@ FILE *open_file(const char *fileName, const char *mode)
 }
 
 
-/*****
+/**
  * Close a file stream, but only if the file stream exists.
- *****/
-void close_file(FILE *io)
+ *
+ * ARGUMENTS:
+ *  fp          The file stream to be closed.
+ */
+void close_file(FILE *fp)
 {
-    if (io) fclose(io);
+    if (fp) fclose(fp);
 }
 
 
@@ -51,7 +54,7 @@ void close_file(FILE *io)
  * Reading Input From Files
  ************************************************************************/
 
-/*****
+/**
  * Read all bytes from a supplied input file stream.
  *
  *  Bytes are read into a String buffer that is reallocated by an order
@@ -64,7 +67,7 @@ void close_file(FILE *io)
  *  A String node initialized with the bytes read from file, the memory
  *  allocated for this node (in bytes), and the number of bytes actually
  *  read from the input file stream.
- *****/
+ */
 String *read_all_input_bytes(FILE *ifp)
 {
     int ret    = 0;         /* The return value from fread(). */

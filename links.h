@@ -1,4 +1,4 @@
-/*****
+/**
  * links.h -- data methods for link manipulation
  * 
  *  author:     Pat Gaffney <pat@hypepat.com>
@@ -30,6 +30,7 @@ typedef struct LinkRef
  *
  *  These methods create a binary search tree of LinkRef nodes that can
  *  then be searched to resolve inline link references.
+ *
  ************************************************************************/
 
 /** Allocate space for new LinkRef node. **/
