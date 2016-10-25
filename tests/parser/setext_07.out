@@ -1,0 +1,5 @@
+PARAGRAPH: 'Foo
+= ='
+BLANK_LINE: '(null)'
+PARAGRAPH: 'Foo
+--- -'

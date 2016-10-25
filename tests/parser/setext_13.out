@@ -1,0 +1,6 @@
+PARAGRAPH: 'Foo
+bar'
+BLANK_LINE: '(null)'
+HORIZONTAL_RULE: '(null)'
+BLANK_LINE: '(null)'
+PARAGRAPH: 'baz'

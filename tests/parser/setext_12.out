@@ -1,0 +1,4 @@
+PARAGRAPH: 'Foo'
+BLANK_LINE: '(null)'
+SETEXT_HEADER_2: 'bar'
+PARAGRAPH: 'baz'
