@@ -14,22 +14,22 @@ debug: C_FLAGS += -g -fsanitize=address -fno-omit-frame-pointer
 debug: build
 
 main.o: main.c errors.h files.h markdown.h parsers.h
-	$(CCX) -c main.c
+	$(CCX) -c $(C_FLAGS) main.c
 	
 errors.o: errors.c errors.h
-	$(CCX) -c errors.c
+	$(CCX) -c $(C_FLAGS) errors.c
 	
 strings.o: strings.c errors.h strings.h
-	$(CCX) -c strings.c
+	$(CCX) -c $(C_FLAGS) strings.c
 	
 files.o: files.c errors.h files.h strings.h
-	$(CCX) -c files.c
+	$(CCX) -c $(C_FLAGS) files.c
 
 markdown.o: markdown.c markdown.h errors.h strings.h
-	$(CCX) -c markdown.c
+	$(CCX) -c $(C_FLAGS) markdown.c
 
 parsers.o: parsers.c parsers.h markdown.h strings.h
-	$(CCX) -c parsers.c
+	$(CCX) -c $(C_FLAGS) parsers.c
 
 clean: 
 	rm -f $(TARGET) $(BUILD_OBJS) $(GEN_OBJS) $(UNIX_TARGET) 
