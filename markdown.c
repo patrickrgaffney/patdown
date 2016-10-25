@@ -45,9 +45,9 @@ static Markdown *tail = NULL;   /* Tail of the queue. */
 static mdblock_t currentblk = UNKNOWN;
 
 /** Private queue function prototypes. **/
-static Markdown *md_alloc_node(void);
-static bool md_insert_queue(Markdown **head, Markdown **tail, Markdown *node);
-static void __free_markdown_node(Markdown *node);
+static Markdown *__md_alloc_node(void);
+static bool      __md_insert_queue(Markdown **, Markdown **, Markdown *);
+static void      __free_markdown_node(Markdown *);
 
 
 /**
@@ -59,7 +59,7 @@ static void __free_markdown_node(Markdown *node);
  * RETURNS
  *  A pointer to the new Markdown node.
  */
-static Markdown *md_alloc_node(void)
+static Markdown *__md_alloc_node(void)
 {
     Markdown *node = NULL;
     node = malloc(sizeof(Markdown));
@@ -81,7 +81,7 @@ static Markdown *md_alloc_node(void)
  */
 bool add_markdown(String *s, const mdblock_t type, void *addtinfo)
 {
-    Markdown *node = md_alloc_node();
+    Markdown *node = __md_alloc_node();
     
     /* Create an empty String node if *s was NULL. */
     if (!s) node->string = init_string(0);
@@ -93,7 +93,7 @@ bool add_markdown(String *s, const mdblock_t type, void *addtinfo)
     
     currentblk = UNKNOWN;
     
-    if (md_insert_queue(&head, &tail, node)) return true;
+    if (__md_insert_queue(&head, &tail, node)) return true;
     else return false;
 }
 
@@ -109,7 +109,7 @@ bool add_markdown(String *s, const mdblock_t type, void *addtinfo)
  * RETURNS
  *  true if node is inserted, false if node is NULL.
  */
-static bool md_insert_queue(Markdown **head, Markdown **tail, Markdown *node)
+static bool __md_insert_queue(Markdown **head, Markdown **tail, Markdown *node)
 {
     if (node) {
         if (!*head) *head = node;
