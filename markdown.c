@@ -3,7 +3,7 @@
  * 
  *  author:     Pat Gaffney <pat@hypepat.com>
  *  created:    2016-06-15
- *  modified:   2016-10-24
+ *  modified:   2016-10-25
  *  project:    patdown
  * 
  ************************************************************************/
@@ -47,6 +47,7 @@ static mdblock_t currentblk = UNKNOWN;
 /** Private queue function prototypes. **/
 static Markdown *md_alloc_node(void);
 static bool md_insert_queue(Markdown **head, Markdown **tail, Markdown *node);
+static void __free_markdown_node(Markdown *node);
 
 
 /**
@@ -217,7 +218,26 @@ void debug_print_queue(void)
 }
 
 
-void __free_markdown_node(Markdown *node) 
+/** 
+ * Free all the Markdown nodes in the queue. 
+ *
+ *  This is the external interface for freeing the internal
+ *  Markdown queue created by parsing the input file.
+ */
+void free_markdown(void)
+{
+    __free_markdown_node(head);
+}
+
+
+/** 
+ * Free the memory allocated for a Markdown node.
+ *
+ *  This is the internal interface for freeing a particular
+ *  Markdown node. All nodes below the node pointer to by the
+ *  argument will also be free'd.
+ */
+static void __free_markdown_node(Markdown *node)
 {
     if (node) {
         if (node->addtinfo) free(node->addtinfo);
@@ -225,10 +245,4 @@ void __free_markdown_node(Markdown *node)
         __free_markdown_node(node->next);
         free(node);
     }
-}
-
-/** Free all the Markdown nodes in the queue. **/
-void free_markdown(void)
-{
-    __free_markdown_node(head);
 }

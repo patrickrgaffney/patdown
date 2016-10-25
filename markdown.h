@@ -76,10 +76,10 @@ typedef enum
 void free_markdown(void);
 
 /** Debug-print all Markdown data. **/
-void debug_print_queue();
+void debug_print_queue(void);
 
 /** Add a new Markdown block to the data queue. **/
-bool add_markdown(String *s, const mdblock_t type, void *addtinfo);
+bool add_markdown(String *, const mdblock_t, void *);
 
 /** Get the number of parsed Markdown blocks. **/
 size_t get_queue_length(void);
@@ -88,4 +88,4 @@ size_t get_queue_length(void);
 mdblock_t get_last_block(void);
 
 /** Set the current block being parsed. **/
-void set_current_block(const mdblock_t blk);
+void set_current_block(const mdblock_t);
