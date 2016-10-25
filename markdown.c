@@ -217,13 +217,18 @@ void debug_print_queue(void)
 }
 
 
+void __free_markdown_node(Markdown *node) 
+{
+    if (node) {
+        if (node->addtinfo) free(node->addtinfo);
+        free_string(node->string);
+        __free_markdown_node(node->next);
+        free(node);
+    }
+}
+
 /** Free all the Markdown nodes in the queue. **/
 void free_markdown(void)
 {
-    while ((tail = head)) {
-        if (tail->addtinfo) free(tail->addtinfo);
-        free_string(tail->string);
-        head = head->next;
-        free(tail);
-    }
+    __free_markdown_node(head);
 }
