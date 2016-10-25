@@ -12,6 +12,9 @@ build: $(BUILD_OBJS) $(GEN_OBJS)
 
 debug: C_FLAGS += -g -fsanitize=address -fno-omit-frame-pointer
 debug: build
+	
+valgrind: C_FLAGS += -g
+valgrind: build
 
 main.o: main.c errors.h files.h markdown.h parsers.h
 	$(CCX) -c $(C_FLAGS) main.c
