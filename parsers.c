@@ -404,38 +404,70 @@ static ssize_t parse_indented_code_block(uint8_t *data)
     size_t ws = 0;      /* White space index. */
     String *c = init_string(BLK_BUF);
     
-    ws = count_indentation(data);
+    if (count_indentation(data) < 4) return -1;
+    
     do {
-        /* Increment one tab or four spaces. */
+        ws = count_indentation(data);
+        
+        /* Skip the indentation: one tab or four spaces. */
         if (ws > 3) {
             if (*data == '\t') data++, i++;
             else data += 4, i += 4;
         }
-        else break;
-        
+        else {
+            /* Get first non-WS byte. */
+            while (isblank(*data)) data++, i++;
+            
+            /* If we found a non-WS byte before the newline, break out. */
+            if (*data != '\n') break;
+            
+            /* Otherwise add a newline and continue parsing. */
+            else {
+                if (c->length < c->allocd - NEWLINE - NEWLINE) {
+                    *c->data++ = *data++;
+                    c->length++;
+                }
+                else realloc_string(c, c->allocd + BLK_BUF);
+                continue;
+            }
+            
+        }
+
         /* Add characters until we reach a newline. */
         while (*data && *data != '\n') {
-            if (c->length < c->allocd - NEWLINE) {
+            if (c->length < c->allocd - NEWLINE - NEWLINE) {
                 *c->data++ = *data++;
                 c->length++;
             }
             else realloc_string(c, c->allocd + BLK_BUF);
         }
-        
-        /* Are we still in an indented code block? */
-        if (((ws = count_indentation(++data))) > 3) {
-            *c->data++ = '\n';
-            c->length++;
-            continue;
+
+        /* Continue parsing based on indentation -- also, be sure to
+         * keep all newlines found nested in the code block. */
+        if (((ws = count_indentation(++data))) > 3 || 
+            is_blank_line(data, CHK_SYNTX) > 0) {
+                *c->data++ = '\n';
+                c->length++;
+                continue;
         }
         break;
         
     } while (true);
-    
+
+    /* Add final newline for the <pre> block. */
+    if (*(c->data - 1) != '\n') {
+        *c->data++ = '\n';
+        c->length++;
+    }
+    /* If there's 2 newlines in a row, remove one of them. */
+    else if (*(c->data - 1) == '\n' && *(c->data - 2) == '\n') {
+        c->data--;
+        c->length--;
+    }
     *c->data = '\0';
     c->data -= c->length;
     add_markdown(c, INDENTED_CODE_BLOCK, NULL);
-    return i + c->length + NEWLINE;
+    return i + c->length;
 }
 
 
