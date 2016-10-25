@@ -430,7 +430,6 @@ static ssize_t parse_indented_code_block(uint8_t *data)
                 else realloc_string(c, c->allocd + BLK_BUF);
                 continue;
             }
-            
         }
 
         /* Add characters until we reach a newline. */
@@ -454,20 +453,13 @@ static ssize_t parse_indented_code_block(uint8_t *data)
         
     } while (true);
 
-    /* Add final newline for the <pre> block. */
-    if (*(c->data - 1) != '\n') {
-        *c->data++ = '\n';
-        c->length++;
-    }
-    /* If there's 2 newlines in a row, remove one of them. */
-    else if (*(c->data - 1) == '\n' && *(c->data - 2) == '\n') {
-        c->data--;
-        c->length--;
-    }
-    *c->data = '\0';
+    /* Remove any trailing newlines we added. */
+    while (*(--c->data) == '\n') c->length--;
+    
+    *(++c->data) = '\0';
     c->data -= c->length;
     add_markdown(c, INDENTED_CODE_BLOCK, NULL);
-    return i + c->length;
+    return i + c->length + NEWLINE;
 }
 
 
