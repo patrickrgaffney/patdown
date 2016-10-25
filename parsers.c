@@ -404,11 +404,9 @@ static ssize_t parse_indented_code_block(uint8_t *data)
     size_t ws = 0;      /* White space index. */
     String *c = init_string(BLK_BUF);
     
-    if (count_indentation(data) < 4) return -1;
+    if (((ws = count_indentation(data))) < 4) return -1;
     
     do {
-        ws = count_indentation(data);
-        
         /* Skip the indentation: one tab or four spaces. */
         if (ws > 3) {
             if (*data == '\t') data++, i++;
@@ -428,6 +426,8 @@ static ssize_t parse_indented_code_block(uint8_t *data)
                     c->length++;
                 }
                 else realloc_string(c, c->allocd + BLK_BUF);
+                
+                ws = count_indentation(data);
                 continue;
             }
         }
