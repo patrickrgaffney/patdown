@@ -83,22 +83,28 @@ static bool block_parser(String *bytes)
 {
     int len = 0;                    /* Length of last block. */
     uint8_t *doc = bytes->data;     /* Document pointer. */
+    size_t total = 0;
     
     while (true) {
-        size_t ws = count_indentation(doc);
+        size_t ws = 0;
 
-        /* EOF reached? */
-        if (!(*(doc + ws))) break;
+        if (total >= bytes->length) break;
         
-        /* Check for blank line. */
-        else if (((len = is_blank_line(doc, PARSE_BLK))) > 0) {
+        ws = count_indentation(doc);
+        
+        /* Check for blank line, returns 0 for EOF. */
+        if (((len = is_blank_line(doc, PARSE_BLK))) > 0) {
             doc += len;
+            total += len;
             continue;
         }
+        else if (len == 0) break;
         
         /* Check for indented code block. */
         else if (ws > 3) {
-            doc += parse_indented_code_block(doc);
+            len = parse_indented_code_block(doc);
+            doc += len;
+            total += len;
             continue;
         }
         
@@ -116,6 +122,7 @@ static bool block_parser(String *bytes)
             len = parse_paragraph(doc + ws) + ws;
         }
         doc += len;
+        total += len;
     }
     
     /* Return true only if we added at least one block to the queue. */
@@ -136,6 +143,8 @@ static bool block_parser(String *bytes)
 static ssize_t is_blank_line(uint8_t *data, bool parse)
 {
     size_t i = 0;   /* Byte-index to increment and return. */
+    
+    if (*data == '\0') return 0;
     while (*data && isblank(*data)) data++, i++;
     
     /* Cannot have any non-WS chars on a blank line. */
