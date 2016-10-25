@@ -366,6 +366,8 @@ static ssize_t is_setext_header(uint8_t *data)
     int8_t sc = -1;     /* Setext character used in this header. */
     size_t i  = ws;     /* Byte-index to increment and return. */
     
+    if (ws > 3) return -1;
+    
     data += ws;
     sc = (*data == '-' || *data == '=') ? *data : -1;
     
