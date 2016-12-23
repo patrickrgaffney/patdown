@@ -3,7 +3,7 @@
  * 
  *  author:     Pat Gaffney <pat@hypepat.com>
  *  created:    2016-06-15
- *  modified:   2016-10-25
+ *  modified:   2016-12-22
  *  project:    patdown
  * 
  ************************************************************************/
@@ -18,15 +18,15 @@
 
 
 /************************************************************************
- * Markdown Blocks
+ * # Markdown Blocks
  *
- *  Markdown nodes are created and inserted into a queue. They are 
- *  distinguished by their mdblock_t and their position in the queue. 
- *  The queue forms a linear structure of nodes parsed from the file.
+ * Markdown nodes are created and inserted into a queue. They are 
+ * distinguished by their `mdblock_t` and their position in the queue. 
+ * The queue forms a linear structure of nodes parsed from the file.
  *
  ************************************************************************/
 
-/** A container node for a parsed Markdown block. **/
+/** A container node for a parsed Markdown block. */
 typedef struct Markdown
 {
     String *string;         /* String value of parsed block. */
@@ -36,33 +36,30 @@ typedef struct Markdown
 } Markdown;
 
 
-/** Markdown Queue Pointers **/
+/** Markdown Queue Pointers */
 static Markdown *head = NULL;   /* Head of the queue. */
 static Markdown *tail = NULL;   /* Tail of the queue. */
 
-/* Allow parser to prematurely set the return value of get_last_block()
- * if we are parsing a multi-line block (i.e. paragraphs). */
+/** Allow the parser to set the current block before inserting it. */
 static mdblock_t currentblk = UNKNOWN;
 
 /** Private Markdown queue functions. **/
-static Markdown *__md_alloc_node(void);
-static bool      __md_insert_queue(Markdown **, Markdown **, Markdown *);
-static void      __free_markdown_node(Markdown *);
+static Markdown *md_alloc_node(void);
+static bool md_insert_queue(Markdown **, Markdown **, Markdown *);
+static void free_markdown_node(Markdown *);
 
 /** Private Markdown extension functions. **/
-static CodeBlk *__alloc_code_blk(void);
+static CodeBlk *alloc_code_blk(void);
 
 
 /**
  * Allocate memory for a new Markdown block.
  *
- * ERRORS
- *  fatal_memory_error  Memory could not be allocated.
+ * - throws fatal_memory_error: Memory could not be allocated.
  *
- * RETURNS
- *  A pointer to the new Markdown node.
+ * - returns: A pointer to the new Markdown node.
  */
-static Markdown *__md_alloc_node(void)
+static Markdown *md_alloc_node(void)
 {
     Markdown *node = NULL;
     node = malloc(sizeof(Markdown));
@@ -74,17 +71,15 @@ static Markdown *__md_alloc_node(void)
 /**
  * Add a Markdown node to the queue with a given set of data.
  *
- * ARGUMENTS
- *  s           The actual string of parsed markdown.
- *  type        The block type, or, HTML element.
- *  addtinfo    Any additional information -- optional.
+ * - parameter s: The actual string of parsed markdown.
+ * - parameter type: The block type, or, HTML element.
+ * - parameter addtinfo: Any additional information -- optional.
  *
- * RETURNS
- *  true if node is inserted, false if node is NULL.
+ * - returns: `true` if node is inserted, `false` if node is `NULL`.
  */
 bool add_markdown(String *s, const mdblock_t type, void *addtinfo)
 {
-    Markdown *node = __md_alloc_node();
+    Markdown *node = md_alloc_node();
     
     /* Create an empty String node if *s was NULL. */
     if (!s) node->string = init_string(0);
@@ -96,7 +91,7 @@ bool add_markdown(String *s, const mdblock_t type, void *addtinfo)
     
     currentblk = UNKNOWN;
     
-    if (__md_insert_queue(&head, &tail, node)) return true;
+    if (md_insert_queue(&head, &tail, node)) return true;
     else return false;
 }
 
@@ -104,30 +99,29 @@ bool add_markdown(String *s, const mdblock_t type, void *addtinfo)
 /**
  * Insert a Markdown block into the queue at the tail.
  *
- * ARGUMENTS
- *  head    The first node in the queue.
- *  tail    The last node in the queue.
- *  node    The node to be inserted at the tail.
+ * - parameter head: The first node in the queue.
+ * - parameter tail: The last node in the queue.
+ * - parameter node: The node to be inserted at the tail.
  * 
- * RETURNS
- *  true if node is inserted, false if node is NULL.
+ * - returns: `true` if node is inserted, `false` if node is `NULL`.
  */
-static bool __md_insert_queue(Markdown **head, Markdown **tail, Markdown *node)
+static bool md_insert_queue(Markdown **head, Markdown **tail, Markdown *node)
 {
     if (node) {
         if (!*head) *head = node;
         else (*tail)->next = node;
+        
         *tail = node;
         return true;
     }
-    else return false;
+    return false;
 }
+
 
 /**
  * Get the number of parsed Markdown blocks.
  *
- * RETURNS
- *  The number of nodes in the queue.
+ * - returns: The number of nodes in the queue.
  */
 size_t get_queue_length(void)
 {
@@ -143,16 +137,16 @@ size_t get_queue_length(void)
     return len;
 }
 
+
 /**
  * Set the current block being parsed.
  *
- *  This is useful when parsing multi-line blocks (i.e. paragraphs).
- *  This value will be returned from get_last_block() instead of
- *  tail->type when available. The value of currentblk is reset to
- *  UNKNOWN everytime add_markdown() is called.
+ * This is useful when parsing multi-line blocks (i.e. paragraphs).
+ * This value will be returned from `get_last_block()` instead of
+ * `tail->type` when available. The value of `currentblk` is reset to
+ * `UNKNOWN` everytime `add_markdown()` is called.
  *
- * ARGUMENTS
- *  blk     The new value of currentblk;
+ * - parameter blk: The new value of `currentblk`.
  */
 void set_current_block(const mdblock_t blk)
 {
@@ -163,8 +157,7 @@ void set_current_block(const mdblock_t blk)
 /**
  * Get the type of the last block added to the queue.
  *
- * RETURNS
- *  The mdblock_t of tail.
+ * - returns: The `mdblock_t` of tail, or `currentblk`, if it isn't `UNKNOWN`.
  */
 mdblock_t get_last_block(void)
 {
@@ -229,7 +222,7 @@ void debug_print_queue(void)
  */
 void free_markdown(void)
 {
-    __free_markdown_node(head);
+    free_markdown_node(head);
 }
 
 
@@ -239,32 +232,32 @@ void free_markdown(void)
  *  This is the internal interface for freeing a particular
  *  Markdown node. All nodes below the node pointer to by the
  *  argument will also be free'd.
+ *
+ * - parameter node: The node at which to begin freeing.
  */
-static void __free_markdown_node(Markdown *node)
+static void free_markdown_node(Markdown *node)
 {
     if (node) {
         if (node->addtinfo) free(node->addtinfo);
         free_string(node->string);
-        __free_markdown_node(node->next);
+        free_markdown_node(node->next);
         free(node);
     }
 }
 
 
 /************************************************************************
- * Markdown Block Extensions
+ * ## Markdown Block Extensions
  ************************************************************************/
 
 /**
  * Allocate memory for a CodeBlk structure.
  *
- * ERRORS   
- *  fatal_memory_error  Memory could not be allocated.
+ * - throws fatal_memory_error: Memory could not be allocated.
  *
- * RETURNS
- *  A pointer to the new structure.
+ * - returns: A pointer to the new structure.
  */
-static CodeBlk *__alloc_code_blk(void)
+static CodeBlk *alloc_code_blk(void)
 {
     CodeBlk *cb = malloc(sizeof(CodeBlk));
     if (!cb) throw_fatal_memory_error();
@@ -275,10 +268,9 @@ static CodeBlk *__alloc_code_blk(void)
 /**
  * Initialize a CodeBlk structure.
  *
- * RETURNS
- *  A pointer to the new structure.
+ * - returns: A pointer to the new structure.
  */
 CodeBlk *init_code_blk(void)
 {
-    return __alloc_code_blk();
+    return alloc_code_blk();
 }

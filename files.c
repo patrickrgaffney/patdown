@@ -3,7 +3,7 @@
  * 
  *  author:     Pat Gaffney <pat@hypepat.com>
  *  created:    2016-06-17
- *  modified:   2016-10-24
+ *  modified:   2016-12-22
  *  project:    patdown
  * 
  ************************************************************************/
@@ -16,18 +16,16 @@
 #include "strings.h"
 
 /************************************************************************
- * Opening & Closing Files
+ * # Opening & Closing Files
  ************************************************************************/
 
 /**
  * Open a file stream for some given file access mode.
  *
- * ARGUMENTS
- *  fileName    The name of the file to be opened (a C-string).
- *  type        The mode by which the file should be opened: "r", "w".
+ * - parameter fileName: The name of the file to be opened (a C-string).
+ * - parameter type: The mode by which the file should be opened.
  *
- * RETURNS
- *  A pointer to the file stream.
+ * - returns: A pointer to the file stream.
  */
 FILE *open_file(const char *fileName, const char *mode)
 {
@@ -41,8 +39,7 @@ FILE *open_file(const char *fileName, const char *mode)
 /**
  * Close a file stream, but only if the file stream exists.
  *
- * ARGUMENTS:
- *  fp          The file stream to be closed.
+ * - parameter fp: The file stream to be closed.
  */
 void close_file(FILE *fp)
 {
@@ -51,22 +48,20 @@ void close_file(FILE *fp)
 
 
 /************************************************************************
- * Reading Input From Files
+ * # Reading Input From Files
  ************************************************************************/
 
 /**
  * Read all bytes from a supplied input file stream.
  *
- *  Bytes are read into a String buffer that is reallocated by an order
- *  of 5120 bytes in order to make room for the entire file.
+ * Bytes are read into a `String` buffer that is reallocated by an order
+ * of 5120 bytes in order to make room for the entire file.
  *
- * ARGUMENTS
- *  ifp     Input file stream (must be opened for reading).
+ * - parameter ifp: Input file stream (must be opened for reading).
  *
- * RETURNS
- *  A String node initialized with the bytes read from file, the memory
- *  allocated for this node (in bytes), and the number of bytes actually
- *  read from the input file stream.
+ * - returns: A `String` node initialized with the bytes read from file, 
+ *   the memory allocated for this node (in bytes), and the number of bytes 
+ *   actually read from the input file stream.
  */
 String *read_all_input_bytes(FILE *ifp)
 {

@@ -1,9 +1,9 @@
 /**
- * parsers.c -- markdown parsing methods
+ * parsers.c: markdown parsing methods
  * 
  *  author:     Pat Gaffney <pat@hypepat.com>
  *  created:    2016-06-15
- *  modified:   2016-10-24
+ *  modified:   2016-12-20
  *  project:    patdown
  * 
  ************************************************************************/
@@ -18,15 +18,14 @@
 #include "parsers.h"
 #include "strings.h"
 
-/** The base-size in bytes of a block buffer. **/
+/** The **base-size** in bytes of a block buffer. */
 #define BLK_BUF 256
 
-/** The byte-length of a newline / NULL-terminating character. **/
+/** Named constants for particular byte-lengths. */
 #define NEWLINE 1
 #define NULL_CHAR 1
 
-/** When calling the block-functions, we can either parse the 
- ** block -- call add_markdown() -- or just check the syntax. */
+/** Named constants for the boolean parameter of parsing functions. */
 #define PARSE_BLK true
 #define CHK_SYNTX false
 
@@ -42,20 +41,20 @@ static ssize_t is_setext_header(uint8_t *);
 static ssize_t parse_indented_code_block(uint8_t *);
 
 /************************************************************************
- * External Parsing API
+ * # External Parsing API
  ************************************************************************/
 
 /**
  * Call upon the parsers and generate the Markdown queue.
  *
- *  This function is the external API for the parser. Call it with 
- *  a bag of bytes and it will parse the input.
+ * This function is the external API for the parser. Call it with 
+ * a bag of utf8 bytes and it will parse them into a queue of markdown
+ * nodes that can then be represented in a different way.
  *
- * ARGUMENTS
- *  bytes   A string of raw bytes read from the input file.
+ * - parameter bytes: A string of raw bytes read from the input file.
  *
- * RETURNS
- *  true if the parsing completed, false if no nodes were parsed.
+ * - returns: true if the parsing completed, false if no nodes 
+ *   were parsed.
  */
 bool markdown(String *bytes)
 {
@@ -67,17 +66,16 @@ bool markdown(String *bytes)
 
 
 /************************************************************************
- * Block Parsing Functions
+ * # Block Parsing Functions
  ************************************************************************/
 
 /**
  * Parse a String of input bytes into a Markdown queue.
  *
- * ARGUMENTS
- *  bytes   A string of raw bytes read from the input file.
+ * - parameter bytes: A string of raw bytes read from the input file.
  *
- * RETURNS
- *  true if the parsing completed, false if no nodes were parsed.
+ * - returns: true if the parsing completed, false if no nodes 
+ *   were parsed.
  */
 static bool block_parser(String *bytes)
 {
@@ -131,14 +129,12 @@ static bool block_parser(String *bytes)
 
 
 /**
- * Is the current line a blank line?
+ * Check the next line for a blank line.
  *
- * ARGUMENTS
- *  data    An array of byte data (input utf8 string).
- *  parse   If true, parse the block; if false, just check syntax.
+ * - parameter data: An array of byte data (utf8 string).
+ * - parameter parse: If true, parse the block; if false, just check syntax.
  *
- * RETURNS
- *  The size in bytes of the raw block, or -1 if not a blank line.
+ * - returns: The size in bytes of the raw block, or -1 if not a blank line.
  */
 static ssize_t is_blank_line(uint8_t *data, bool parse)
 {
@@ -157,19 +153,17 @@ static ssize_t is_blank_line(uint8_t *data, bool parse)
 
 
 /**
- * Is the current line a continuation of the current paragraph?
+ * Check the next line for a lazy paragraph continuation.
  *
- *  Check to ensure that this new line is still part of the PARAGRAPH
- *  that began on a previous line. No check is made to determine if 
- *  this line is a setext header -- that is done by default everytime 
- *  we *close* a PARAGRAPH block.
+ * Check to ensure that this new line is still part of the `PARAGRAPH`
+ * that began on a previous line. No check is made to determine if 
+ * this line is a setext header -- that is done by default everytime 
+ * we *close* a `PARAGRAPH` block.
  *
- * ARGUMENTS
- *  data    An array of byte data (input utf8 string).
+ * - parameter data: An array of byte data (input utf8 string).
  *
- * RETURNS
- *  true if this is still a PARAGRAPH, false if this line belongs 
- *  to a different (*new*) block.
+ * - returns: true if this is still a `PARAGRAPH`, false if this line 
+ *   belongs to a different (*new*) block.
  */
 static bool is_still_paragraph(uint8_t *data)
 {
@@ -181,22 +175,20 @@ static bool is_still_paragraph(uint8_t *data)
 
 
 /**
- * Parse a paragraph and add it to the queue.
+ * Parse a paragraph block and add it to the queue.
  *
- * ARGUMENTS
- *  data    An array of byte data (input utf8 string).
+ * - parameter data: An array of byte data (utf8 string).
  *
- * RETURNS
- *  The size in bytes of the block that was parsed.
+ * - returns: The size in bytes of the block that was parsed.
  */
 static ssize_t parse_paragraph(uint8_t *data)
 {
     String *p = init_string(BLK_BUF);
     mdblock_t type = PARAGRAPH;
-    set_current_block(PARAGRAPH);
     ssize_t sh = 0;     /* Length of a possible setext header. */
     size_t  ws = 0;     /* Length of possible leading line WS. */
     
+    set_current_block(PARAGRAPH);
     do {
         /* Remove all leading WS on the line. */
         while (isblank(*data)) data++, ws++;
@@ -235,14 +227,12 @@ static ssize_t parse_paragraph(uint8_t *data)
 
 
 /**
- * Is the current line an ATX header?
+ * Check the current line for an ATX header.
  *
- * ARGUMENTS
- *  data    An array of byte data (input utf8 string).
- *  parse   If true, parse the block; if false, just check syntax.
+ * - parameter data: An array of byte data (utf8 string).
+ * - parameter parse: If true, parse the block; if false, just check syntax.
  *
- * RETURNS
- *  The size in bytes of the raw block, or -1 if not a ATX header.
+ * - returns: The size in bytes of the raw block, or -1 if not a ATX header.
  */
 static ssize_t is_atx_header(uint8_t *data, bool parse)
 {
@@ -271,13 +261,11 @@ static ssize_t is_atx_header(uint8_t *data, bool parse)
 /**
  * Parse an ATX header and add it to the queue.
  *
- * ARGUMENTS
- *  data    An array of byte data (input utf8 string).
- *  hashes  The number of leading hashes (determines mdblock_t).
- *  i       Index of *data for the current block (return value).
+ * - parameter data: An array of byte data (utf8 string).
+ * - parameter hashes: The number of leading hashes (determines `mdblock_t`).
+ * - parameter i: Index of `data` for the current block (return value).
  *
- * RETURNS
- *  The size in bytes of the block that was parsed.
+ * - returns: The size in bytes of the block that was parsed.
  */
 static ssize_t parse_atx_header(uint8_t *data, size_t hashes, size_t i)
 {
@@ -319,14 +307,12 @@ static ssize_t parse_atx_header(uint8_t *data, size_t hashes, size_t i)
 
 
 /**
- * Is the current line a horizontal rule? If so, parse it.
+ * Check the current line for a horizontal rule.
  *
- * ARGUMENTS
- *  data    An array of byte data (input utf8 string).
- *  parse   If true, parse the block; if false, just check syntax.
+ * - parameter data: An array of byte data (utf8 string).
+ * - parameter parse: If true, parse the block; if false, just check syntax.
  *
- * RETURNS
- *  The size in bytes of the raw block, or -1 if not a horizontal rule.
+ * - returns: The size in bytes of the raw block, or -1 if not a <hr>.
  */
 static ssize_t is_horizontal_rule(uint8_t *data, bool parse)
 {
@@ -358,13 +344,11 @@ static ssize_t is_horizontal_rule(uint8_t *data, bool parse)
 
 
 /**
- * Is the current line a setext header? 
+ * Check the current line for a setext header.
  *
- * ARGUMENTS
- *  data    An array of byte data (input utf8 string).
+ * - parameter data: An array of byte data (utf8 string).
  *
- * RETURNS
- *  The size in bytes of the raw block, or -1 if not a setext header.
+ * - returns: The size in bytes of the block, or -1 if not a setext header.
  */
 static ssize_t is_setext_header(uint8_t *data)
 {
@@ -395,14 +379,12 @@ static ssize_t is_setext_header(uint8_t *data)
 
 
 /**
- * Parse an ATX header and add it to the queue.
+ * Parse an indented code block and add it to the queue.
  *
- * ARGUMENTS
- *  data    An array of byte data (input utf8 string).
+ * - parameter data: An array of byte data (utf8 string).
  *
- * RETURNS
- *  The size in bytes of the raw block, or -1 if not an indented
- *  code block.
+ * - returns: The size in bytes of the raw block, or -1 if not an 
+ *   indented code block.
  */ 
 static ssize_t parse_indented_code_block(uint8_t *data)
 {

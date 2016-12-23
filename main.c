@@ -3,7 +3,7 @@
  * 
  *  author:     Pat Gaffney <pat@hypepat.com>
  *  created:    2016-06-15
- *  modified:   2016-10-24
+ *  modified:   2016-12-22
  *  project:    patdown
  * 
  ************************************************************************/
@@ -25,7 +25,7 @@ static const char *_version = "0.0.1";
 static const char *_author  = "Pat Gaffney";
 static const char *_email   = "pat@hypepat.com";
 
-/** Print the version dialog. **/
+/** Print the version dialog. */
 static void __print_version()
 {
     fprintf(stderr, "%s %s\n", _program, _version);
@@ -35,7 +35,7 @@ static void __print_version()
 }
 
 
-/** Print the help dialog. **/
+/** Print the help dialog. */
 static void __print_help()
 {
     __print_version();
@@ -54,17 +54,15 @@ static void __print_help()
 
 
 /************************************************************************
- * Main Function
+ * # Main Function
  ************************************************************************/
 
 /**
  * Begin program execution and parse command-line arguments.
  *
- * ERRORS
- *  throw_fatal_input_files_error   Multiple input files provided.
+ * - throws fatal_input_files_error: Multiple input files provided.
  *
- * RETURNS
- *  0 or EXIT_SUCCESS.
+ * - returns: `EXIT_SUCCESS`.
  */
 int main(int argc, char **argv)
 {   

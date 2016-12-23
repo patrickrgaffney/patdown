@@ -3,7 +3,7 @@
  * 
  *  author:     Pat Gaffney <pat@hypepat.com>
  *  created:    2016-06-15
- *  modified:   2016-10-24
+ *  modified:   2016-12-22
  *  project:    patdown
  * 
  ************************************************************************/
@@ -14,15 +14,13 @@
 #include "errors.h"
 
 /************************************************************************
- * Fatal Errors
+ * # Fatal Errors
  *
  *  All of these errors cause program execution to be halted.
  *
  ************************************************************************/
 
-/**
- * Fatal error: memory could not be allocated. Exit with dialog.
- */
+/** Fatal error: memory could not be allocated. Exit with dialog. */
 void throw_fatal_memory_error(void)
 {
     fprintf(stderr, "FATAL: memory could not be allocated.\n");
@@ -32,8 +30,7 @@ void throw_fatal_memory_error(void)
 /**
  * Fatal error: file could not be opened. Exit with dialog.
  *
- * ARGUMENTS
- *  file    The name of the file that could not be opened.
+ * - parameter file: The name of the file that could not be opened.
  */
 void throw_fatal_fopen_error(const char *file)
 {

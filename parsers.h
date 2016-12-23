@@ -12,5 +12,5 @@
 
 #include "strings.h"
 
-/** Call upon the parsers and generate the Markdown queue. **/
+/** Call upon the parsers and generate the Markdown queue. */
 bool markdown(String *rawBytes);

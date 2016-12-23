@@ -3,7 +3,7 @@
  * 
  *  author:     Pat Gaffney <pat@hypepat.com>
  *  created:    2016-06-15
- *  modified:   2016-10-24
+ *  modified:   2016-12-22
  *  project:    patdown
  * 
  ************************************************************************/
@@ -13,10 +13,10 @@
 #include "strings.h"
 
 /************************************************************************
- * Markdown Types
+ * # Markdown Types
  ************************************************************************/
 
-/** Valid types of a Markdown block. **/
+/** Valid types of a Markdown block. */
 typedef enum
 {
     /* Meta blocks */
@@ -52,7 +52,7 @@ typedef enum
 } mdblock_t;
 
 
-/** Valid types of a Markdown->data inline span. **/
+/** Valid types of a Markdown->data inline span. */
 typedef enum
 {
     ESCAPED_CHAR,
@@ -69,30 +69,34 @@ typedef enum
 
 
 /************************************************************************
- * Markdown Methods
+ * # Markdown Methods
  ************************************************************************/
 
-/** Free all Markdown data. **/
+/** Free all Markdown data. */
 void free_markdown(void);
 
-/** Debug-print all Markdown data. **/
+/** Debug-print all Markdown data. */
 void debug_print_queue(void);
 
-/** Add a new Markdown block to the data queue. **/
+/** Add a new Markdown block to the data queue. */
 bool add_markdown(String *, const mdblock_t, void *);
 
-/** Get the number of parsed Markdown blocks. **/
+/** Get the number of parsed Markdown blocks. */
 size_t get_queue_length(void);
 
-/** Get the type of the last block added to the queue. **/
+/** Get the type of the last block added to the queue. */
 mdblock_t get_last_block(void);
 
-/** Set the current block being parsed. **/
+/** Set the current block being parsed. */
 void set_current_block(const mdblock_t);
 
 
 /************************************************************************
- * Markdown Block Extensions
+ * # Markdown Block Extensions
+ ************************************************************************/
+
+/************************************************************************
+ * ##  Fenced Code Blocks Extension
  ************************************************************************/
 
 /* Maximum length of an info string on a fenced code block. */

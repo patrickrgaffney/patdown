@@ -11,7 +11,7 @@
 #pragma once
 
 
-/** Valid ouput type constants. **/
+/** Valid ouput type constants. */
 typedef enum 
 {
     OUT_HTML5,      /* Default: HTML5 element syntax. */ 
