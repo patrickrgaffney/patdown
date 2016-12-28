@@ -1,0 +1,4 @@
+FENCED_CODE_BLOCK: 'def foo(x)
+  return 3
+end
+'

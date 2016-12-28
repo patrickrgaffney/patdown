@@ -1,0 +1,4 @@
+PARAGRAPH: 'foo'
+FENCED_CODE_BLOCK: 'bar
+'
+PARAGRAPH: 'baz'
