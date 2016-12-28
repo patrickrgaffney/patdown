@@ -110,7 +110,7 @@ void set_current_block(const mdblock_t);
  */
 typedef struct CodeBlk
 {
-    int8_t lang[INFO_STR_MAX];  /* Info string on the opening fence. */
+    uint8_t lang[INFO_STR_MAX]; /* Info string on the opening fence. */
     size_t ws;                  /* Indentation on the opening fence. */
     size_t fl;                  /* Length of the opening code fence. */
     int8_t fc;                  /* Code fence character (`|~). */
