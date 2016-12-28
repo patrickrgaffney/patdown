@@ -403,6 +403,13 @@ static ssize_t is_horizontal_rule(uint8_t *data, bool parse)
 
 /************************************************************************
  * ## Setext Headers
+ *
+ * A setext header is a paragraph that is immediately followed by a 
+ * line containing a sequence of `=` or `-` characters. Because of the 
+ * ambiguity between a setext header and a horizontal rule, as each 
+ * paragraph is parsed, a check is made to determine if it is a setext
+ * header.
+ * 
  ************************************************************************/
 
 /**
@@ -415,8 +422,8 @@ static ssize_t is_horizontal_rule(uint8_t *data, bool parse)
 static ssize_t is_setext_header(uint8_t *data)
 {
     size_t ws = count_indentation(data);
-    int8_t sc = -1;     /* Setext character used in this header. */
     size_t i  = ws;     /* Byte-index to increment and return. */
+    int8_t sc = -1;     /* Setext character used in this header. */
     
     if (ws > 3) return -1;
     
@@ -427,14 +434,14 @@ static ssize_t is_setext_header(uint8_t *data)
     if (get_last_block() != PARAGRAPH || sc == -1) return -1;
 
     /* Parse *n* number of consecutive setext characters. */
-    while (*data && (*data == sc)) data++, i++;
+    while (*data == sc) data++, i++;
 
     /* Parse *n* number of spaces. */
-    while (*data && (*data == 0x20)) data++, i++;
+    while (*data == 0x20) data++, i++;
 
     /* No other characters may occur inline. */
     if (*data == '\n' || !(*data)) {
-       return i + NEWLINE;
+       return !(*data) ? i : (i + NEWLINE);
     }
     return -1;
 }
