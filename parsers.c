@@ -3,7 +3,7 @@
  * 
  *  author:     Pat Gaffney <pat@hypepat.com>
  *  created:    2016-06-15
- *  modified:   2016-12-27
+ *  modified:   2016-12-28
  *  project:    patdown
  * 
  ************************************************************************/
@@ -29,7 +29,7 @@
 #define PARSE_BLK true
 #define CHK_SYNTX false
 
-/* Block parsing prototypes. **/
+/* Block parsing prototypes. */
 static bool    block_parser(String *);
 static ssize_t is_blank_line(uint8_t *, bool);
 static bool    is_still_paragraph(uint8_t *);
@@ -70,6 +70,15 @@ bool markdown(String *bytes)
 
 /************************************************************************
  * # Block Parsing Functions
+ *
+ * Each block has it's own parsing function -- some have more than one.
+ * Any function with the name `is_<block_name>()` performs a syntax 
+ * check on the current line to determine if it could be parsed as a 
+ * <block_name>. Each of these functions takes a Boolean `parse`
+ * parameter that determine whether or not the function should actually
+ * parse the block after checking the syntax. Each of the *parsing*
+ * functions have the name `parse_<block_name>()`.
+ * 
  ************************************************************************/
 
 /**
@@ -82,16 +91,14 @@ bool markdown(String *bytes)
  */
 static bool block_parser(String *bytes)
 {
-    int len = 0;                    /* Length of last block. */
     uint8_t *doc = bytes->data;     /* Document pointer. */
+    ssize_t len  = 0;               /* Length of last block. */
     size_t total = 0;               /* Total bytes parsed. */
     
     while (true) {
-        size_t ws = 0;
-
         if (total >= bytes->length) break;
         
-        ws = count_indentation(doc);
+        size_t ws = count_indentation(doc);
         
         /* Check for blank line, returns 0 for EOF. */
         if (((len = is_blank_line(doc, PARSE_BLK))) > 0) {
@@ -99,6 +106,8 @@ static bool block_parser(String *bytes)
             total += len;
             continue;
         }
+        
+        /* Zero is returned when EOF is found. */
         else if (len == 0) break;
         
         /* Check for indented code block. */
@@ -121,9 +130,7 @@ static bool block_parser(String *bytes)
         }
         
         /* Default to paragraph if no nodes were added. */
-        if (len == -1) {
-            len = parse_paragraph(doc + ws) + ws;
-        }
+        if (len == -1) len = parse_paragraph(doc + ws) + ws;
         doc += len;
         total += len;
     }
@@ -149,7 +156,7 @@ static bool block_parser(String *bytes)
  * - parameter data: An array of byte data (utf8 string).
  * - parameter parse: If true, parse the block; if false, just check syntax.
  *
- * - returns: The size in bytes of the raw block, or -1 if not a blank line.
+ * - returns: The size in bytes of the line, or -1 if not a blank line.
  */
 static ssize_t is_blank_line(uint8_t *data, bool parse)
 {
@@ -162,7 +169,7 @@ static ssize_t is_blank_line(uint8_t *data, bool parse)
         if (parse) add_markdown(NULL, BLANK_LINE, NULL);
         
         /* Don't append a newline byte if we reached EOF. */
-        return i + (!(*data) ? 0 : NEWLINE);
+        return !(*data) ? i : i + NEWLINE;
     }
     return -1;
 }
@@ -344,12 +351,17 @@ static ssize_t parse_atx_header(uint8_t *data, size_t hashes, size_t i)
     *h->data = '\0';
     h->data -= h->length;
     add_markdown(h, (ATX_HEADER_1 - 1) + hashes, NULL);
-    return i + (!(*data) ? 0 : NEWLINE);
+    return !(*data) ? i : i + NEWLINE;
 }
 
 
 /************************************************************************
  * ## Horizontal Rules
+ *
+ * A horizontal line contains a sequence of three or more matching `-`, 
+ * `_`, or `*` characters, each of which may be followed many any number
+ * of optional spaces.
+ *
  ************************************************************************/
 
 /**
@@ -363,14 +375,14 @@ static ssize_t parse_atx_header(uint8_t *data, size_t hashes, size_t i)
 static ssize_t is_horizontal_rule(uint8_t *data, bool parse)
 {
     size_t ws = count_indentation(data);
-    size_t rc = 0;      /* Number of rule characters. */
     size_t i  = ws;     /* Byte-index to increment and return. */
+    size_t rc = 0;      /* Number of rule characters. */
     int8_t hr = -1;     /* Specific rule character used in this <hr>. */
     
     data += ws;
     hr = (*data == '*' || *data == '_' || *data == '-') ? *data : -1;
     
-    /* Ensure that this isn't a setext header. */
+    /* Ensure this is not a setext header. */
     if (get_last_block() == PARAGRAPH && hr == '-') return -1;
     if (ws > 3 || hr == -1) return -1;
 
@@ -388,6 +400,10 @@ static ssize_t is_horizontal_rule(uint8_t *data, bool parse)
     return -1;
 }
 
+
+/************************************************************************
+ * ## Setext Headers
+ ************************************************************************/
 
 /**
  * Check the current line for a setext header.
