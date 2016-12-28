@@ -180,10 +180,8 @@ static ssize_t is_blank_line(uint8_t *data, bool parse)
 /**
  * Check the next line for a lazy paragraph continuation.
  *
- * Check to ensure that this new line is still part of the `PARAGRAPH`
- * that began on a previous line. No check is made to determine if 
- * this line is a setext header -- that is done by default everytime 
- * we *close* a `PARAGRAPH` block.
+ * Check to ensure that this new line is still part of the 
+ * `PARAGRAPH` that began on a previous line.
  *
  * - TODO: Add checks for blockquotes and lists.
  *
@@ -249,12 +247,22 @@ static ssize_t parse_paragraph(uint8_t *data)
     *p->data = '\0';
     p->data -= p->length;
     add_markdown(p, type, NULL);
-    return p->length + sh + ws + NEWLINE;
+    
+    /* <p> + [optional] setext + WS + newline [or 0 if EOF] */
+    return p->length + sh + ws + (!(*data) ? 0 : NEWLINE);
 }
 
 
 /************************************************************************
  * ## ATX Headers
+ *
+ * An ATX Header is a string of bytes trapped between an opening 
+ * sequence of 1-6 hashes and an optional trailing seqeunce of hashes.
+ * The opening sequence must be followed by a space or tab. The closing
+ * sequence must be precedded by a space and can be followed only by
+ * spaces. All the above significant whitespace is stripped during
+ * parsing.
+ *
  ************************************************************************/
 
 /**
@@ -285,15 +293,18 @@ static ssize_t is_atx_header(uint8_t *data, bool parse)
     while (isblank(*data)) i++, data++;
     
     if (parse) return parse_atx_header(data, hashes, i);
-    else return i;
+    return i;
 }
 
 
 /**
  * Parse an ATX header and add it to the queue.
  *
+ * This function is only called by `is_atx_header()`. In order to
+ * parse a header, pass `true` to the Boolean parameter in that function.
+ *
  * - parameter data: An array of byte data (utf8 string).
- * - parameter hashes: The number of leading hashes (determines `mdblock_t`).
+ * - parameter hashes: Number of leading hashes (determines `mdblock_t`).
  * - parameter i: Index of `data` for the current block (return value).
  *
  * - returns: The size in bytes of the block that was parsed.
@@ -333,7 +344,7 @@ static ssize_t parse_atx_header(uint8_t *data, size_t hashes, size_t i)
     *h->data = '\0';
     h->data -= h->length;
     add_markdown(h, (ATX_HEADER_1 - 1) + hashes, NULL);
-    return i + NEWLINE;
+    return i + (!(*data) ? 0 : NEWLINE);
 }
 
 
