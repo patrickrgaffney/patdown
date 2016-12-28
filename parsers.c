@@ -546,9 +546,10 @@ static ssize_t is_closing_code_fence(uint8_t *data, CodeBlk *blk)
     while (*data == 0x20 || *data == '\t') i++, data++;
     
     /* If any non-newline characters, this can't be a closing fence. */
-    if (*data != '\n') return -1;
+    if (*data == '\n') return i + NEWLINE;
+    if (!(*data)) return i;
     
-    return i + NEWLINE;
+    return -1;
 }
 
 
