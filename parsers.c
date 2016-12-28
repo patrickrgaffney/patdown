@@ -170,6 +170,11 @@ static ssize_t is_blank_line(uint8_t *data, bool parse)
 
 /************************************************************************
  * ## Paragraphs
+ *
+ * Paragraphs are a seqeunce of non-blank lines that could not be
+ * intrepreted as a different type of block. In other words, it is the
+ * fallback when we fail to parse a block.
+ *
  ************************************************************************/
 
 /**
@@ -180,6 +185,8 @@ static ssize_t is_blank_line(uint8_t *data, bool parse)
  * this line is a setext header -- that is done by default everytime 
  * we *close* a `PARAGRAPH` block.
  *
+ * - TODO: Add checks for blockquotes and lists.
+ *
  * - parameter data: An array of byte data (input utf8 string).
  *
  * - returns: true if this is still a `PARAGRAPH`, false if this line 
@@ -187,7 +194,6 @@ static ssize_t is_blank_line(uint8_t *data, bool parse)
  */
 static bool is_still_paragraph(uint8_t *data)
 {
-    /* TODO: Add checks for blockquotes and lists. */
     return ((is_blank_line(data, CHK_SYNTX) < 0) &&
             (is_atx_header(data, CHK_SYNTX) < 0) &&
             (is_horizontal_rule(data, CHK_SYNTX) < 0) &&
@@ -210,7 +216,7 @@ static ssize_t parse_paragraph(uint8_t *data)
     size_t  ws = 0;     /* Length of possible leading line WS. */
     
     set_current_block(PARAGRAPH);
-    do {
+    while (true) {
         /* Remove all leading WS on the line. */
         while (isblank(*data)) data++, ws++;
         
@@ -224,7 +230,8 @@ static ssize_t parse_paragraph(uint8_t *data)
         }
         
         /* Is this next line the same paragraph? Setext header? */
-        if (!is_still_paragraph(++data)) break;
+        if (!(*data) || !is_still_paragraph(++data)) break;
+        
         if (((sh = is_setext_header(data))) > 0) {
             if (*(data + count_indentation(data)) == '=') {
                 type = SETEXT_HEADER_1;
@@ -236,14 +243,13 @@ static ssize_t parse_paragraph(uint8_t *data)
         
         /* Add a newline and continue parsing. */
         *p->data++ = '\n';
-        p->length++;
-        
-    } while (true);
+        p->length++;   
+    }
     
     *p->data = '\0';
     p->data -= p->length;
     add_markdown(p, type, NULL);
-    return p->length + sh + + ws + NEWLINE;
+    return p->length + sh + ws + NEWLINE;
 }
 
 
