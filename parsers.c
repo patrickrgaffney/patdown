@@ -579,7 +579,7 @@ static size_t parse_fenced_code_block(uint8_t *data, CodeBlk *blk, size_t i)
         
         /* Advance past the WS on the opening code fence. */
         size_t linews = 0;
-        if (blk->ws > 0 && ws > 0 && linews < blk->ws) {
+        while (blk->ws > 0 && ws > 0 && linews < blk->ws) {
             data++, i++;
             linews++;
         }
