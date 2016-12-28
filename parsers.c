@@ -135,6 +135,12 @@ static bool block_parser(String *bytes)
 
 /************************************************************************
  * ## Blank Lines
+ *
+ * Blank lines contain only WS characters: spaces, tabs, and a newline.
+ *
+ * Blank lines produce no output, but they are inserted into the Markdown
+ * queue in order to keep block precedence as the parsing continues.
+ *
  ************************************************************************/
 
 /**
@@ -150,12 +156,13 @@ static ssize_t is_blank_line(uint8_t *data, bool parse)
     size_t i = 0;   /* Byte-index to increment and return. */
     
     if (!(*data)) return 0;
-    while (*data && isblank(*data)) data++, i++;
+    while (isblank(*data)) data++, i++;
     
-    /* Cannot have any non-WS chars on a blank line. */
-    if (*data == '\n' || !(*data)) {
+    if (*data == '\n') {
         if (parse) add_markdown(NULL, BLANK_LINE, NULL);
-        return i + NEWLINE;
+        
+        /* Don't append a newline byte if we reached EOF. */
+        return i + (!(*data) ? 0 : NEWLINE);
     }
     return -1;
 }
