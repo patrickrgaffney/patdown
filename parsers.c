@@ -449,6 +449,14 @@ static ssize_t is_setext_header(uint8_t *data)
 
 /************************************************************************
  * ## Indented Code Blocks
+ *
+ * An indented code block is a series of indented lines optionally 
+ * separated by blank lines. Because of the ambiguity of when an indented
+ * code block actually ends, a look-a-head is performed after a blank
+ * line is encountered inside an indented code block.
+ *
+ * For consistency, the required indentation is one tab or four spaces.
+ * 
  ************************************************************************/
 
 /**
@@ -465,7 +473,7 @@ static ssize_t parse_indented_code_block(uint8_t *data)
     size_t ws = 0;      /* White space index. */
     String *c = init_string(BLK_BUF);
     
-    if (((ws = count_indentation(data))) < 4) return -1;
+    if ((ws = count_indentation(data)) < 4) return -1;
     
     do {
         /* Skip the indentation: one tab or four spaces. */
