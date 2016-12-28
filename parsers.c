@@ -3,7 +3,7 @@
  * 
  *  author:     Pat Gaffney <pat@hypepat.com>
  *  created:    2016-06-15
- *  modified:   2016-12-20
+ *  modified:   2016-12-27
  *  project:    patdown
  * 
  ************************************************************************/
@@ -12,9 +12,6 @@
 #include <string.h>
 #include <stdlib.h>
 #include <stdbool.h>
-
-// TODO: REMOVE
-#include <stdio.h>
 
 #include "links.h"
 #include "markdown.h"
