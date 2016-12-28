@@ -29,7 +29,7 @@
 #define PARSE_BLK true
 #define CHK_SYNTX false
 
-/** Block parsing prototypes. **/
+/* Block parsing prototypes. **/
 static bool    block_parser(String *);
 static ssize_t is_blank_line(uint8_t *, bool);
 static bool    is_still_paragraph(uint8_t *);
@@ -84,7 +84,7 @@ static bool block_parser(String *bytes)
 {
     int len = 0;                    /* Length of last block. */
     uint8_t *doc = bytes->data;     /* Document pointer. */
-    size_t total = 0;
+    size_t total = 0;               /* Total bytes parsed. */
     
     while (true) {
         size_t ws = 0;
@@ -133,6 +133,10 @@ static bool block_parser(String *bytes)
 }
 
 
+/************************************************************************
+ * ## Blank Lines
+ ************************************************************************/
+
 /**
  * Check the next line for a blank line.
  *
@@ -156,6 +160,10 @@ static ssize_t is_blank_line(uint8_t *data, bool parse)
     return -1;
 }
 
+
+/************************************************************************
+ * ## Paragraphs
+ ************************************************************************/
 
 /**
  * Check the next line for a lazy paragraph continuation.
@@ -231,6 +239,10 @@ static ssize_t parse_paragraph(uint8_t *data)
     return p->length + sh + + ws + NEWLINE;
 }
 
+
+/************************************************************************
+ * ## ATX Headers
+ ************************************************************************/
 
 /**
  * Check the current line for an ATX header.
@@ -312,6 +324,10 @@ static ssize_t parse_atx_header(uint8_t *data, size_t hashes, size_t i)
 }
 
 
+/************************************************************************
+ * ## Horizontal Rules
+ ************************************************************************/
+
 /**
  * Check the current line for a horizontal rule.
  *
@@ -383,6 +399,10 @@ static ssize_t is_setext_header(uint8_t *data)
     return -1;
 }
 
+
+/************************************************************************
+ * ## Indented Code Blocks
+ ************************************************************************/
 
 /**
  * Parse an indented code block and add it to the queue.
@@ -456,6 +476,10 @@ static ssize_t parse_indented_code_block(uint8_t *data)
     return i + c->length + NEWLINE;
 }
 
+
+/************************************************************************
+ * ## Fenced Code Blocks
+ ************************************************************************/
 
 /**
  * Check the current line for an opening code fence.
