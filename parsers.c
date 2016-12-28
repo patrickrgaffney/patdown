@@ -13,6 +13,9 @@
 #include <stdlib.h>
 #include <stdbool.h>
 
+// TODO: REMOVE
+#include <stdio.h>
+
 #include "links.h"
 #include "markdown.h"
 #include "parsers.h"
@@ -39,6 +42,9 @@ static ssize_t parse_atx_header(uint8_t *, size_t, size_t);
 static ssize_t is_horizontal_rule(uint8_t *, bool);
 static ssize_t is_setext_header(uint8_t *);
 static ssize_t parse_indented_code_block(uint8_t *);
+static ssize_t is_opening_code_fence(uint8_t *, bool);
+static ssize_t is_closing_code_fence(uint8_t *, CodeBlk *);
+static size_t  parse_fenced_code_block(uint8_t *, CodeBlk *, size_t);
 
 /************************************************************************
  * # External Parsing API
@@ -108,10 +114,12 @@ static bool block_parser(String *bytes)
         
         /* Switch on first non-WS character of the line. */
         switch(*(doc + ws)) {
-            case '-': len = is_horizontal_rule(doc, PARSE_BLK); break;
-            case '_': len = is_horizontal_rule(doc, PARSE_BLK); break;
-            case '*': len = is_horizontal_rule(doc, PARSE_BLK); break;
-            case '#': len = is_atx_header(doc, PARSE_BLK);      break;
+            case '-': len = is_horizontal_rule(doc, PARSE_BLK);     break;
+            case '_': len = is_horizontal_rule(doc, PARSE_BLK);     break;
+            case '*': len = is_horizontal_rule(doc, PARSE_BLK);     break;
+            case '#': len = is_atx_header(doc, PARSE_BLK);          break;
+            case '`': len = is_opening_code_fence(doc, PARSE_BLK);  break;
+            case '~': len = is_opening_code_fence(doc, PARSE_BLK);  break;
             default:  len = -1;
         }
         
@@ -140,7 +148,7 @@ static ssize_t is_blank_line(uint8_t *data, bool parse)
 {
     size_t i = 0;   /* Byte-index to increment and return. */
     
-    if (*data == '\0') return 0;
+    if (!(*data)) return 0;
     while (*data && isblank(*data)) data++, i++;
     
     /* Cannot have any non-WS chars on a blank line. */
@@ -167,10 +175,11 @@ static ssize_t is_blank_line(uint8_t *data, bool parse)
  */
 static bool is_still_paragraph(uint8_t *data)
 {
-    /* TODO: Add checks for code fence, blockquotes, and lists. */
+    /* TODO: Add checks for blockquotes and lists. */
     return ((is_blank_line(data, CHK_SYNTX) < 0) &&
             (is_atx_header(data, CHK_SYNTX) < 0) &&
-            (is_horizontal_rule(data, CHK_SYNTX) < 0));
+            (is_horizontal_rule(data, CHK_SYNTX) < 0) &&
+            (is_opening_code_fence(data, CHK_SYNTX) < 0));
 }
 
 
@@ -451,86 +460,153 @@ static ssize_t parse_indented_code_block(uint8_t *data)
 }
 
 
-// /* Maximum length of an info string on a fenced code block. */
-// #define INFO_STRING_MAX 20
-//
-// /** is_code_fence() -- is the current line a code fence? ****************/
-// static bool is_code_fence(void)
-// {
-//     size_t i = indentation;
-//     size_t fenceLen = 0;            /* Length of the fence. */
-//     int fenceChar = -1;             /* Character used for the fence. */
-//     int c = line->string[i];        /* First non-WS character. */
-//
-//     /* Count the number of fence characters. */
-//     fenceChar = (c == '~' || c == '`') ? c : -1;
-//     while (line->string[i] == fenceChar) i++, fenceLen++;
-//
-//     return (fenceLen > 2);
-//
-// }
-//
-// /** parse_fenced_code_block(fp) -- attempt to parse a fenced code block */
-// static Markdown *parse_fenced_code_block(FILE *fp)
-// {
-//     Markdown *node = NULL;          /* Node to be returned. */
-//     CodeBlock *info = NULL;         /* Used to hold info string. */
-//     size_t openFenceLength = 0;     /* Length of opening fence. */
-//     size_t closeFenceLength = 0;    /* Length of closing fence. */
-//     size_t i = indentation;         /* Index used to create substring. */
-//     size_t k = 0;                   /* Index used to create infostring. */
-//     int fenceChar = -1;             /* Character used for the fence. */
-//     int c = line->string[i];        /* First opening fence character. */
-//
-//     /* Count the number of fence characters. */
-//     fenceChar = (c == '~' || c == '`') ? c : -1;
-//     while (line->string[i] == fenceChar) {
-//         i++;
-//         openFenceLength++;
-//     }
-//     if (openFenceLength < 3) return NULL;
-//
-//     /* Create an empty code block node -- the actual *code block*
-//      * content (lines) will be added as we parse it line-by-line. */
-//     node = init_markdown(NULL, 0, 0, FENCED_CODE_BLOCK);
-//
-//     /* Parse an unlimited number of spaces after the opening fence. */
-//     while (line->string[i] == ' ') i++;
-//
-//     /* Check for an info string. */
-//     if (isalpha(line->string[i])) {
-//         info = alloc_code_block_data();
-//
-//         /* Collect INFO_STRING_MAX characters for the info-string. */
-//         while (isalpha(line->string[i]) && k < INFO_STRING_MAX) {
-//             info->lang[k++] = line->string[i++];
-//         }
-//         node->data = info;
-//     }
-//
-//     /* Parse every line as part of this code block
-//      * until we find the closing fence. */
-//     while (true) {
-//         if (!(line = read_line(fp))) break;
-//         i = indentation = count_indentation(line->string);
-//
-//         /* Check this line for a code fence. */
-//         while (line->string[i] == fenceChar) i++, closeFenceLength++;
-//         if (openFenceLength == closeFenceLength) break;
-//
-//         /* Combine strings with newline if node->value has a string value. */
-//         if (node->value->len != 0) {
-//             node->value = combine_strings("%s\n%s", node->value, line);
-//         }
-//         /* Otherwise just assign node->value to be a copy of `line`. */
-//         else node->value = create_substring(line, 0, line->len - 1);
-//
-//         update_state(FREE_LINE, FENCED_CODE_BLOCK);
-//     }
-//     update_state(FREE_LINE, FENCED_CODE_BLOCK);
-//     return node;
-// }
-// 
+/**
+ * Check the current line for an opening code fence.
+ *
+ * - parameter data: An array of byte data (utf8 string).
+ * - parameter parse: If true, parse the block; if false, just check syntax.
+ *
+ * - returns: The size in bytes of the line, or -1 if not a code fence.
+ */
+static ssize_t is_opening_code_fence(uint8_t *data, bool parse)
+{
+    size_t ws = count_indentation(data);
+    int8_t fc = -1;         /* Character used in for the fence (~|`). */
+    size_t fl = 0;          /* The length of this fence. */
+    size_t i  = ws;         /* Byte-index to increment and return. */
+    CodeBlk *blk = NULL;    /* The data for this code block. */
+    
+    if (ws > 3) return -1;
+    
+    data += ws;
+    fc = (*data == '`' || *data == '~') ? *data : -1;
+    if (fc == -1) return -1;
+
+    /* Count the number of fence characters. */
+    while (*data == fc) i++, fl++, data++;
+    if (fl < 3) return -1;
+    
+    /* Save the code block data if we're parsing, return true (positive
+     * integer) to the caller if we were sent here to just check syntax. */
+    if (parse) {
+        blk = init_code_blk();
+        blk->ws = ws;
+        blk->fl = fl;
+        blk->fc = fc;
+    }
+    else return i;
+    
+    /* Skip an unlimited number of whitespace. */
+    while (*data == 0x20 || *data == '\t') i++, data++;
+    
+    /* Enter the fenced code block if there's no info string. */
+    if (*data == '\n') {
+        return parse_fenced_code_block(++data, blk, i + NEWLINE);
+    }
+    
+    /* Parse the info string. */
+    for (size_t k = 0; (k < INFO_STR_MAX && isalpha(*data)); k++) {
+        blk->lang[k] = *data++;
+        i++;
+    }
+    
+    /* Find the newline. */
+    while (*data && *data != '\n') data++, i++;
+    
+    return parse_fenced_code_block(++data, blk, i + NEWLINE);
+}
+
+
+/**
+ * Check the current line for a closing code fence.
+ *
+ * - parameter data: An array of byte data (utf8 string).
+ * - parameter blk: Data about the opening fence for this block.
+ *
+ * - returns: The size in bytes of the line, or -1 if not a code fence.
+ */
+static ssize_t is_closing_code_fence(uint8_t *data, CodeBlk *blk)
+{
+    size_t ws = count_indentation(data);
+    int8_t fc = -1;         /* Character used for the fence (~|`). */
+    size_t fl = 0;          /* The length of this fence. */
+    size_t i  = ws;         /* Byte-index to increment and return. */
+    
+    if (ws > 3) return -1;
+    
+    data += ws;
+    fc = (*data == '`' || *data == '~') ? *data : -1;
+    if (fc == -1 || fc != blk->fc) return -1;
+
+    /* Count the number of fence characters. */
+    while (*data == fc) i++, fl++, data++;
+    if (fl < 3 || fl < blk->fl) return -1;
+    
+    /* Skip an unlimited number of whitespace. */
+    while (*data == 0x20 || *data == '\t') i++, data++;
+    
+    /* If any non-newline characters, this can't be a closing fence. */
+    if (*data != '\n') return -1;
+    
+    return i + NEWLINE;
+}
+
+
+/**
+ * Parse a fenced code block and add it to the queue.
+ *
+ * - parameter data: An array of byte data (utf8 string).
+ * - parameter blk: Data about the opening fence for this block.
+ * - parameter i: Index of `data` for the current block (return value).
+ *
+ * - returns: The size in bytes of the line.
+ */
+static size_t parse_fenced_code_block(uint8_t *data, CodeBlk *blk, size_t i)
+{
+    String *cb = init_string(BLK_BUF);
+    size_t ws  = 0;
+    ssize_t cfl = 0;    /* Closing-fence line length (in bytes). */
+    
+    /* Parse every line as part of this code block 
+     * until we find the closing fence. */
+    while (true) {
+        ws = count_indentation(data);
+        
+        /* Check this line for a code fence. */
+        if ((cfl = is_closing_code_fence(data, blk)) > 0) break;
+        else cfl = 0;
+        
+        /* Advance past the WS on the opening code fence. */
+        size_t linews = 0;
+        if (blk->ws > 0 && ws > 0 && linews < blk->ws) {
+            data++, i++;
+            linews++;
+        }
+        
+        /* Add characters until we reach a newline. */
+        while (*data && *data != '\n') {
+            if (cb->length < cb->allocd - NEWLINE - NULL_CHAR) {
+                *cb->data++ = *data++;
+                cb->length++;
+                i++;
+            }
+            else realloc_string(cb, cb->allocd + BLK_BUF);
+        }
+        if (!(*data)) break;
+        
+        /* Add the newline. */
+        *cb->data++ = '\n';
+        cb->length++;
+        i++, data++;
+    }
+    
+    *cb->data = '\0';
+    cb->data -= cb->length;
+    add_markdown(cb, FENCED_CODE_BLOCK, blk);
+    return i + cfl;
+}
+
+
 // /** match_html_block_element(e, len) -- determine if e is html5 element name */
 // static bool match_html_block_element(const char *e, const size_t len)
 // {
