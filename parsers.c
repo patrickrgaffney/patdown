@@ -13,6 +13,9 @@
 #include <stdlib.h>
 #include <stdbool.h>
 
+/* TODO: REMOVE THIS WHEN DONE TESTING */
+#include <stdio.h>
+
 #include "links.h"
 #include "markdown.h"
 #include "parsers.h"
@@ -29,6 +32,9 @@
 #define PARSE_BLK true
 #define CHK_SYNTX false
 
+/** The number of characters to compare when parsing html tag names. */
+#define TAG_LEN 25
+
 /* Block parsing prototypes. */
 static bool    block_parser(String *);
 static ssize_t is_blank_line(uint8_t *, bool);
@@ -42,6 +48,8 @@ static ssize_t parse_indented_code_block(uint8_t *);
 static ssize_t is_opening_code_fence(uint8_t *, bool);
 static ssize_t is_closing_code_fence(uint8_t *, CodeBlk *);
 static size_t  parse_fenced_code_block(uint8_t *, CodeBlk *, size_t);
+static bool    match_html_element(const uint8_t *, const size_t);
+static ssize_t is_html_block(uint8_t *, bool);
 
 /************************************************************************
  * # External Parsing API
@@ -126,6 +134,7 @@ static bool block_parser(String *bytes)
             case '#': len = is_atx_header(doc, PARSE_BLK);          break;
             case '`': len = is_opening_code_fence(doc, PARSE_BLK);  break;
             case '~': len = is_opening_code_fence(doc, PARSE_BLK);  break;
+            case '<': len = is_html_block(doc, PARSE_BLK);          break;
             default:  len = -1;
         }
         
@@ -534,6 +543,18 @@ static ssize_t parse_indented_code_block(uint8_t *data)
 
 /************************************************************************
  * ## Fenced Code Blocks
+ *
+ * A fenced code block begins with an **opening code fence** -- a series
+ * of at least three consequtive, identical `\`` or `~` characters. An
+ * optional info-string can also be provided after the opening fence. The
+ * first 20 alpha characters after the end of the opening fence will be 
+ * parsed as the blocks info-string.
+ *
+ * After the opening fence all subsequent lines will be parsed as the
+ * content of a fenced code block until a line containing a **closing
+ * code fence** is encountered. A closing fence must match the opening
+ * fence in length and the character used.
+ *
  ************************************************************************/
 
 /**
@@ -547,9 +568,9 @@ static ssize_t parse_indented_code_block(uint8_t *data)
 static ssize_t is_opening_code_fence(uint8_t *data, bool parse)
 {
     size_t ws = count_indentation(data);
+    size_t i  = ws;         /* Byte-index to increment and return. */
     int8_t fc = -1;         /* Character used in for the fence (~|`). */
     size_t fl = 0;          /* The length of this fence. */
-    size_t i  = ws;         /* Byte-index to increment and return. */
     CodeBlk *blk = NULL;    /* The data for this code block. */
     
     if (ws > 3) return -1;
@@ -577,7 +598,10 @@ static ssize_t is_opening_code_fence(uint8_t *data, bool parse)
     
     /* Enter the fenced code block if there's no info string. */
     if (*data == '\n') {
-        return parse_fenced_code_block(++data, blk, i + NEWLINE);
+        if (parse) {
+            return parse_fenced_code_block(++data, blk, i + NEWLINE);
+        }
+        return !(*data) ? i : (i + NEWLINE);
     }
     
     /* Parse the info string. */
@@ -589,7 +613,10 @@ static ssize_t is_opening_code_fence(uint8_t *data, bool parse)
     /* Find the newline. */
     while (*data && *data != '\n') data++, i++;
     
-    return parse_fenced_code_block(++data, blk, i + NEWLINE);
+    if (parse) {
+        return parse_fenced_code_block(++data, blk, i + NEWLINE);
+    }
+    return !(*data) ? i : (i + NEWLINE);
 }
 
 
@@ -604,9 +631,9 @@ static ssize_t is_opening_code_fence(uint8_t *data, bool parse)
 static ssize_t is_closing_code_fence(uint8_t *data, CodeBlk *blk)
 {
     size_t ws = count_indentation(data);
-    int8_t fc = -1;         /* Character used for the fence (~|`). */
-    size_t fl = 0;          /* The length of this fence. */
     size_t i  = ws;         /* Byte-index to increment and return. */
+    int8_t fc = -1;         /* Character used for closing fence (~|`). */
+    size_t fl = 0;          /* The length of the closing fence. */
     
     if (ws > 3) return -1;
     
@@ -622,8 +649,8 @@ static ssize_t is_closing_code_fence(uint8_t *data, CodeBlk *blk)
     while (*data == 0x20 || *data == '\t') i++, data++;
     
     /* If any non-newline characters, this can't be a closing fence. */
-    if (*data == '\n') return i + NEWLINE;
     if (!(*data)) return i;
+    if (*data == '\n') return i + NEWLINE;
     
     return -1;
 }
@@ -649,7 +676,7 @@ static size_t parse_fenced_code_block(uint8_t *data, CodeBlk *blk, size_t i)
         
         /* Check this line for a code fence. */
         if ((cfl = is_closing_code_fence(data, blk)) > 0) break;
-        else cfl = 0;
+        cfl = 0;
         
         /* Advance past the WS on the opening code fence. */
         size_t linews = 0;
@@ -683,112 +710,231 @@ static size_t parse_fenced_code_block(uint8_t *data, CodeBlk *blk, size_t i)
 }
 
 
-// /** match_html_block_element(e, len) -- determine if e is html5 element name */
-// static bool match_html_block_element(const char *e, const size_t len)
-// {
-//     static char *elements[7][14] = {
-//         { "p" },
-//         { "dd", "dl", "dt", "td", "th", "tr" },
-//         { "col", "dir", "div", "nav" },
-//         { "base", "body", "form", "head", "html", "link", "main", "menu",
-//           "meta" },
-//         { "aside", "frame", "param", "style", "table", "tbody", "tfoot",
-//           "thead", "title", "track" },
-//         { "center", "dialog", "figure", "footer", "header", "iframe",
-//           "legend", "option", "script", "source" },
-//         { "address", "article", "basefont", "caption", "colgroup", "details",
-//           "fieldset", "figcaption", "frameset", "menuitem", "noframes",
-//           "optgroup", "section", "summary" }
-//     };
-//
-//     if (len == 0) return false;
-//
-//     for (size_t i = 0; i < 14; i++) {
-//         if (elements[len][i] && strcmp(e, elements[len][i]) == 0) {
-//             return true;
-//         }
-//     }
-//     return false;
-// }
-// 
-//
-//
-// /** parse_html_block(fp) -- attempt to parse an HTML block **************/
-// static Markdown *parse_html_block(FILE *fp)
-// {
-//     size_t i = indentation;
-//     Markdown *node = NULL;      /* Node to be returned. */
-//     Markdown *temp = NULL;      /* Node to hold temporary parsing data. */
-//     size_t j = 0;               /* Index used for element[]. */
-//     char element[15];           /* Opening elements name. */
-//
-//     /* HTML block start tag must not be indented. */
-//     if (i > 0) return NULL;
-//
-//     /* Check for opening angle-bracket. */
-//     if (line->string[i++] != '<') return NULL;
-//
-//     /* If it appears to be a comment, attempt to parse one. */
-//     if (line->string[i] == '!') return parse_html_comment(fp);
-//
-//     /* Validate the opening tag name. */
-//     while (isalpha(line->string[i])) {
-//         element[j++] = line->string[i++];
-//     }
-//     if (!match_html_block_element(element, --j)) return NULL;
-//
-//     node = init_markdown(line, 0, line->len - 1, HTML_BLOCK);
-//     update_state(FREE_LINE, HTML_BLOCK);
-//
-//     /* Append lines to this HTML_BLOCK until a newline is encountered. */
-//     while (true) {
-//         if (!(line = read_line(fp))) break;
-//         i = indentation = count_indentation(line->string);
-//
-//         /* Check for exit-condition: a BLANK_LINE was encountered. */
-//         if (is_blank_line()) {
-//             update_state(FREE_LINE, BLANK_LINE);
-//             break;
-//         }
-//
-//         /* Otherwise, append this line to the HTML_BLOCK node. */
-//         node->value = combine_strings("%s\n%s", node->value, line);
-//     }
-//     return node;
-// }
-//
-//
-// /** parse_html_comment(fp) -- attempt to parse an HTML comment **********/
-// static Markdown *parse_html_comment(FILE *fp)
-// {
-//     size_t i = indentation;
-//
-//     /* Check for *required* opening sequence: "<!--". */
-//     if (line->string[i++] != '<') return NULL;
-//     if (line->string[i++] != '!') return NULL;
-//     if (line->string[i++] != '-') return NULL;
-//     if (line->string[i++] != '-') return NULL;
-//
-//     /* Consume all lines until we find the ending sequence: "-->". */
-//     while (true) {
-//         /* Check the current line for the ending sequence. */
-//         while (line->string[i] != '-') i++;
-//
-//         if (line->string[i++] == '-' &&
-//             line->string[i++] == '-' &&
-//             line->string[i]   == '>') break;
-//
-//         /* Get the next line to check for ending sequence. */
-//         else {
-//             update_state(FREE_LINE, HTML_COMMENT);
-//             if (!(line = read_line(fp))) break;
-//             i = indentation = count_indentation(line->string);
-//         }
-//     }
-//     update_state(FREE_LINE, HTML_COMMENT);
-//     return init_markdown(NULL, 0, 0, HTML_COMMENT);
-// }
-//
+/************************************************************************
+ * ## HTML Blocks
+ *
+ * Because there are 7 different kinds of HTML blocks, all traffic is
+ * directed through `is_html_block()` which will examine the syntax of 
+ * the current line and determine which type -- if any -- can be 
+ * represented. It will then parse the line by calling the appropriate
+ * parsing function if the `parse` parameter is true.
+ *
+ * The seven types of HTML blocks:
+ *
+ * 1. **Literal content**: Line begins with `<script`, `<pre`, or `<style`. 
+ *
+ *    This block is closed when an end tag -- `</script>`, `</pre>`, or 
+ *    `<style>` --  is encountered. As a result, these blocks can contain 
+ *    blank lines. If there is no end tag, the rest of the document will 
+ *    be part of this block. The end tag can also occur on the same line 
+ *    as the opening tag. Anything after the end tag on the line it is
+ *    found is considered part of this block.
+ *
+ * 2. **HTML Comment**: line begins with `<!--`.
+ *
+ *    This block is closed when the end tag -- `-->` -- is encountered.
+ *    It follows the same rules regarding the end tag as type #1.
+ *
+ * 3. **PHP instructions**: line begins with `<?`.
+ *
+ *    This block is closed when the end tag -- `?>` -- is encountered.
+ *    It follows the same rules regarding the end tag as type #1.
+ *
+ * 4. **HTML declaration**: line begins with `<!` followed by an uppercase
+ *    ASCII character.
+ *
+ *    This block is closed when the end tag -- `>` -- is encountered.
+ *    It follows the same rules regarding the end tag as type #1.
+ *
+ * 5. **CDATA instructions**: line begins with `<![CDATA[`.
+ *
+ *    This block is closed when the end tag -- `]]>` -- is encountered.
+ *    It follows the same rules regarding the end tag as type #1.
+ *
+ * 6. **HTML5 Element**: line begins with `<` or `</` followed by one of
+ *    the standard element names.
+ *
+ *    This block is closed when a blank line is encountered. Therefore,
+ *    there can be no nested blank lines inside this block. No checks 
+ *    are made to ensure the opening tag is closed or even that it is
+ *    complete -- only the bracket, optional forward-slash, and element
+ *    name are required.
+ *
+ * 7. **Custom Element**: line begins with `<` or `</` followed by any tag
+ *    name that is not `script`, `style`, or `pre` followed by a `>` and
+ *    any amount of whitespace before the newline.
+ *
+ *    This block is closed when a blank line is encountered. This block
+ *    cannot interrupt a paragraph. The distinction is made in order to
+ *    prevent the parser from closing a paragraph prematurely when a tag
+ *    is placed at the beginning of the line of a lazy-continuation.
+ *
+ ************************************************************************/
+
+
+/**
+ * Match an input string to a valid HTML element name.
+ *
+ * - parameter e: The input string.
+ * - parameter len: The number of characters in `e`.
+ *
+ * - returns: true if a match is found, false otherwise.
+ */
+static bool match_html_element(const uint8_t *e, const size_t len)
+{
+    /* Valid element names -- separated by string length. */
+    static char *elements[7][17] = {
+        { 
+            "p", NULL 
+        },
+        { 
+            "dd", "dl", "dt", "h1", "h2", "h3", "h4", "h5", "h6", "hr", 
+            "li", "ol", "td", "th", "tr", "ul", NULL 
+        },
+        { 
+            "col", "dir", "div", "nav", NULL 
+        },
+        { 
+            "base", "body", "form", "head", "html", "link", "main", 
+            "menu", "meta", NULL 
+        },
+        { 
+            "aside", "frame", "param", "table", "tbody", "tfoot",
+            "thead", "title", "track", NULL
+        },
+        { 
+            "center", "dialog", "figure", "footer", "header", "iframe",
+            "legend", "option", "source", NULL
+        },
+        { 
+            "address", "article", "basefont", "blockquote", "caption", 
+            "colgroup", "details", "fieldset", "figcaption", "frameset", 
+            "menuitem", "noframes", "optgroup", "section", "summary", NULL
+        }
+    };
+
+    if (len == 0) return false;
+
+    for (size_t i = 0; i < 17; i++) {
+        if (elements[len][i] && strcmp((char *)e, elements[len][i]) == 0) {
+            return true;
+        }
+    }
+    return false;
+}
+
+
+/**
+ * Check the current line for an HTML block.
+ *
+ * - parameter data: An array of byte data (utf8 string).
+ * - parameter parse: If true, parse the block; if false, just check syntax.
+ *
+ * - returns: The size in bytes of the line, or -1 if not an HTML block.
+ */
+static ssize_t is_html_block(uint8_t *data, bool parse)
+{
+    size_t ws = count_indentation(data);
+    size_t i  = ws;         /* Byte-index to increment and return. */
+    size_t k  = 0;          /* Index for the tag buffer. */
+    uint8_t tag[TAG_LEN];   /* Buffer to hold the tag while parsing. */
+    bool literal = true;    /* Should we parse for type 1: literal content. */
+    
+    if (ws > 3) return -1;
+    data += ws;
+    
+    /* All html tags must be opened. */
+    if (*data++ != '<') return -1;
+    
+    /* HTML comments, HTML declarations, and CDATA instructions. */
+    if (*data == '!') {
+        data++, i++;
+        
+        /* 2nd type: HTML comment. */
+        if (*data == '-') {
+            data++, i++;
+            if (*data == '-') {
+                /* TODO: return parse_html_comment() */
+                printf("-- type 2: HTML comment\n"); 
+                return -1;
+            }
+            else return -1;
+        }
+        
+        /* 4th type: HTML declaration. */
+        else if (isupper(*data)) {
+            /* TODO: return parse_html_declaration() */
+            printf("-- type 4: HTML declaration\n"); 
+            return -1;
+        }
+        
+        /* 5th type: CDATA instructions. */
+        else if (*data == '[') {
+            data++, i++;
+            if (*data++ == 'C' &&
+                *data++ == 'D' &&
+                *data++ == 'A' &&
+                *data++ == 'T' &&
+                *data++ == 'A' &&
+                *data   == '[') {
+                i += 6;
+                /* TODO: return parse_cdata_instructions() */   
+                printf("-- type 5: CDATA instructions\n"); 
+                return -1;
+            }
+            else return -1;
+        }
+        else return -1;
+    }
+    
+    /* 3rd type: PHP instructions. */
+    if (*data == '?') {
+        /* TODO: return parse_php_instructions() */
+        printf("-- type 3: php instructions\n");
+        return -1;
+    }
+    
+    /* Check for optional forward-slash. */
+    if (*data == '/') {
+        data++, i++;
+        literal = false;
+    }
+    
+    /* Extract the tag name -- exit if there's no tag. */
+    for (k = 0; k < TAG_LEN - 1 && isalpha(*data); k++, i++) {
+        tag[k] = tolower(*data++);
+    }
+    tag[k] = '\0';
+    if (k == 0) return -1;
+    
+    /* 1st type: Literal content. */
+    if (literal) {
+        if (strncmp((char *)tag, "script", TAG_LEN) == 0 ||
+            strncmp((char *)tag, "style", TAG_LEN) == 0  ||
+            strncmp((char *)tag, "pre", TAG_LEN) == 0) {
+            printf("tag = \'%s\' -- type 1: literal content\n", tag);
+            /* TODO: return parse_php_instructions() */
+            return -1;
+        }
+    }
+    
+    /* 6th type: HTML5 element. */
+    if (match_html_element(tag, k)) {
+        printf("tag = \'%s\' -- type 6: html5 element\n", tag);
+        /* TODO: return parse_html_element() */
+        return -1;
+    }
+    
+    /* 7th type: Custom element. */
+    if (get_last_block() == PARAGRAPH) return -1;
+    
+    /* TODO: return parse_custom_element() */
+    printf("tag = \'%s\' -- type 7: custom element\n", tag);
+    return -1;
+}
+
+
+
 // /** parse_link_reference(fp) -- attempt to parse a link reference definition */
 // static Markdown *parse_link_ref_defs(FILE *fp)
 // {
