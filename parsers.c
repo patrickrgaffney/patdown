@@ -564,14 +564,12 @@ static ssize_t is_closing_code_fence(uint8_t *data, CodeBlk *blk)
  */
 static size_t parse_fenced_code_block(uint8_t *data, CodeBlk *blk, size_t i)
 {
-    String *cb = init_string(BLK_BUF);
-    size_t ws  = 0;
+    String *cb  = init_string(BLK_BUF);
     ssize_t cfl = 0;    /* Closing-fence line length (in bytes). */
     
     /* Parse every line as part of this code block 
      * until we find the closing fence. */
     while (true) {
-        ws = count_indentation(data);
         
         /* Check this line for a code fence. */
         if ((cfl = is_closing_code_fence(data, blk)) > 0) break;
@@ -579,7 +577,7 @@ static size_t parse_fenced_code_block(uint8_t *data, CodeBlk *blk, size_t i)
         
         /* Advance past the WS on the opening code fence. */
         size_t linews = 0;
-        while (blk->ws > 0 && ws > 0 && linews < blk->ws) {
+        while (blk->ws > 0 && *data == 0x20 && linews < blk->ws) {
             data++, i++;
             linews++;
         }
