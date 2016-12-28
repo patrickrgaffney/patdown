@@ -593,11 +593,12 @@ static size_t parse_fenced_code_block(uint8_t *data, CodeBlk *blk, size_t i)
             }
             else realloc_string(cb, cb->allocd + BLK_BUF);
         }
-        if (!(*data)) break;
         
         /* Add the newline. */
         *cb->data++ = '\n';
         cb->length++;
+        
+        if (!(*data)) break;
         i++, data++;
     }
     
