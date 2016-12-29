@@ -13,9 +13,6 @@
 #include <stdlib.h>
 #include <stdbool.h>
 
-/* TODO: REMOVE THIS WHEN DONE TESTING */
-#include <stdio.h>
-
 #include "links.h"
 #include "markdown.h"
 #include "parsers.h"
@@ -48,9 +45,7 @@ static ssize_t parse_indented_code_block(uint8_t *);
 static ssize_t is_opening_code_fence(uint8_t *, bool);
 static ssize_t is_closing_code_fence(uint8_t *, CodeBlk *);
 static size_t  parse_fenced_code_block(uint8_t *, CodeBlk *, size_t);
-static bool    match_html_element(uint8_t *, size_t);
 static ssize_t is_html_block(uint8_t *, bool);
-static ssize_t parse_html_until_blankline(uint8_t *data);
 
 /************************************************************************
  * # External Parsing API
@@ -830,120 +825,33 @@ static bool match_html_element(uint8_t *e, size_t len)
 
 
 /**
- * Check the current line for an HTML block.
+ * Search the current line for the substring `endtag`.
  *
  * - parameter data: An array of byte data (utf8 string).
- * - parameter parse: If true, parse the block; if false, just check syntax.
+ * - parameter endtag: The string of characters that ends the block.
  *
- * - returns: The size in bytes of the line, or -1 if not an HTML block.
+ * - returns: true if the line contains `endtag`, false otherwise.
  */
-static ssize_t is_html_block(uint8_t *data, bool parse)
+static bool line_contains_endtag(char *data, const char *endtag)
 {
-    size_t ws = count_indentation(data);
-    size_t i  = ws;         /* Byte-index to increment and return. */
-    size_t k  = 0;          /* Index for the tag buffer. */
-    uint8_t tag[TAG_LEN];   /* Buffer to hold the tag while parsing. */
-    bool literal = true;    /* Should we parse for type 1: literal content. */
+    size_t index = 0;       /* Index of next newline. */
+    size_t tagi  = 0;       /* Index of the next end tag. */
+    char *tag    = NULL;    /* Pointer to next end tag. */
+    char *newl   = NULL;    /* Pointer to next newline. */
     
-    if (ws > 3) return -1;
-    data += ws;
-    
-    /* All html tags must be opened. */
-    if (*data++ != '<') return -1;
-    else i++;
-    
-    /* HTML comments, HTML declarations, and CDATA instructions. */
-    if (*data == '!') {
-        data++, i++;
-        
-        /* 2nd type: HTML comment. */
-        if (*data == '-') {
-            data++, i++;
-            if (*data == '-') {
-                /* TODO: return parse_html_comment() */
-                printf("-- type 2: HTML comment\n"); 
-                return -1;
-            }
-            else return -1;
-        }
-        
-        /* 4th type: HTML declaration. */
-        else if (isupper(*data)) {
-            /* TODO: return parse_html_declaration() */
-            printf("-- type 4: HTML declaration\n"); 
-            return -1;
-        }
-        
-        /* 5th type: CDATA instructions. */
-        else if (*data == '[') {
-            data++, i++;
-            if (*data++ == 'C' &&
-                *data++ == 'D' &&
-                *data++ == 'A' &&
-                *data++ == 'T' &&
-                *data++ == 'A' &&
-                *data   == '[') {
-                i += 6;
-                /* TODO: return parse_cdata_instructions() */   
-                printf("-- type 5: CDATA instructions\n"); 
-                return -1;
-            }
-            else return -1;
-        }
-        else return -1;
+    /* Get index of next newline. */
+    if (!(newl = strchr(data, '\n'))) {
+        return false;
     }
+    index = newl - data;
     
-    /* 3rd type: PHP instructions. */
-    if (*data == '?') {
-        /* TODO: return parse_php_instructions() */
-        printf("-- type 3: php instructions\n");
-        return -1;
+    /* Find the index of the endtag. */
+    if (!(tag = strstr(data, endtag))) {
+        return false;
     }
+    tagi = tag - data;
     
-    /* Check for optional forward-slash. */
-    if (*data == '/') {
-        data++, i++;
-        literal = false;
-    }
-    
-    /* Extract the tag name -- exit if there's no tag. */
-    for (k = 0; k < TAG_LEN - 1 && isalpha(*data); k++, i++) {
-        tag[k] = tolower(*data++);
-    }
-    tag[k] = '\0';
-    if (k == 0) return -1;
-    
-    /* 1st type: Literal content. */
-    if (literal) {
-        if (strncmp((char *)tag, "script", TAG_LEN) == 0 ||
-            strncmp((char *)tag, "style", TAG_LEN) == 0  ||
-            strncmp((char *)tag, "pre", TAG_LEN) == 0) {
-            printf("tag = \'%s\' -- type 1: literal content\n", tag);
-            /* TODO: return parse_php_instructions() */
-            return -1;
-        }
-    }
-    
-    /* 6th type: HTML5 element. */
-    if (match_html_element(tag, k)) {
-        if (parse) return parse_html_until_blankline(data - i);
-        return i;
-    }
-    
-    /* 7th type: Custom element -- cannot interrupt a paragraph. */
-    if (get_last_block() == PARAGRAPH) return -1;
-    
-    /* Only the opening bracket is allowed on the first line. */
-    while (*data && *data != '>' && *data != '\n') data++, i++;
-    if (*data == '\n') return -1;
-    else data++, i++;
-    
-    /* Find the newline, otherwise this can't be custom element. */
-    while (*data == 0x20) data++, i++;
-    if (*data && *data != '\n') return -1;
-    
-    if (parse) return parse_html_until_blankline(data - i);
-    return i;
+    return tagi < index;
 }
 
 
@@ -992,6 +900,164 @@ static ssize_t parse_html_until_blankline(uint8_t *data)
     hb->data -= hb->length;
     add_markdown(hb, HTML_BLOCK, NULL);
     return i + bl;
+}
+
+
+/**
+ * Parse all input as an HTML block until a proper end tag is found.
+ *
+ * This function parses types 1 - 5 of HTML Blocks (literal content,
+ * HTML content, PHP instructions, HTML declarations, CDATA 
+ * instructions).
+ *
+ * - parameter data: An array of byte data (utf8 string).
+ * - parameter endtag: The string of characters that ends the block.
+ *
+ * - returns: The size in bytes of the block. 
+ */
+static ssize_t parse_html_block(uint8_t *data, const char *endtag)
+{
+    String *hb = init_string(BLK_BUF);
+    bool lastline = false;      /* Set to true when block should end. */
+    
+    while (true) {
+        
+        /* Check if the current line contains the end tag. */
+        if (line_contains_endtag((char *)data, endtag)) {
+            lastline = true;
+        }
+        
+        /* Add characters until we reach a newline. */
+        while (*data && *data != '\n') {
+            if (hb->length < hb->allocd - NEWLINE - NULL_CHAR) {
+                *hb->data++ = *data++;
+                hb->length++;
+            }
+            else realloc_string(hb, hb->allocd + BLK_BUF);
+        }
+        
+        /* Break if that was our last line or EOF. */
+        if (!(*data) || lastline) break;
+        
+        /* Add newline if we're still parsing. */
+        *hb->data++ = *data++;
+        hb->length++;
+    }
+    
+    *hb->data = '\0';
+    hb->data -= hb->length;
+    add_markdown(hb, HTML_BLOCK, NULL);
+    return hb->length + NEWLINE;
+}
+
+
+/**
+ * Check the current line for an HTML block.
+ *
+ * - parameter data: An array of byte data (utf8 string).
+ * - parameter parse: If true, parse the block; if false, just check syntax.
+ *
+ * - returns: The size in bytes of the line, or -1 if not an HTML block.
+ */
+static ssize_t is_html_block(uint8_t *data, bool parse)
+{
+    size_t ws = count_indentation(data);
+    size_t i  = ws;         /* Byte-index to increment and return. */
+    size_t k  = 0;          /* Index for the tag buffer. */
+    uint8_t tag[TAG_LEN];   /* Buffer to hold the tag while parsing. */
+    bool literal = true;    /* Should we parse for type 1: literal content. */
+    
+    if (ws > 3) return -1;
+    data += ws;
+    
+    /* All html tags must be opened. */
+    if (*data++ != '<') return -1;
+    else i++;
+    
+    /* HTML comments, HTML declarations, and CDATA instructions. */
+    if (*data == '!') {
+        data++, i++;
+        
+        /* 2nd type: HTML comment. */
+        if (*data == '-') {
+            data++, i++;
+            if (*data == '-') {
+                return parse ? parse_html_block(data - i, "-->") : i;
+            }
+            else return -1;
+        }
+        
+        /* 4th type: HTML declaration. */
+        else if (isupper(*data)) {
+            return parse ? parse_html_block(data - i, ">") : i;
+        }
+        
+        /* 5th type: CDATA instructions. */
+        else if (*data == '[') {
+            data++, i++;
+            if (*data++ == 'C' &&
+                *data++ == 'D' &&
+                *data++ == 'A' &&
+                *data++ == 'T' &&
+                *data++ == 'A' &&
+                *data   == '[') {
+                    i += 5;
+                    return parse ? parse_html_block(data - i, "]]>") : i;
+            }
+            else return -1;
+        }
+        else return -1;
+    }
+    
+    /* 3rd type: PHP instructions. */
+    if (*data == '?') {
+        return parse ? parse_html_block(data - i, "?>") : i;
+    }
+    
+    /* Check for optional forward-slash -- rules out literal blocks. */
+    if (*data == '/') {
+        data++, i++;
+        literal = false;
+    }
+    
+    /* Extract the tag name -- exit if there's no tag. */
+    for (k = 0; k < TAG_LEN - 1 && isalpha(*data); k++, i++) {
+        tag[k] = tolower(*data++);
+    }
+    tag[k] = '\0';
+    if (k == 0) return -1;
+    
+    /* 1st type: Literal content. */
+    if (literal) {
+        if (strncmp((char *)tag, "script", TAG_LEN) == 0) {
+            return parse ? parse_html_block(data - i, "</script>") : i;
+        }
+        else if (strncmp((char *)tag, "style", TAG_LEN) == 0) {
+            return parse ? parse_html_block(data - i, "</style>") : i;
+        }
+        else if (strncmp((char *)tag, "pre", TAG_LEN) == 0) {
+            return parse ? parse_html_block(data - i, "</pre>") : i;
+        }
+    }
+    
+    /* 6th type: HTML5 element. */
+    if (match_html_element(tag, k)) {
+        return parse ? parse_html_until_blankline(data - i) : i;
+    }
+    
+    /* 7th type: Custom element -- cannot interrupt a paragraph. */
+    if (get_last_block() == PARAGRAPH) return -1;
+    
+    /* Only the opening bracket is allowed on the first line. */
+    while (*data && *data != '>' && *data != '\n') data++, i++;
+    if (*data == '\n') return -1;
+    else data++, i++;
+    
+    /* Find the newline, otherwise this can't be custom element. */
+    while (*data == 0x20) data++, i++;
+    if (*data && *data != '\n') return -1;
+    
+    return parse ? parse_html_until_blankline(data - i) : i;
 }
 
 
