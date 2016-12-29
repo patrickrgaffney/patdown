@@ -1,0 +1,6 @@
+HTML_BLOCK: '<?php
+
+  echo '>';
+
+?>'
+PARAGRAPH: 'okay'

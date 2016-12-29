@@ -1,0 +1,4 @@
+PARAGRAPH: 'Foo'
+HTML_BLOCK: '<div>
+bar
+</div>'

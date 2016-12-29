@@ -1,0 +1,2 @@
+HTML_BLOCK: '<!-- foo -->*bar*'
+PARAGRAPH: 'baz'
