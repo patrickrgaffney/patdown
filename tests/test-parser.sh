@@ -62,7 +62,7 @@ do
             result=$(eval $BINARY $testfile)
             
             # Test their respective equality.
-            if [[ $answer == $result ]]; then
+            if [[ $answer == "$result" ]]; then
                 echo -e "$BOLD$GREEN --> 🍺  PASSED: $testfile $RESET"
                 let PASSED++
             else
