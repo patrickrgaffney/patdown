@@ -932,6 +932,16 @@ static ssize_t is_html_block(uint8_t *data, bool parse)
     
     /* 7th type: Custom element -- cannot interrupt a paragraph. */
     if (get_last_block() == PARAGRAPH) return -1;
+    
+    /* Only the opening bracket is allowed on the first line. */
+    while (*data && *data != '>' && *data != '\n') data++, i++;
+    if (*data == '\n') return -1;
+    else data++, i++;
+    
+    /* Find the newline, otherwise this can't be custom element. */
+    while (*data == 0x20) data++, i++;
+    if (*data && *data != '\n') return -1;
+    
     if (parse) return parse_html_until_blankline(data - i);
     return i;
 }
