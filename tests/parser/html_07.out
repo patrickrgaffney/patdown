@@ -1,0 +1,4 @@
+HTML_BLOCK: '<div>
+*foo*'
+BLANK_LINE: '(null)'
+PARAGRAPH: 'bar'

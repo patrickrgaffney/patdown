@@ -1,0 +1,5 @@
+HTML_BLOCK: '<DIV CLASS="foo">'
+BLANK_LINE: '(null)'
+PARAGRAPH: 'Markdown'
+BLANK_LINE: '(null)'
+HTML_BLOCK: '</DIV>'
