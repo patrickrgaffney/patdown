@@ -568,6 +568,7 @@ static ssize_t is_opening_code_fence(uint8_t *data, bool parse)
     size_t i  = ws;         /* Byte-index to increment and return. */
     int8_t fc = -1;         /* Character used in for the fence (~|`). */
     size_t fl = 0;          /* The length of this fence. */
+    size_t k  = 0;          /* Index for the code fence info string. */
     CodeBlk *blk = NULL;    /* The data for this code block. */
     
     if (ws > 3) return -1;
@@ -602,10 +603,11 @@ static ssize_t is_opening_code_fence(uint8_t *data, bool parse)
     }
     
     /* Parse the info string. */
-    for (size_t k = 0; (k < INFO_STR_MAX && isalpha(*data)); k++) {
+    for (k = 0; (k < INFO_STR_MAX && isalpha(*data)); k++) {
         blk->lang[k] = *data++;
         i++;
     }
+    blk->lang[k] = '\0';
     
     /* Find the newline. */
     while (*data && *data != '\n') data++, i++;
