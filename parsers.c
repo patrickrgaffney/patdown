@@ -48,8 +48,9 @@ static ssize_t parse_indented_code_block(uint8_t *);
 static ssize_t is_opening_code_fence(uint8_t *, bool);
 static ssize_t is_closing_code_fence(uint8_t *, CodeBlk *);
 static size_t  parse_fenced_code_block(uint8_t *, CodeBlk *, size_t);
-static bool    match_html_element(const uint8_t *, const size_t);
+static bool    match_html_element(uint8_t *, size_t);
 static ssize_t is_html_block(uint8_t *, bool);
+static ssize_t parse_html_until_blankline(uint8_t *data);
 
 /************************************************************************
  * # External Parsing API
@@ -663,7 +664,7 @@ static ssize_t is_closing_code_fence(uint8_t *data, CodeBlk *blk)
  * - parameter blk: Data about the opening fence for this block.
  * - parameter i: Index of `data` for the current block (return value).
  *
- * - returns: The size in bytes of the line.
+ * - returns: The size in bytes of the block.
  */
 static size_t parse_fenced_code_block(uint8_t *data, CodeBlk *blk, size_t i)
 {
@@ -780,10 +781,13 @@ static size_t parse_fenced_code_block(uint8_t *data, CodeBlk *blk, size_t i)
  *
  * - returns: true if a match is found, false otherwise.
  */
-static bool match_html_element(const uint8_t *e, const size_t len)
+static bool match_html_element(uint8_t *e, size_t len)
 {
+    if (len > 7) len = 7;
+    
     /* Valid element names -- separated by string length. */
-    static char *elements[7][17] = {
+    static char *elements[8][17] = {
+        { NULL },
         { 
             "p", NULL 
         },
@@ -816,7 +820,8 @@ static bool match_html_element(const uint8_t *e, const size_t len)
     if (len == 0) return false;
 
     for (size_t i = 0; i < 17; i++) {
-        if (elements[len][i] && strcmp((char *)e, elements[len][i]) == 0) {
+        if (!elements[len][i]) break;
+        if (strncmp((char *)e, elements[len][i], TAG_LEN) == 0) {
             return true;
         }
     }
@@ -845,6 +850,7 @@ static ssize_t is_html_block(uint8_t *data, bool parse)
     
     /* All html tags must be opened. */
     if (*data++ != '<') return -1;
+    else i++;
     
     /* HTML comments, HTML declarations, and CDATA instructions. */
     if (*data == '!') {
@@ -920,17 +926,62 @@ static ssize_t is_html_block(uint8_t *data, bool parse)
     
     /* 6th type: HTML5 element. */
     if (match_html_element(tag, k)) {
-        printf("tag = \'%s\' -- type 6: html5 element\n", tag);
-        /* TODO: return parse_html_element() */
-        return -1;
+        if (parse) return parse_html_until_blankline(data - i);
+        return i;
     }
     
-    /* 7th type: Custom element. */
+    /* 7th type: Custom element -- cannot interrupt a paragraph. */
     if (get_last_block() == PARAGRAPH) return -1;
+    if (parse) return parse_html_until_blankline(data - i);
+    return i;
+}
+
+
+/**
+ * Parse all input as an HTML block until a blank line is encountered.
+ *
+ * Add the HTML block to the queue after parsing. The blank line that 
+ * ends this HTML block will not be parsed, we just check for it's
+ * existence, then break out of parsing the HTML block. The next
+ * iteration of the main parsing loop will add that blank line to the 
+ * markdown queue.
+ *
+ * - parameter data: An array of byte data (utf8 string).
+ *
+ * - returns: The size in bytes of the block.
+ */
+static ssize_t parse_html_until_blankline(uint8_t *data)
+{
+    String *hb  = init_string(BLK_BUF);
+    size_t i    = 0;    /* Byte-index to increment and return. */
+    ssize_t bl  = 0;    /* Index returned from is_blank_line(). */
     
-    /* TODO: return parse_custom_element() */
-    printf("tag = \'%s\' -- type 7: custom element\n", tag);
-    return -1;
+    while (true) {
+        
+        /* Add characters until we reach a newline. */
+        while (*data && *data != '\n') {
+            if (hb->length < hb->allocd - NEWLINE - NULL_CHAR) {
+                *hb->data++ = *data++;
+                hb->length++;
+                i++;
+            }
+            else realloc_string(hb, hb->allocd + BLK_BUF);
+        }
+        
+        /* Check the next line for a blank line. */
+        if ((bl = is_blank_line(++data, CHK_SYNTX)) >= 0) break;
+        else {
+            *hb->data++ = '\n';
+            hb->length++;
+            i++;
+            bl = 0;
+        }
+    }
+    
+    *hb->data = '\0';
+    hb->data -= hb->length;
+    add_markdown(hb, HTML_BLOCK, NULL);
+    return i + bl;
 }
 
 
