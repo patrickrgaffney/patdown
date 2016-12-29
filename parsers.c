@@ -207,7 +207,8 @@ static bool is_still_paragraph(uint8_t *data)
     return ((is_blank_line(data, CHK_SYNTX) < 0) &&
             (is_atx_header(data, CHK_SYNTX) < 0) &&
             (is_horizontal_rule(data, CHK_SYNTX) < 0) &&
-            (is_opening_code_fence(data, CHK_SYNTX) < 0));
+            (is_opening_code_fence(data, CHK_SYNTX) < 0) &&
+            (is_html_block(data, CHK_SYNTX)) < 0);
 }
 
 
