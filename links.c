@@ -1,9 +1,9 @@
 /**
- * links.c -- data methods for link manipulation
+ * links.c -- binary search tree of links
  * 
  *  author:     Pat Gaffney <pat@hypepat.com>
  *  created:    2016-09-30
- *  modified:   2016-10-13
+ *  modified:   2016-12-30
  *  project:    patdown
  *
  ************************************************************************/
@@ -15,19 +15,30 @@
 #include "errors.h"
 #include "links.h"
 
+
 /************************************************************************
- * Link Reference Methods
+ * Link Reference Binary Search Tree
  *
- *  These methods create a binary search tree of LinkRef nodes that can
- *  then be searched to resolve inline link references.
+ * A private binary search of `LinkRef` nodes is created as the input
+ * file is parsed. This tree is then queried as the actual references
+ * are encountered in the file.
  *
  ************************************************************************/
 
-/** Allocate space for new LinkRef node. ********************************/
+/** Binary Search Tree Pointer. */
+static LinkRef *head = NULL;
+
+
+/** 
+ * Allocate space for new `LinkRef` node.
+ *
+ * - throws fatal_memory_error: Memory could not be allocated.
+ *
+ * - returns: A pointer to the new `LinkRef` node.
+ */
 LinkRef *init_link_ref(void)
 {
-    LinkRef *ref = NULL;
-    ref = malloc(sizeof(LinkRef));
+    LinkRef *ref = (LinkRef *) malloc(sizeof(LinkRef));
     if (!ref) throw_fatal_memory_error();
     
     ref->left  = NULL;
@@ -35,54 +46,78 @@ LinkRef *init_link_ref(void)
     return ref;
 }
 
-/** Insert a LinkRef node into the tree. ********************************/
-void insert_link_ref(LinkRef **head, LinkRef *node)
+
+/**
+ * Insert a `LinkRef` node into the binary tree.
+ *
+ * - TODO: Implement duplicate detection (should overwrite).
+ *
+ * - parameter node: The node to insert into the tree.
+ */
+void insert_link_ref(LinkRef *node)
 {
-    if (!*head) *head = node;
+    if (!node) return;
+    if (!head) head = node;
     else {
-        int rc = strcmp(node->label, (*head)->label);
+        int rc = strcmp(node->label, head->label);
         if (rc < 0) {
-            insert_link_ref(&((*head)->left), node);
+            insert_link_ref(head->left, node);
         }
         else if (rc > 0) {
-            insert_link_ref(&((*head)->right), node);
+            insert_link_ref(head->right, node);
         }
         else printf("DUPLICATE NODE: \'%s\'\n", node->label);
     }
 }
 
-/** Search LinkRef tree for node by link label. *************************/
-LinkRef *search_link_refs(LinkRef *head, char *label)
+
+/**
+ * Search the binary tree for a particular link label.
+ *
+ * - parameter label: The link to search for.
+ *
+ * - returns: A pointer to the link, if found, otherwise `NULL`.
+ */
+LinkRef *search_link_refs(char *label)
 {
     if (!head) return NULL;
     
     int rc = strcmp(label, head->label);
     if (rc < 0) {
-        search_link_refs(head->left, label);
+        return search_link_refs(head->left, label);
     }
     else if (rc > 0) {
-        search_link_refs(head->right, label);
+        return search_link_refs(head->right, label);
     }
-    
     return head;
 }
 
-/** Debug-print a tree of LinkRef nodes -- in-order traversal ***********/
-void print_link_refs(LinkRef *node)
+
+/** 
+ * Free the memory allocated for a `LinkRef` node.
+ *
+ * This is the internal interface for freeing a particular `LinkRef` node. 
+ * All nodes below the parameter in the tree will also be free'd.
+ *
+ * - parameter node: The node at which to begin freeing.
+ */
+static void free_link_ref_node(LinkRef *node)
 {
     if (node) {
-        print_link_refs(node->left);
-        printf("[%s]: <%s> -> \'%s\'\n", node->label, node->dest, node->title);
-        print_link_refs(node->right);
+        free_link_ref_node(node->left);
+        free_link_ref_node(node->right);
+        free(node);
     }
 }
 
-/** Free a LinkRef tree -- starting at node. **/
-void free_link_ref_tree(LinkRef *node)
+
+/**
+ * Free all nodes in the private binary search tree.
+ *
+ * This is the external interface for freeing the internal
+ * binary serach tree created by parsing the input file.
+ */
+void free_link_refs(void)
 {
-    if (node) {
-        free_link_ref_tree(node->left);
-        free_link_ref_tree(node->right);
-        free(node);
-    }
+    free_link_ref_node(head)
 }
