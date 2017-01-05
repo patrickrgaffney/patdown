@@ -764,9 +764,10 @@ static size_t parse_fenced_code_block(uint8_t *data, CodeBlk *blk, size_t i)
  *    any amount of whitespace before the newline.
  *
  *    This block is closed when a blank line is encountered. This block
- *    cannot interrupt a paragraph. The distinction is made in order to
- *    prevent the parser from closing a paragraph prematurely when a tag
- *    is placed at the beginning of the line of a lazy-continuation.
+ *    cannot interrupt a paragraph. A distinction is made from **HTML5
+ *    Elements** in order to prevent the parser from closing a paragraph 
+ *    prematurely when a tag is placed at the beginning of the line of a 
+ *    lazy-continuation.
  *
  ************************************************************************/
 
@@ -1064,6 +1065,11 @@ static ssize_t is_html_block(uint8_t *data, bool parse)
 }
 
 
+/************************************************************************
+ * ## Link Reference Definitions
+ *
+ *
+ ************************************************************************/
 
 // /** parse_link_reference(fp) -- attempt to parse a link reference definition */
 // static Markdown *parse_link_ref_defs(FILE *fp)
