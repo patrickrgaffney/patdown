@@ -23,7 +23,7 @@
 /**
  * A type to hold link data information. 
  * 
- * There are three important pices of a link: a label, destination, and
+ * There are three important pieces of a link: a label, destination, and
  * title. Each are stored as static arrays of 1000 `char` elements.
  *
  * - member label: the link label -- unique identifier for every link.
@@ -53,8 +53,8 @@ typedef struct LinkRef
 /** Allocate space for new `LinkRef` node. */
 LinkRef *init_link_ref(void);
 
-/** Insert a `LinkRef` node into the tree. */
-void insert_link_ref(LinkRef *node);
+/** Add a `LinkRef` node the the internal binary search tree. */
+void add_link_ref(LinkRef *node);
 
 /** Search the binary tree for a particular link label. */
 LinkRef *search_link_refs(char *label);

@@ -54,20 +54,33 @@ LinkRef *init_link_ref(void)
  *
  * - parameter node: The node to insert into the tree.
  */
-void insert_link_ref(LinkRef *node)
+static void insert_link_ref(LinkRef *top, LinkRef *node)
 {
     if (!node) return;
-    if (!head) head = node;
+    if (!top) top = node;
     else {
-        int rc = strcmp(node->label, head->label);
+        int rc = strcmp(node->label, top->label);
         if (rc < 0) {
-            insert_link_ref(head->left, node);
+            insert_link_ref(top->left, node);
         }
         else if (rc > 0) {
-            insert_link_ref(head->right, node);
+            insert_link_ref(top->right, node);
         }
         else printf("DUPLICATE NODE: \'%s\'\n", node->label);
     }
+}
+
+
+/**
+ * Add a `LinkRef` node the the internal binary search tree.
+ *
+ * This function is the public API for inserting nodes.
+ *
+ * - parameter node: The node to insert into the tree.
+ */
+void add_link_ref(LinkRef *node)
+{
+    insert_link_ref(top, node);
 }
 
 
