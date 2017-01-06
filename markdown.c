@@ -13,6 +13,7 @@
 #include <stdlib.h>
 
 #include "errors.h"
+#include "links.h"
 #include "markdown.h"
 #include "strings.h"
 
@@ -208,7 +209,18 @@ void debug_print_queue(void)
     };
     
     while (tmp) {
-        printf("%s: \'%s\'\n", blocknames[tmp->type], tmp->string->data);
+        if (tmp->type == LINK_REFERENCE_DEF) {
+            printf("%s: [%s]: %s \'%s\'\n", 
+                   blocknames[tmp->type],
+                   ((LinkRef *)tmp->addtinfo)->label,
+                   ((LinkRef *)tmp->addtinfo)->dest,
+                   ((LinkRef *)tmp->addtinfo)->title);
+        }
+        else {
+            printf("%s: \'%s\'\n", 
+                   blocknames[tmp->type], 
+                   tmp->string->data);
+        }
         tmp = tmp->next;
     }
 }

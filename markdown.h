@@ -36,9 +36,9 @@ typedef enum
     SETEXT_HEADER_2,            /* 11. <h2></h2> */
     INDENTED_CODE_BLOCK,        /* 12. <pre></pre> */
     FENCED_CODE_BLOCK,          /* 13. <div class="lang"></div> */
-    HTML_BLOCK,                 /* 14. No wrapper element. */
-    HTML_COMMENT,               /* 15. Not inserted into queue. */
-    LINK_REFERENCE_DEF,         /* 16. Not inserted into queue. */
+    HTML_BLOCK,                 /* 14. Raw HTML. */
+    HTML_COMMENT,               /* 15. Raw HTML. */
+    LINK_REFERENCE_DEF,         /* 16. Inserted into queue for testing. */
     
     /* Unimplemented blocks */
     BLOCKQUOTE_START,
