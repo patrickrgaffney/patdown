@@ -1088,7 +1088,7 @@ static ssize_t is_html_block(uint8_t *data, bool parse)
 /**
  * Check the current line for a link reference definition.
  *
- * - TODO: Add this node to the links BST.
+ * - TODO: Add this node to the links BST if parsing was successful.
  *
  * - parameter data: An array of byte data (utf8 string).
  * - parameter parse: If true, parse the block; if false, just check syntax.
