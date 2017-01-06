@@ -1122,6 +1122,7 @@ static ssize_t is_link_definition(uint8_t *data, bool parse)
     /* Skip an unlimited amount of spaces, tabs, and an optional newline. */
     while (*data == 0x20 || *data == '\t') data++, i++;
     if (*data == '\n') data++, i++;
+    while (*data == 0x20 || *data == '\t') data++, i++;
     
     /* Add characters until we reach a space or control character. */
     for (size_t k = 0; k < 1000 && isgraph(*data); k++, i++) {
@@ -1131,6 +1132,7 @@ static ssize_t is_link_definition(uint8_t *data, bool parse)
     /* Skip an unlimited amount of spaces, tabs, and an optional newline. */
     while (*data == 0x20 || *data == '\t') data++, i++;
     if (*data == '\n') data++, i++;
+    while (*data == 0x20 || *data == '\t') data++, i++;
     
     /* Check for opening to a link title or EOF. */
     if (*data == '\'' || *data == '\"') {
