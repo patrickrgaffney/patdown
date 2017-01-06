@@ -8,10 +8,10 @@
  * 
  ************************************************************************/
 
+#include <getopt.h>
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <getopt.h>
 
 #include "errors.h"
 #include "output.h"
@@ -63,7 +63,7 @@ static void print_help()
  *
  * - returns: A pointer to the file stream.
  */
-FILE *open_file(const char *fileName, const char *mode)
+static FILE *open_file(const char *fileName, const char *mode)
 {
     FILE *filePtr = fopen(fileName, mode);
     if (!filePtr) {
@@ -90,7 +90,7 @@ FILE *open_file(const char *fileName, const char *mode)
  *   the memory allocated for this node (in bytes), and the number of bytes 
  *   actually read from the input file stream.
  */
-String *read_all_input_bytes(FILE *ifp)
+static String *read_all_input_bytes(FILE *ifp)
 {
     int ret    = 0;         /* The return value from fread(). */
     size_t lim = 5120;      /* Max number of bytes to allocate for. */
