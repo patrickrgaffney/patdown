@@ -53,6 +53,29 @@ static void print_help()
 
 
 /************************************************************************
+ * # Opening & Closing Files
+ ************************************************************************/
+
+/**
+ * Open a file stream for some given file access mode.
+ *
+ * - parameter fileName: The name of the file to be opened (a C-string).
+ * - parameter type: The mode by which the file should be opened.
+ *
+ * - returns: A pointer to the file stream.
+ */
+FILE *open_file(const char *fileName, const char *mode)
+{
+    FILE *filePtr = fopen(fileName, mode);
+    if (!filePtr) {
+        printf("FATAL: file could not be opened: \'%s\'\n", fileName);
+        exit(EXIT_FAILURE);
+    }
+    return filePtr;
+}
+
+
+/************************************************************************
  * # Main Function
  ************************************************************************/
 
@@ -121,8 +144,8 @@ int main(int argc, char **argv)
     
     debug_print_queue();
     
-    if (iFileName) close_file(ifp);
-    if (oFileName) close_file(ofp);
+    if (iFileName && ifp) fclose(ofp);
+    if (oFileName && ofp) fclose(ofp);
 
     free_markdown();
     

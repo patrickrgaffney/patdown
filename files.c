@@ -15,37 +15,6 @@
 #include "files.h"
 #include "strings.h"
 
-/************************************************************************
- * # Opening & Closing Files
- ************************************************************************/
-
-/**
- * Open a file stream for some given file access mode.
- *
- * - parameter fileName: The name of the file to be opened (a C-string).
- * - parameter type: The mode by which the file should be opened.
- *
- * - returns: A pointer to the file stream.
- */
-FILE *open_file(const char *fileName, const char *mode)
-{
-    FILE *filePtr = NULL;
-    filePtr = fopen(fileName, mode);
-    if (!filePtr) throw_fatal_fopen_error(fileName);
-    return filePtr;
-}
-
-
-/**
- * Close a file stream, but only if the file stream exists.
- *
- * - parameter fp: The file stream to be closed.
- */
-void close_file(FILE *fp)
-{
-    if (fp) fclose(fp);
-}
-
 
 /************************************************************************
  * # Reading Input From Files

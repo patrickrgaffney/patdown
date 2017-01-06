@@ -21,10 +21,6 @@
 /** Open a file stream for some given file access mode. */
 FILE *open_file(const char *fileName, const char *mode);
 
-/** Close a file stream, but only if the file stream exists. */
-void close_file(FILE *io);
-
-
 /************************************************************************
  * # Reading Input From Files
  ************************************************************************/
