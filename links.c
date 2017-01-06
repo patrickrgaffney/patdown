@@ -41,6 +41,9 @@ LinkRef *init_link_ref(void)
     LinkRef *ref = (LinkRef *) malloc(sizeof(LinkRef));
     if (!ref) throw_fatal_memory_error();
     
+    /* A link title is optional. */
+    ref->title[0] = '\0';
+    
     ref->left  = NULL;
     ref->right = NULL;
     return ref;
@@ -54,21 +57,21 @@ LinkRef *init_link_ref(void)
  *
  * - parameter node: The node to insert into the tree.
  */
-static void insert_link_ref(LinkRef *top, LinkRef *node)
-{
-    if (!node) return;
-    if (!top) top = node;
-    else {
-        int rc = strcmp(node->label, top->label);
-        if (rc < 0) {
-            insert_link_ref(top->left, node);
-        }
-        else if (rc > 0) {
-            insert_link_ref(top->right, node);
-        }
-        else printf("DUPLICATE NODE: \'%s\'\n", node->label);
-    }
-}
+// static void insert_link_ref(LinkRef *top, LinkRef *node)
+// {
+//     if (!node) return;
+//     if (!top) top = node;
+//     else {
+//         int rc = strcmp(node->label, top->label);
+//         if (rc < 0) {
+//             insert_link_ref(top->left, node);
+//         }
+//         else if (rc > 0) {
+//             insert_link_ref(top->right, node);
+//         }
+//         else printf("DUPLICATE NODE: \'%s\'\n", node->label);
+//     }
+// }
 
 
 /**
@@ -78,10 +81,10 @@ static void insert_link_ref(LinkRef *top, LinkRef *node)
  *
  * - parameter node: The node to insert into the tree.
  */
-void add_link_ref(LinkRef *node)
-{
-    insert_link_ref(top, node);
-}
+// void add_link_ref(LinkRef *node)
+// {
+//     insert_link_ref(head, node);
+// }
 
 
 /**
@@ -91,19 +94,19 @@ void add_link_ref(LinkRef *node)
  *
  * - returns: A pointer to the link, if found, otherwise `NULL`.
  */
-LinkRef *search_link_refs(char *label)
-{
-    if (!head) return NULL;
-    
-    int rc = strcmp(label, head->label);
-    if (rc < 0) {
-        return search_link_refs(head->left, label);
-    }
-    else if (rc > 0) {
-        return search_link_refs(head->right, label);
-    }
-    return head;
-}
+// LinkRef *search_link_refs(LinkRef *top, char *label)
+// {
+//     if (!head) return NULL;
+//
+//     int rc = strcmp(label, head->label);
+//     if (rc < 0) {
+//         return search_link_refs(head->left, label);
+//     }
+//     else if (rc > 0) {
+//         return search_link_refs(head->right, label);
+//     }
+//     return head;
+// }
 
 
 /** 
@@ -132,5 +135,5 @@ static void free_link_ref_node(LinkRef *node)
  */
 void free_link_refs(void)
 {
-    free_link_ref_node(head)
+    free_link_ref_node(head);
 }

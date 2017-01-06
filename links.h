@@ -54,10 +54,10 @@ typedef struct LinkRef
 LinkRef *init_link_ref(void);
 
 /** Add a `LinkRef` node the the internal binary search tree. */
-void add_link_ref(LinkRef *node);
+// void add_link_ref(LinkRef *node);
 
 /** Search the binary tree for a particular link label. */
-LinkRef *search_link_refs(char *label);
+// LinkRef *search_link_refs(char *label);
 
 /** Free all nodes in the private binary search tree. */
 void free_link_refs(void);
