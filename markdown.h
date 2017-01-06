@@ -52,7 +52,7 @@ typedef enum
 } mdblock_t;
 
 
-/** Valid types of a Markdown->data inline span. */
+/** Valid types of a Markdown inline span. */
 typedef enum
 {
     ESCAPED_CHAR,
@@ -133,8 +133,20 @@ CodeBlk *init_code_blk(void);
 
 
 /************************************************************************
- * # Parsing Functions
+ * # Markdown Parsing Functions
  ************************************************************************/
 
 /** Call upon the parsers and generate the Markdown queue. */
 bool markdown(String *rawBytes);
+
+
+/************************************************************************
+ * # Markdown Output Types
+ ************************************************************************/
+
+/** Valid ouput type constants. */
+typedef enum 
+{
+    OUT_HTML5,      /* Default: HTML5 element syntax. */ 
+    OUT_PARSED      /* Internal parsing information (for debugging). */
+} output_t;

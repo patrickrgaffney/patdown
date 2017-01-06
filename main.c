@@ -1,5 +1,5 @@
 /**
- * main.c -- parse command-line arguments and open files
+ * main.c -- program execution entry
  * 
  *  author:     Pat Gaffney <pat@hypepat.com>
  *  created:    2016-06-15
@@ -14,7 +14,6 @@
 #include <stdlib.h>
 
 #include "errors.h"
-#include "output.h"
 #include "markdown.h"
 #include "strings.h"
 
@@ -58,10 +57,10 @@ static void print_help()
 /**
  * Open a file stream for some given file access mode.
  *
- * - parameter fileName: The name of the file to be opened (a C-string).
- * - parameter type: The mode by which the file should be opened.
+ * - parameter fileName: The name of the file to be opened.
+ * - parameter type: The mode for `fopen()`.
  *
- * - returns: A pointer to the file stream.
+ * - returns: A pointer to the new file stream.
  */
 static FILE *open_file(const char *fileName, const char *mode)
 {
@@ -101,7 +100,7 @@ static String *read_all_input_bytes(FILE *ifp)
     
     while (true) {
         ret = fread(bytes->data + bytes->length, 1, 
-                    bytes->allocd - bytes->length, ifp);
+                    bytes->allocd - bytes->length - 1, ifp);
         bytes->length += ret;
         
         if (feof(ifp)) break;
