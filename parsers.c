@@ -1098,8 +1098,9 @@ static ssize_t is_html_block(uint8_t *data, bool parse)
 static ssize_t is_link_definition(uint8_t *data, bool parse)
 {
     size_t ws = count_indentation(data);
-    size_t i  = ws;       /* Byte-index to increment and return. */
-    LinkRef *lr = parse ? init_link_ref() : NULL;
+    size_t i  = ws;     /* Byte-index to increment and return. */
+    size_t k  = 0;      /* Index for the link label, dest, and title. */
+    LinkRef *lr = init_link_ref();
     
     if (ws > 3) return -1;
     data += ws;
@@ -1109,9 +1110,10 @@ static ssize_t is_link_definition(uint8_t *data, bool parse)
     data++, i++;
     
     /* Add characters until we reach the closing bracket. */
-    for (size_t k = 0; k < 1000 && *data && *data != ']'; k++, i++) {
+    for (k = 0; k < 1000 && *data && *data != ']'; k++, i++) {
         lr->label[k] = *data++;
     }
+    lr->label[k] = '\0';
     
     /* Ensure we found the closing bracket and colon. */
     if (*data != ']') return -1;
@@ -1124,24 +1126,28 @@ static ssize_t is_link_definition(uint8_t *data, bool parse)
     if (*data == '\n') data++, i++;
     while (*data == 0x20 || *data == '\t') data++, i++;
     
-    /* Add characters until we reach a space or control character. */
-    for (size_t k = 0; k < 1000 && isgraph(*data); k++, i++) {
+    /* Parse destination until a space or control character. */
+    if (*data == '<') data++, i++;
+    for (k = 0; k < 1000 && isgraph(*data); k++, i++) {
         lr->dest[k] = *data++;
     }
+    if (*(data - 1) == '>') lr->dest[--k] = '\0';
+    else lr->dest[k] = '\0';
     
     /* Skip an unlimited amount of spaces, tabs, and an optional newline. */
     while (*data == 0x20 || *data == '\t') data++, i++;
     if (*data == '\n') data++, i++;
     while (*data == 0x20 || *data == '\t') data++, i++;
     
-    /* Check for opening to a link title or EOF. */
+    /* Check for opening to a link title. */
     if (*data == '\'' || *data == '\"') {
         uint8_t titleEnd = *data++;
         
         /* Add characters until we reach the end of the title. */
-        for (size_t k = 0; k < 1000 && *data && *data != titleEnd; k++, i++) {
+        for (k = 0; k < 1000 && *data && *data != titleEnd; k++, i++) {
             lr->title[k] = *data++;
         }
+        lr->title[k] = '\0';
         if (*data == titleEnd) data++, i++;
         
         /* Skip an unlimited amount of spaces and tabs. */
