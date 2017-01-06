@@ -1,35 +1,24 @@
-CC=clang
-TARGET=patdown
-UNIX_TARGET=a.out
-CC_FLAGS= -std=c99 -Wall -Wextra -pedantic
-CCX=clang $(CC_FLAGS)
+CC = clang
+CFLAGS = -std=c99 -Wall -Wextra -pedantic -O3
 
-BUILD_OBJS=main.o
-GEN_OBJS=errors.o strings.o markdown.o parsers.o links.o
+TARGET = patdown
+SRCS   = errors.c links.c main.c markdown.c parsers.c strings.c
+OBJS  := $(SRCS:%.c=%.o)
 
-build: $(BUILD_OBJS) $(GEN_OBJS)
-	$(CC) $(C_FLAGS) -o $(TARGET) $(BUILD_OBJS) $(GEN_OBJS)
-
-debug: C_FLAGS += -g -fsanitize=address -fno-omit-frame-pointer
-debug: build
-
-main.o: main.c errors.h markdown.h
-	$(CCX) -c $(C_FLAGS) main.c
+all: $(TARGET)
 	
+$(TARGET): $(OBJS)
+	$(CC) $(CFLAGS) -o $(TARGET) $(OBJS)
+
+debug: CFLAGS += -g -fsanitize=address -fno-omit-frame-pointer
+debug: $(TARGET)
+
 errors.o: errors.c errors.h
-	$(CCX) -c $(C_FLAGS) errors.c
-	
-strings.o: strings.c errors.h strings.h
-	$(CCX) -c $(C_FLAGS) strings.c
-
-markdown.o: markdown.c markdown.h errors.h strings.h
-	$(CCX) -c $(C_FLAGS) markdown.c
-
-parsers.o: parsers.c markdown.h strings.h
-	$(CCX) -c $(C_FLAGS) parsers.c
-
 links.o: links.c errors.h links.h
-	$(CCX) -c $(C_FLAGS) links.c
+main.o: main.c errors.h markdown.h strings.h
+markdown.o: markdown.c errors.h links.h markdown.h strings.h
+strings.o: strings.c errors.h strings.h
 
-clean: 
-	rm -f $(TARGET) $(BUILD_OBJS) $(GEN_OBJS) $(UNIX_TARGET) 
+.PHONY: clean
+clean:
+	rm -f $(TARGET) $(OBJS)
