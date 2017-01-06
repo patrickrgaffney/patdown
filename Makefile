@@ -5,7 +5,7 @@ CC_FLAGS= -std=c99 -Wall -Wextra -pedantic
 CCX=clang $(CC_FLAGS)
 
 BUILD_OBJS=main.o
-GEN_OBJS=errors.o strings.o files.o markdown.o parsers.o
+GEN_OBJS=errors.o strings.o files.o markdown.o parsers.o links.o
 
 build: $(BUILD_OBJS) $(GEN_OBJS)
 	$(CC) $(C_FLAGS) -o $(TARGET) $(BUILD_OBJS) $(GEN_OBJS)
@@ -33,6 +33,9 @@ markdown.o: markdown.c markdown.h errors.h strings.h
 
 parsers.o: parsers.c parsers.h markdown.h strings.h
 	$(CCX) -c $(C_FLAGS) parsers.c
+
+links.o: links.c errors.h links.h
+	$(CCX) -c $(C_FLAGS) links.c
 
 clean: 
 	rm -f $(TARGET) $(BUILD_OBJS) $(GEN_OBJS) $(UNIX_TARGET) 
