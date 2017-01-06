@@ -3,7 +3,7 @@
  * 
  *  author:     Pat Gaffney <pat@hypepat.com>
  *  created:    2016-06-15
- *  modified:   2016-12-22
+ *  modified:   2017-01-05
  *  project:    patdown
  * 
  ************************************************************************/
@@ -17,7 +17,6 @@
 #include "files.h"
 #include "output.h"
 #include "markdown.h"
-#include "parsers.h"
 #include "strings.h"
 
 static const char *_program = "patdown";

@@ -3,7 +3,7 @@
  * 
  *  author:     Pat Gaffney <pat@hypepat.com>
  *  created:    2016-06-15
- *  modified:   2016-12-28
+ *  modified:   2017-01-05
  *  project:    patdown
  * 
  ************************************************************************/
@@ -15,7 +15,6 @@
 
 #include "links.h"
 #include "markdown.h"
-#include "parsers.h"
 #include "strings.h"
 
 /** The **base-size** in bytes of a block buffer. */

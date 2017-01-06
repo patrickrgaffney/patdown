@@ -16,7 +16,7 @@ debug: build
 valgrind: C_FLAGS += -g
 valgrind: build
 
-main.o: main.c errors.h files.h markdown.h parsers.h
+main.o: main.c errors.h files.h markdown.h
 	$(CCX) -c $(C_FLAGS) main.c
 	
 errors.o: errors.c errors.h
@@ -31,7 +31,7 @@ files.o: files.c errors.h files.h strings.h
 markdown.o: markdown.c markdown.h errors.h strings.h
 	$(CCX) -c $(C_FLAGS) markdown.c
 
-parsers.o: parsers.c parsers.h markdown.h strings.h
+parsers.o: parsers.c markdown.h strings.h
 	$(CCX) -c $(C_FLAGS) parsers.c
 
 links.o: links.c errors.h links.h

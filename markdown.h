@@ -3,7 +3,7 @@
  * 
  *  author:     Pat Gaffney <pat@hypepat.com>
  *  created:    2016-06-15
- *  modified:   2016-12-22
+ *  modified:   2017-01-05
  *  project:    patdown
  * 
  ************************************************************************/
@@ -93,20 +93,31 @@ void set_current_block(const mdblock_t);
 
 /************************************************************************
  * # Markdown Block Extensions
+ *
+ * A block extension is a set of additional information about a specific
+ * block that is saved during parsing. All of the block extensions are
+ * static in memory -- in other words, their memory is managed by
+ * calling `free_markdown()`.
+ *
  ************************************************************************/
 
 /************************************************************************
  * ##  Fenced Code Blocks Extension
  ************************************************************************/
 
-/* Maximum length of an info string on a fenced code block. */
+/** Maximum length of an info string on a fenced code block. */
 #define INFO_STR_MAX 20
 
 /**
  * A type to hold additional information about a fenced code block.
  *
- *  The members of this type are used to parse and write the fenced
- *  code block as output.
+ * The members of this type are used to parse and write the fenced
+ * code block as output.
+ *
+ * - member lang: Info string on the opening fence.
+ * - member ws: Indentation on the opening fence.
+ * - member fl: Length of the opening code fence.
+ * - member fc: Code fence character `\`` or `~`.
  */
 typedef struct CodeBlk
 {
@@ -119,3 +130,11 @@ typedef struct CodeBlk
 
 /** Allocate a CodeBlk structure. **/
 CodeBlk *init_code_blk(void);
+
+
+/************************************************************************
+ * # Parsing Functions
+ ************************************************************************/
+
+/** Call upon the parsers and generate the Markdown queue. */
+bool markdown(String *rawBytes);
