@@ -1,5 +1,5 @@
 /**
- * markdown.h -- markdown types and methods
+ * patdown.h -- markdown types and methods
  * 
  *  author:     Pat Gaffney <pat@hypepat.com>
  *  created:    2016-06-15
@@ -8,8 +8,8 @@
  * 
  ************************************************************************/
 
-#ifndef MARKDOWN_DOT_H
-#define MARKDOWN_DOT_H
+#ifndef PATDOWN_DOT_H
+#define PATDOWN_DOT_H
 
 #include <stdbool.h>
 

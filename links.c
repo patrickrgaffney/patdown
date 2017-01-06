@@ -13,7 +13,7 @@
 #include <stdio.h>
 
 #include "errors.h"
-#include "markdown.h"
+#include "patdown.h"
 
 
 /************************************************************************

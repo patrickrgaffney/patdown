@@ -14,9 +14,9 @@ debug: CFLAGS += -g -fsanitize=address -fno-omit-frame-pointer
 debug: $(TARGET)
 
 errors.o: errors.c errors.h
-links.o: links.c errors.h markdown.h
-main.o: main.c errors.h markdown.h strings.h
-markdown.o: markdown.c errors.h markdown.h strings.h
+links.o: links.c errors.h patdown.h
+main.o: main.c errors.h patdown.h strings.h
+markdown.o: markdown.c errors.h patdown.h strings.h
 strings.o: strings.c errors.h strings.h
 
 .PHONY: clean

@@ -14,7 +14,7 @@
 #include <stdlib.h>
 
 #include "errors.h"
-#include "markdown.h"
+#include "patdown.h"
 #include "strings.h"
 
 static const char *_program = "patdown";

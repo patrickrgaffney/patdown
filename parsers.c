@@ -13,7 +13,7 @@
 #include <stdlib.h>
 #include <stdbool.h>
 
-#include "markdown.h"
+#include "patdown.h"
 #include "strings.h"
 
 /** The **base-size** in bytes of a block buffer. */
