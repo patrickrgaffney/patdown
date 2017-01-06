@@ -3,7 +3,7 @@
  * 
  *  author:     Pat Gaffney <pat@hypepat.com>
  *  created:    2016-09-30
- *  modified:   2016-12-30
+ *  modified:   2016-01-06
  *  project:    patdown
  *
  ************************************************************************/
@@ -13,7 +13,7 @@
 #include <stdio.h>
 
 #include "errors.h"
-#include "links.h"
+#include "markdown.h"
 
 
 /************************************************************************

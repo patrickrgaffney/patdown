@@ -3,7 +3,7 @@
  * 
  *  author:     Pat Gaffney <pat@hypepat.com>
  *  created:    2016-06-15
- *  modified:   2017-01-05
+ *  modified:   2017-01-06
  *  project:    patdown
  * 
  ************************************************************************/
@@ -118,13 +118,6 @@ static String *read_all_input_bytes(FILE *ifp)
  * # Main Function
  ************************************************************************/
 
-/**
- * Begin program execution and parse command-line arguments.
- *
- * - throws fatal_input_files_error: Multiple input files provided.
- *
- * - returns: `EXIT_SUCCESS`.
- */
 int main(int argc, char **argv)
 {   
     char *iFileName  = NULL;        /* Input file name. */

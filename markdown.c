@@ -13,7 +13,6 @@
 #include <stdlib.h>
 
 #include "errors.h"
-#include "links.h"
 #include "markdown.h"
 #include "strings.h"
 
