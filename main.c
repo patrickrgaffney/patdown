@@ -14,7 +14,6 @@
 #include <getopt.h>
 
 #include "errors.h"
-#include "files.h"
 #include "output.h"
 #include "markdown.h"
 #include "strings.h"
@@ -72,6 +71,47 @@ FILE *open_file(const char *fileName, const char *mode)
         exit(EXIT_FAILURE);
     }
     return filePtr;
+}
+
+
+/************************************************************************
+ * # Reading Input From Files
+ ************************************************************************/
+
+/**
+ * Read all bytes from a supplied input file stream.
+ *
+ * Bytes are read into a `String` buffer that is reallocated by an order
+ * of 5120 bytes in order to make room for the entire file.
+ *
+ * - parameter ifp: Input file stream (must be opened for reading).
+ *
+ * - returns: A `String` node initialized with the bytes read from file, 
+ *   the memory allocated for this node (in bytes), and the number of bytes 
+ *   actually read from the input file stream.
+ */
+String *read_all_input_bytes(FILE *ifp)
+{
+    int ret    = 0;         /* The return value from fread(). */
+    size_t lim = 5120;      /* Max number of bytes to allocate for. */
+    size_t order  = 1;      /* Multiplier for lim if we realloc() memory. */
+    String *bytes = init_string(lim);
+    
+    if (!ifp) return NULL;
+    
+    while (true) {
+        ret = fread(bytes->data + bytes->length, 1, 
+                    bytes->allocd - bytes->length, ifp);
+        bytes->length += ret;
+        
+        if (feof(ifp)) break;
+        else {
+            lim += lim * ++order;
+            realloc_string(bytes, lim);
+        }
+    }
+    bytes->data[bytes->length] = '\0';
+    return bytes;
 }
 
 

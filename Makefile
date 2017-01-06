@@ -5,7 +5,7 @@ CC_FLAGS= -std=c99 -Wall -Wextra -pedantic
 CCX=clang $(CC_FLAGS)
 
 BUILD_OBJS=main.o
-GEN_OBJS=errors.o strings.o files.o markdown.o parsers.o links.o
+GEN_OBJS=errors.o strings.o markdown.o parsers.o links.o
 
 build: $(BUILD_OBJS) $(GEN_OBJS)
 	$(CC) $(C_FLAGS) -o $(TARGET) $(BUILD_OBJS) $(GEN_OBJS)
@@ -16,7 +16,7 @@ debug: build
 valgrind: C_FLAGS += -g
 valgrind: build
 
-main.o: main.c errors.h files.h markdown.h
+main.o: main.c errors.h markdown.h
 	$(CCX) -c $(C_FLAGS) main.c
 	
 errors.o: errors.c errors.h
@@ -24,9 +24,6 @@ errors.o: errors.c errors.h
 	
 strings.o: strings.c errors.h strings.h
 	$(CCX) -c $(C_FLAGS) strings.c
-	
-files.o: files.c errors.h files.h strings.h
-	$(CCX) -c $(C_FLAGS) files.c
 
 markdown.o: markdown.c markdown.h errors.h strings.h
 	$(CCX) -c $(C_FLAGS) markdown.c
