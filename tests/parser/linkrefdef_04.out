@@ -1,0 +1,5 @@
+LINK_REFERENCE_DEF: [foo]: /url '
+title
+line1
+line2
+'
