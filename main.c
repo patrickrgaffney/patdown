@@ -25,30 +25,30 @@ static const char *_author  = "Pat Gaffney";
 static const char *_email   = "pat@hypepat.com";
 
 /** Print the version dialog. */
-static void __print_version()
+static void print_version()
 {
-    fprintf(stderr, "%s %s\n", _program, _version);
-    fprintf(stderr, "\n");
-    fprintf(stderr, "A Markdown compiler.\n");
-    fprintf(stderr, "Written by %s <%s>\n", _author, _email);
+    printf("%s %s\n", _program, _version);
+    printf("\n");
+    printf("A Markdown compiler.\n");
+    printf("Written by %s <%s>\n", _author, _email);
 }
 
 
 /** Print the help dialog. */
-static void __print_help()
+static void print_help()
 {
-    __print_version();
-    fprintf(stderr, "\n");
-    fprintf(stderr, "  USAGE: %s [options <arg>] <inputfile>\n", _program);
-    fprintf(stderr, "\n");
-    fprintf(stderr, "  OPTIONS:\n");
-    fprintf(stderr, "  -5               Output HTML5 [default]\n");
-    fprintf(stderr, "  -d               Output parsing information\n");
-    fprintf(stderr, "  -h, --help       Show help\n");
-    fprintf(stderr, "  -o <file>        Set output file [default: stdout]\n");
-    fprintf(stderr, "  -v, --version    Show version\n");
-    fprintf(stderr, "\n");
-    fprintf(stderr, "\n");
+    print_version();
+    printf("\n");
+    printf("  USAGE: %s [options <arg>] <inputfile>\n", _program);
+    printf("\n");
+    printf("  OPTIONS:\n");
+    printf("  -5               Output HTML5 [default]\n");
+    printf("  -d               Output parsing information\n");
+    printf("  -h, --help       Show help\n");
+    printf("  -o <file>        Set output file [default: stdout]\n");
+    printf("  -v, --version    Show version\n");
+    printf("\n");
+    printf("\n");
 }
 
 
@@ -107,19 +107,12 @@ int main(int argc, char **argv)
         }
     }
     
-    /* If both helpFlag and versionFlag were turned on during command-
-     * line parsing, only print the help output dialog. */
-    if (helpFlag) __print_help();
-    else if (versionFlag) __print_version();
-    
+    /* If both help and version flags were provided only print help. */
+    if (helpFlag) print_help();
+    else if (versionFlag) print_version();
 
-    if (iFileName) {
-        ifp = open_file(iFileName, "r");
-    }
-    if (oFileName) {
-        ofp = open_file(oFileName, "w");
-    }
-    
+    if (iFileName) ifp = open_file(iFileName, "r");
+    if (oFileName) ofp = open_file(oFileName, "w");
     
     rawBytes = read_all_input_bytes(ifp);
     
