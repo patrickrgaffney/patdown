@@ -8,7 +8,10 @@
  * 
  ************************************************************************/
 
-#pragma once
+#ifndef ERRORS_DOT_H
+#define ERRORS_DOT_H
 
 /** Memory could not be allocated. */
 void throw_fatal_memory_error(void);
+
+#endif

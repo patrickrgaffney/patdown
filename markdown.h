@@ -8,7 +8,8 @@
  * 
  ************************************************************************/
 
-#pragma once
+#ifndef MARKDOWN_DOT_H
+#define MARKDOWN_DOT_H
 
 #include "strings.h"
 
@@ -150,3 +151,5 @@ typedef enum
     OUT_HTML5,      /* Default: HTML5 element syntax. */ 
     OUT_PARSED      /* Internal parsing information (for debugging). */
 } output_t;
+
+#endif

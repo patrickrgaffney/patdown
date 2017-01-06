@@ -8,7 +8,8 @@
  * 
  ************************************************************************/
 
-#pragma once
+#ifndef STRINGS_DOT_H
+#define STRINGS_DOT_H
 
 #include <stddef.h>
 #include <stdint.h>
@@ -46,3 +47,5 @@ void free_string(String *str);
 
 /** Reallocate a String node's data member to contain size elements. */
 void realloc_string(String *str, const size_t size);
+
+#endif

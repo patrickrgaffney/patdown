@@ -8,7 +8,8 @@
  *
  ************************************************************************/
 
-#pragma once
+#ifndef LINKS_DOT_H
+#define LINKS_DOT_H
 
 /************************************************************************
  * # Link Reference Type
@@ -61,3 +62,5 @@ LinkRef *init_link_ref(void);
 
 /** Free all nodes in the private binary search tree. */
 void free_link_refs(void);
+
+#endif
