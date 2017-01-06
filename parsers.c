@@ -1126,6 +1126,9 @@ static ssize_t is_link_definition(uint8_t *data, bool parse)
     if (*data == '\n') data++, i++;
     while (*data == 0x20 || *data == '\t') data++, i++;
     
+    /* Link reference definitions must provide a destination. */
+    if (!(*data) || *data == '\n') return -1;
+    
     /* Parse destination until a space or control character. */
     if (*data == '<') data++, i++;
     for (k = 0; k < 1000 && isgraph(*data); k++, i++) {
