@@ -46,6 +46,7 @@ static ssize_t is_opening_code_fence(uint8_t *, bool);
 static ssize_t is_closing_code_fence(uint8_t *, CodeBlk *);
 static size_t  parse_fenced_code_block(uint8_t *, CodeBlk *, size_t);
 static ssize_t is_html_block(uint8_t *, bool);
+static ssize_t is_link_definition(uint8_t *, bool);
 
 /************************************************************************
  * # External Parsing API
@@ -131,6 +132,7 @@ static bool block_parser(String *bytes)
             case '`': len = is_opening_code_fence(doc, PARSE_BLK);  break;
             case '~': len = is_opening_code_fence(doc, PARSE_BLK);  break;
             case '<': len = is_html_block(doc, PARSE_BLK);          break;
+            case '[': len = is_link_definition(doc, PARSE_BLK);     break;
             default:  len = -1;
         }
         
@@ -1068,79 +1070,82 @@ static ssize_t is_html_block(uint8_t *data, bool parse)
 /************************************************************************
  * ## Link Reference Definitions
  *
+ * Definitions of **link references** take the following form:
+ *
+ * 1. 0-3 spaces of indentation.
+ * 2. *Link label* followed by a colon: `[link label]:`
+ * 3. Unlimited amount of WS -- including a newline.
+ * 4. *Link destination*: 999 consecutive non-control, non-space ASCII
+ * 5. Unlimited amount of WS -- including a newline.
+ * 6. Optional *Link title*: sequence of quoted characters
+ *
+ * Links are stored in a binary search tree internal to the 
+ * implementation in `links.c`. They are also inserted into the Markdown
+ * queue for testing purposes.
  *
  ************************************************************************/
 
-// /** parse_link_reference(fp) -- attempt to parse a link reference definition */
-// static Markdown *parse_link_ref_defs(FILE *fp)
-// {
-//     size_t i = indentation;
-//     size_t j = 0;               /* Index for the link_ref_t members.    */
-//     Markdown *node = NULL;      /* Node to be returned.                 */
-//     LinkRef *ref = NULL;        /* Link information to attach to node.  */
-//
-//     /* Link definition cannot be indented more than 3 spaces. */
-//     if (i > 3) return NULL;
-//
-//     /* Link label must begin with an open bracket. */
-//     if (line->string[i++] != '[') return NULL;
-//
-//     ref = init_link_ref();
-//
-//     /* Pull the link label out of the definition. */
-//     while (line->string[i] && line->string[i] != ']' && j < 1000) {
-//         ref->label[j++] = line->string[i++];
-//     }
-//     ref->label[j] = '\0';
-//
-//     /* Link label must end with a closing bracket. */
-//     if (line->string[i++] != ']') return NULL;
-//
-//     /* Followed by a colon -- no colon means this is a *reference*, not
-//      * a definition -- so we parse it as a paragraph. */
-//     if (line->string[i++] != ':') return parse_paragraph(fp);
-//
-//     /* Parse an unlimited number of whitespace characters. */
-//     while (line->string[i] == ' ') i++;
-//
-//     /* Check for an optional line-ending -- possibly get another line. */
-//     if (!line->string[i]) {
-//         update_state(FREE_LINE, LINK_REFERENCE_DEF);
-//         if (!(line = read_line(fp))) return NULL;
-//         i = indentation = count_indentation(line->string);
-//     }
-//
-//     /* Pull the link destination out of the definition. */
-//     j = 0;
-//     while (line->string[i] && line->string[i] != ' ' && j < 1000) {
-//         ref->dest[j++] = line->string[i++];
-//     }
-//     ref->dest[j] = '\0';
-//
-//     /* Parse an unlimited number of whitespace characters. */
-//     while (line->string[i] == ' ') i++;
-//
-//     /* Check for an optional line-ending -- possible get another line. */
-//     if (!line->string[i]) {
-//         update_state(FREE_LINE, LINK_REFERENCE_DEF);
-//         if (!(line = read_line(fp))) goto return_node;
-//         i = indentation = count_indentation(line->string);
-//     }
-//
-//     /* Link title must begin with quotation mark. */
-//     if (line->string[i++] != '\"') goto return_node;
-//
-//     /* Pull the link title out of the definition. */
-//     j = 0;
-//     while (line->string[i] && line->string[i] != '\"' && j < 1000) {
-//         ref->title[j++] = line->string[i++];
-//     }
-//     ref->title[j] = '\0';
-//     goto return_node;
-//
-//     return_node:
-//         update_state(FREE_LINE, LINK_REFERENCE_DEF);
-//         node = init_markdown(NULL, 0, 0, LINK_REFERENCE_DEF);
-//         node->data = ref;
-//         return node;
-// }
+/**
+ * Check the current line for a link reference definition.
+ *
+ * - TODO: Add this node to the links BST.
+ *
+ * - parameter data: An array of byte data (utf8 string).
+ * - parameter parse: If true, parse the block; if false, just check syntax.
+ *
+ * - returns: The size in bytes of the line, or -1 if not a link definition.
+ */
+static ssize_t is_link_definition(uint8_t *data, bool parse)
+{
+    size_t ws = count_indentation(data);
+    size_t i  = ws;       /* Byte-index to increment and return. */
+    LinkRef *lr = parse ? init_link_ref() : NULL;
+    
+    if (ws > 3) return -1;
+    data += ws;
+    
+    /* Opening bracket for the link label. */
+    if (*data != '[') return -1;
+    data++, i++;
+    
+    /* Add characters until we reach the closing bracket. */
+    for (size_t k = 0; k < 1000 && *data && *data != ']'; k++, i++) {
+        lr->label[k] = *data++;
+    }
+    
+    /* Ensure we found the closing bracket and colon. */
+    if (*data != ']') return -1;
+    data++, i++;
+    if (*data != ':') return -1;
+    data++, i++;
+    
+    /* Skip an unlimited amount of spaces, tabs, and an optional newline. */
+    while (*data == 0x20 || *data == '\t') data++, i++;
+    if (*data == '\n') data++, i++;
+    
+    /* Add characters until we reach a space or control character. */
+    for (size_t k = 0; k < 1000 && isgraph(*data); k++, i++) {
+        lr->dest[k] = *data++;
+    }
+    
+    /* Skip an unlimited amount of spaces, tabs, and an optional newline. */
+    while (*data == 0x20 || *data == '\t') data++, i++;
+    if (*data == '\n') data++, i++;
+    
+    /* Check for opening to a link title or EOF. */
+    if (*data == '\'' || *data == '\"') {
+        uint8_t titleEnd = *data++;
+        
+        /* Add characters until we reach the end of the title. */
+        for (size_t k = 0; k < 1000 && *data && *data != titleEnd; k++, i++) {
+            lr->title[k] = *data++;
+        }
+        if (*data == titleEnd) data++, i++;
+        
+        /* Skip an unlimited amount of spaces and tabs. */
+        while (*data == 0x20 || *data == '\t') data++, i++;
+    }
+    
+    if (parse) add_markdown(NULL, LINK_REFERENCE_DEF, lr);
+    return i + NEWLINE;
+}
