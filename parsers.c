@@ -1206,8 +1206,12 @@ static size_t parse_blockquote(uint8_t *data)
         data += ws, i += ws;
         
         /* Required prepending blockquote character. */
-        if (*data != '>') break;
-        data++, i++;
+        if (*data != '>') {
+            
+            /* Check for blockquote type 2: lazy case. */
+            if (first || !is_still_paragraph(data)) break;
+        }
+        else data++, i++;
         
         /* Skip one space -- if it's there. */
         if (*data == 0x20) data++, i++;
