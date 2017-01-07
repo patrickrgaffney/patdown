@@ -1,0 +1,4 @@
+PARAGRAPH: 'foo'
+BLOCKQUOTE_START: '(null)'
+PARAGRAPH: 'bar'
+BLOCKQUOTE_END: '(null)'
