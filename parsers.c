@@ -197,7 +197,7 @@ static ssize_t is_blank_line(uint8_t *data, bool parse)
  * Check to ensure that this new line is still part of the 
  * `PARAGRAPH` that began on a previous line.
  *
- * - TODO: Add checks for blockquotes and lists.
+ * - TODO: Add a check for lists.
  *
  * - parameter data: An array of byte data (input utf8 string).
  *
@@ -210,7 +210,8 @@ static bool is_still_paragraph(uint8_t *data)
             (is_atx_header(data, CHK_SYNTX) < 0) &&
             (is_horizontal_rule(data, CHK_SYNTX) < 0) &&
             (is_opening_code_fence(data, CHK_SYNTX) < 0) &&
-            (is_html_block(data, CHK_SYNTX)) < 0);
+            (is_html_block(data, CHK_SYNTX) < 0) &&
+            (is_blockquote(data, CHK_SYNTX) < 0));
 }
 
 
