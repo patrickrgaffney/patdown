@@ -1,0 +1,7 @@
+BLOCKQUOTE_START: '(null)'
+PARAGRAPH: 'foo'
+BLOCKQUOTE_END: '(null)'
+BLANK_LINE: '(null)'
+BLOCKQUOTE_START: '(null)'
+PARAGRAPH: 'bar'
+BLOCKQUOTE_END: '(null)'
