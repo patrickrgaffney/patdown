@@ -172,6 +172,33 @@ mdblock_t get_last_block(void)
 
 
 /**
+ * Dequeue the last block added to the queue.
+ *
+ * - returns: The `String` of that tail node, or `NULL` if no tail.
+ */
+String *dequeue_last_block(void)
+{
+    String *lastBlock = NULL;   /* String to return. */
+    Markdown *tmp = head;       /* Temp node to traverse queue. */
+    
+    if (!tail) return NULL;    
+    lastBlock = tail->string;
+    
+    /* Find the new tail. */
+    while (tmp->next != tail) {
+        tmp = tmp->next;
+    }
+    
+    /* Free the current tail. */
+    if (tail->addtinfo) free(tail->addtinfo);
+    free(tail);
+    tail = tmp;
+    
+    return lastBlock;
+}
+
+
+/**
  * Debug-print the entire Markdown queue.
  *
  *  This function is used for debugging purposes only.

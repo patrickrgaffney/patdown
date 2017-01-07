@@ -103,7 +103,6 @@ static bool block_parser(String *bytes)
     
     while (true) {
         if (total >= bytes->length) break;
-        
         size_t ws = count_indentation(doc);
         
         /* Check for blank line, returns 0 for EOF. */
@@ -153,7 +152,6 @@ static bool block_parser(String *bytes)
  * ## Blank Lines
  *
  * Blank lines contain only WS characters: spaces, tabs, and a newline.
- *
  * Blank lines produce no output, but they are inserted into the Markdown
  * queue in order to keep block precedence as the parsing continues.
  *
@@ -1198,41 +1196,46 @@ static size_t parse_blockquote(uint8_t *data)
     
     /* String to hold contents of blockquote. */
     String *bq = init_string(BLK_BUF);
+    add_markdown(NULL, BLOCKQUOTE_START, NULL);
     
     /* Parse blockquote line-by-line. */
     while (true) {
+        if (!(*data)) {
+            *bq->data = '\0';
+            bq->data -= bq->length;
+            block_parser(bq);
+            break;
+        }
         
         /* Skip indentation. */
         ws = count_indentation(data);
-        if (ws > 3 || *data == '\t') break;
-        data += ws, i += ws;
-        
-        /* Required prepending blockquote character. */
-        if (*data != '>') {
-            data -= ws, i -= ws;
-
-            /* Check for lazy case (type 2). */
-            if (is_still_paragraph(data)) {
-
-                /* Get the last line we added. */
-                uint8_t *lastline = NULL;
+        if (ws > 3 || *data == '\t' || *(data + ws) != '>') {
+            
+            /* If the next line isn't a lazy case, we're done getting content. */
+            if (!is_still_paragraph(data)) {
+                *bq->data = '\0';
                 bq->data -= bq->length;
-
-                for (size_t k = 0; k < bq->length; k++) {
-                    if (bq->data[k] == '\n') lastline = &bq->data[++k];
-                }
-                
-                /* If theres no newline but content, we only have one line. */
-                if (!lastline && bq->length > 0) lastline = bq->data;
-                else if (!lastline) break;
+                block_parser(bq);
+                break;
+            }
+            
+            /* Otherwise, parse the content we have, check for paragraph. */
+            *bq->data = '\0';
+            bq->data -= bq->length;
+            block_parser(bq);
+            if (get_last_block() == PARAGRAPH) {
+                i += bq->length;
+                free_string(bq);
+                bq = dequeue_last_block();
+                i -= bq->length;
                 bq->data += bq->length;
-
-                /* If last line was paragraph, this is continue on. */
-                if (!is_still_paragraph(lastline)) break;
             }
             else break;
         }
-        else data++, i++;
+        data += ws, i += ws;
+        
+        /* Required prepending blockquote character. */
+        if (*data == '>') data++, i++;
         
         /* Skip one space -- if it's there. */
         if (*data == 0x20) data++, i++;
@@ -1251,20 +1254,13 @@ static size_t parse_blockquote(uint8_t *data)
             }
             else realloc_string(bq, bq->allocd + BLK_BUF);
         }
-        if (!(*data)) break;
-        
-        data++;
+        if (*data) data++;
         first = false;
     }
-    
-    *bq->data = '\0';
-    bq->data -= bq->length;
-    
-    add_markdown(NULL, BLOCKQUOTE_START, NULL);
-    block_parser(bq);
     add_markdown(NULL, BLOCKQUOTE_END, NULL);
-    
-    return bq->length + i + NEWLINE;
+    i += bq->length;
+    free_string(bq);
+    return i + NEWLINE;
 }
 
 /**
