@@ -13,6 +13,8 @@
 #include <stdlib.h>
 #include <stdbool.h>
 
+#include <stdio.h>
+
 #include "patdown.h"
 #include "strings.h"
 
@@ -1190,9 +1192,9 @@ static ssize_t is_link_definition(uint8_t *data, bool parse)
  */
 static size_t parse_blockquote(uint8_t *data)
 {
-    size_t ws = 0;      /* Whitespace for current line. */
-    size_t i  = 0;      /* Byte-index to increment and return. */
-    bool first = true;  /* Is this the first line of the blockquote? */
+    size_t ws  = 0;     /* Whitespace for current line. */
+    size_t i   = 0;     /* Byte-index to increment and return. */
+    bool first = true;  /* Flag to determine if first line of content. */
     
     /* String to hold contents of blockquote. */
     String *bq = init_string(BLK_BUF);
@@ -1207,9 +1209,28 @@ static size_t parse_blockquote(uint8_t *data)
         
         /* Required prepending blockquote character. */
         if (*data != '>') {
-            
-            /* Check for blockquote type 2: lazy case. */
-            if (first || !is_still_paragraph(data)) break;
+            data -= ws, i -= ws;
+
+            /* Check for lazy case (type 2). */
+            if (is_still_paragraph(data)) {
+
+                /* Get the last line we added. */
+                uint8_t *lastline = NULL;
+                bq->data -= bq->length;
+
+                for (size_t k = 0; k < bq->length; k++) {
+                    if (bq->data[k] == '\n') lastline = &bq->data[++k];
+                }
+                
+                /* If theres no newline but content, we only have one line. */
+                if (!lastline && bq->length > 0) lastline = bq->data;
+                else if (!lastline) break;
+                bq->data += bq->length;
+
+                /* If last line was paragraph, this is continue on. */
+                if (!is_still_paragraph(lastline)) break;
+            }
+            else break;
         }
         else data++, i++;
         
