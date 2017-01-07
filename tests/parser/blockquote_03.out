@@ -1,0 +1,5 @@
+BLOCKQUOTE_START: '(null)'
+ATX_HEADER_1: 'Foo'
+PARAGRAPH: 'bar
+baz'
+BLOCKQUOTE_END: '(null)'
