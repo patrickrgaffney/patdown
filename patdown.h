@@ -24,9 +24,9 @@ typedef enum
 {
     /* Meta blocks */
     UNKNOWN,                    /* 00. Placeholder while parsing. */
-    BLANK_LINE,                 /* 01. Separates container blocks. */
     
     /* Implemented blocks */
+    BLANK_LINE,                 /* 01. Separates container blocks. */
     ATX_HEADER_1,               /* 02. <h1></h1> */
     ATX_HEADER_2,               /* 03. <h2></h2> */
     ATX_HEADER_3,               /* 04. <h3></h3> */
@@ -42,10 +42,10 @@ typedef enum
     HTML_BLOCK,                 /* 14. Raw HTML. */
     HTML_COMMENT,               /* 15. Raw HTML. */
     LINK_REFERENCE_DEF,         /* 16. Inserted into queue for testing. */
+    BLOCKQUOTE_START,           /* 17. <blockquote> */
+    BLOCKQUOTE_END,             /* 18. </blockquote> */
     
     /* Unimplemented blocks */
-    BLOCKQUOTE_START,
-    BLOCKQUOTE_END,
     UNORDERED_LIST_START,
     UNORDERED_LIST_ITEM,
     UNORDERED_LIST_END,

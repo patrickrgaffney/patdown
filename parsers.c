@@ -45,6 +45,7 @@ static ssize_t is_closing_code_fence(uint8_t *, CodeBlk *);
 static size_t  parse_fenced_code_block(uint8_t *, CodeBlk *, size_t);
 static ssize_t is_html_block(uint8_t *, bool);
 static ssize_t is_link_definition(uint8_t *, bool);
+static ssize_t is_blockquote(uint8_t *data, bool parse);
 
 /************************************************************************
  * # External Parsing API
@@ -131,6 +132,7 @@ static bool block_parser(String *bytes)
             case '~': len = is_opening_code_fence(doc, PARSE_BLK);  break;
             case '<': len = is_html_block(doc, PARSE_BLK);          break;
             case '[': len = is_link_definition(doc, PARSE_BLK);     break;
+            case '>': len = is_blockquote(doc, PARSE_BLK);          break;
             default:  len = -1;
         }
         
@@ -1157,4 +1159,107 @@ static ssize_t is_link_definition(uint8_t *data, bool parse)
     
     if (parse) add_markdown(NULL, LINK_REFERENCE_DEF, lr);
     return i + NEWLINE;
+}
+
+
+/************************************************************************
+ * ## Blockquotes
+ *
+ * There are two different types of blockquotes, either of which can
+ * interrupt a paragraph:
+ *
+ * 1. **Basic Case**: a sequence of sequential lines that all begin with
+ *    0-3 spaces of WS followed by a `>`.
+ *
+ * 2. **Lazy Case**: If a blockquote begins with the *base case* and a
+ *    paragraph is entered, all subseqent lines of that paragraph can
+ *    have lazy-continuation **without** the prepending `>`.
+ *
+ ************************************************************************/
+
+/**
+ * Parse all subsequent lines with a blockquote marker.
+ *
+ * This function should only be called by `is_blockquote()`. It works by
+ * collecting the complete contents of the blockquote into a `String` 
+ * node and calling `parse_block()` on that content.
+ *
+ * - parameter data: An array of byte data (utf8 string).
+ *
+ * - returns: The size in bytes of the block.
+ */
+static size_t parse_blockquote(uint8_t *data)
+{
+    size_t ws = 0;      /* Whitespace for current line. */
+    size_t i  = 0;      /* Byte-index to increment and return. */
+    bool first = true;  /* Is this the first line of the blockquote? */
+    
+    /* String to hold contents of blockquote. */
+    String *bq = init_string(BLK_BUF);
+    
+    /* Parse blockquote line-by-line. */
+    while (true) {
+        
+        /* Skip indentation. */
+        ws = count_indentation(data);
+        if (ws > 3 || *data == '\t') break;
+        data += ws, i += ws;
+        
+        /* Required prepending blockquote character. */
+        if (*data != '>') break;
+        data++, i++;
+        
+        /* Skip one space -- if it's there. */
+        if (*data == 0x20) data++, i++;
+        
+        /* Add newline if we're still parsing. */
+        if (!first) {
+            *bq->data++ = '\n';
+            bq->length++;
+        }
+        
+        /* Add characters until we reach a newline. */
+        while (*data && *data != '\n') {
+            if (bq->length < bq->allocd - NEWLINE - NULL_CHAR) {
+                *bq->data++ = *data++;
+                bq->length++;
+            }
+            else realloc_string(bq, bq->allocd + BLK_BUF);
+        }
+        if (!(*data)) break;
+        
+        data++;
+        first = false;
+    }
+    
+    *bq->data = '\0';
+    bq->data -= bq->length;
+    
+    add_markdown(NULL, BLOCKQUOTE_START, NULL);
+    block_parser(bq);
+    add_markdown(NULL, BLOCKQUOTE_END, NULL);
+    
+    return bq->length + i + NEWLINE;
+}
+
+/**
+ * Check the current line for the beginning of a blockquote.
+ *
+ * - parameter data: An array of byte data (utf8 string).
+ * - parameter parse: If true, parse the block; if false, just check syntax.
+ *
+ * - returns: The size in bytes of the line, or -1 if not a link definition.
+ */
+static ssize_t is_blockquote(uint8_t *data, bool parse)
+{
+    size_t ws = count_indentation(data);
+    size_t i  = ws;     /* Byte-index to increment and return. */
+    
+    if (ws > 3 || *data == '\t') return -1;
+    data += ws;
+    
+    /* Required prepending blockquote character. */
+    if (*data != '>') return -1;
+    
+    return parse ? parse_blockquote(data - i) : ++i;
 }
