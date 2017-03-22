@@ -47,11 +47,11 @@ typedef enum
     
     /* Unimplemented blocks */
     UNORDERED_LIST_START,
-    UNORDERED_LIST_ITEM,
     UNORDERED_LIST_END,
     ORDERED_LIST_START,
-    ORDERED_LIST_ITEM,
-    ORDERED_LIST_END
+    ORDERED_LIST_END,
+    LIST_ITEM_START,
+    LIST_ITEM_END,
 } mdblock_t;
 
 
